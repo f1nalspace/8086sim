@@ -1,15 +1,10 @@
 ﻿using OneOf;
 using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace CPU8086
 {
-    public enum RegisterDirection : byte
-    {
-        FromRegister = 0,
-        ToRegister = 1,
-    }
-
     public enum RegisterType
     {
         None = 0,
@@ -78,34 +73,45 @@ namespace CPU8086
         public override string ToString() => GetName(Type);
     }
 
-    public readonly struct OpCode
+    public enum OpCode : byte
     {
-        public byte Code { get; }
-        public string Name { get; }
+        None = 0,
+        MOV_R8_R8 = 0x88,
+        MOV_R16_R16 = 0x89,
+        MOV_AX_IMM16 = 0xB8,
+    }
+
+    public readonly struct Instruction
+    {
+        public OpCode OpCode { get; }
+        public byte Length { get; }
+        public string Mnemonic { get; }
         public string Description { get; }
 
-        public OpCode(byte code, string name, string description)
+        public Instruction(OpCode opCode, byte length, string mnemonic, string description)
         {
-            Code = code;
-            Name = name;
+            OpCode = opCode;
+            Length = length;
+            Mnemonic = mnemonic;
             Description = description;
         }
 
-        public override string ToString() => $"{Name} [{Code}]";
+        public override string ToString() => $"{Mnemonic} ({Length} bytes) [{OpCode}]";
     }
 
-    public class OpCodeTable
+    public class InstructionTable
     {
-        private readonly OpCode[] _table;
+        private readonly Instruction[] _table;
 
-        public ref readonly OpCode this[int index] => ref _table[index];
+        public ref readonly Instruction this[int index] => ref _table[index];
 
-        public OpCodeTable()
+        public InstructionTable()
         {
-            _table = new OpCode[255];
+            _table = new Instruction[256];
 
-            _table[136] = new OpCode(0b100010_00, "MOV", "Register/Memory to/from Register");
-            _table[96] = new OpCode(0b101100_00, "MOV", "Immediate to Register");
+            _table[0x88] = new Instruction(OpCode.MOV_R8_R8, 2, "MOV", "8-bit Register to 8-bit Register");
+            _table[0x89] = new Instruction(OpCode.MOV_R16_R16, 2, "MOV", "16-bit Register to 16-bit Register");
+            _table[0xB8] = new Instruction(OpCode.MOV_AX_IMM16, 3, "MOV", "16-bit Immediate to AX Register");
         }
     }
 
@@ -140,14 +146,39 @@ namespace CPU8086
         public ref readonly Register GetWide(byte index) => ref _table[index + 8];
     }
 
+    public enum ErrorCode
+    {
+        Unknown = 0,
+        UnexpectedEndOfStream,
+        OpCodeNotImplemented,
+        OpCodeMismatch,
+        InstructionNotImplemented,
+        InstructionTooLong,
+        ModeNotImplemented,
+    }
+
+    public readonly struct Error
+    {
+        public ErrorCode Code { get; }
+        public string Message { get; }
+
+        public Error(ErrorCode code, string message)
+        {
+            Code = code;
+            Message = message;
+        }
+
+        public override string ToString() => $"[{Code}] {Message}";
+    }
+
     public class CPU
     {
-        private readonly OpCodeTable _opTable;
+        private readonly InstructionTable _opTable;
         private readonly RegisterTable _regTable;
 
         public CPU()
         {
-            _opTable = new OpCodeTable();
+            _opTable = new InstructionTable();
             _regTable = new RegisterTable();
         }
 
@@ -166,79 +197,80 @@ namespace CPU8086
             s.AppendLine("bits 16");
             s.AppendLine();
 
+            Span<byte> data = stackalloc byte[6];
+
             ReadOnlySpan<byte> cur = stream;
-            while (cur.Length >= 2) // Not correct, because there are one byte instructions!
+            while (cur.Length > 0)
             {
-                byte first = cur[0];
-                byte opCode = (byte)(first & 0b11111100);
-                bool isWide = (first & 0b00000001) == 0b00000001;
-                bool directionIsToRegister = (first & 0b00000010) == 0b00000010;
+                byte opCode = data[0] = cur[0];
 
-                string firstBinary = first.ToBinary();
-                string opCodeBinary = opCode.ToBinary();
+                Instruction instruction = _opTable[opCode];
+                if (instruction.OpCode == OpCode.None)
+                    return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}'!");
+                else if ((byte)instruction.OpCode != opCode)
+                    return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instruction.OpCode}'");
+                if (instruction.Length > 6)
+                    return new Error(ErrorCode.InstructionTooLong, $"Instruction '{instruction}' is too long, only 6 bytes are allowed!");
+                if (cur.Length < instruction.Length)
+                    return new Error(ErrorCode.UnexpectedEndOfStream, $"The stream has not enough bytes for the instruction '{instruction}, expect {instruction.Length} bytes, but got left {cur.Length}'!");
 
-                OpCode foundOpCode = _opTable[opCode];
-                if (foundOpCode.Code == 0)
-                    return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '{opCode}'!");
-                else if (foundOpCode.Code != opCode)
-                    return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '{opCode}', but got '{foundOpCode.Code}'");
+                byte index = 1;
 
-                byte second = cur[1];
-                byte mod = (byte)((second >> 6) & 0b11);
-                byte reg = (byte)((second >> 3) & 0b111);
-                byte rm = (byte)((second >> 0) & 0b111);
+                // Load data for instruction
+                for (index = 1; index < instruction.Length; ++index)
+                    data[index] = cur[index];
 
-                string secondBinary = second.ToBinary();
-                string modBinary = mod.ToBinary();
-                string regBinary = reg.ToBinary();
-                string rmBinary = rm.ToBinary();
+                // Clear remaining data to zero
+                for (; index < 6; ++index)
+                    data[index] = 0; 
 
-                ModeEncoding mode = (ModeEncoding)mod;
+                string opCodeName = instruction.Mnemonic.ToLower();
+                string destination = string.Empty;
+                string source = string.Empty;
 
-                string opCodeName = foundOpCode.Name.ToLower();
+                byte mod = (byte)((data[1] >> 6) & 0b111);
+                byte reg = (byte)((data[1] >> 3) & 0b111);
+                byte rm = (byte)((data[1] >> 0) & 0b111);
 
-                string destination;
-                string source;
-                switch (mode)
+                switch (instruction.OpCode)
                 {
-                    case ModeEncoding.RegisterMode:
+                    case OpCode.MOV_R8_R8:
                         {
-                            Register op1;
-                            Register op2;
-                            if (isWide)
-                            {
-                                op1 = _regTable.GetWide(reg);
-                                op2 = _regTable.GetWide(rm);
-                            }
-                            else
-                            {
-                                op1 = _regTable.GetLow(reg);
-                                op2 = _regTable.GetLow(rm);
-                            }
-                            if (directionIsToRegister)
-                            {
-                                destination = op1.Type.ToString().ToLower();
-                                source = op2.Type.ToString().ToLower();
-                            }
-                            else
-                            {
-                                source = op1.Type.ToString().ToLower();
-                                destination = op2.Type.ToString().ToLower();
-                            }
+                            ref readonly Register destReg = ref _regTable.GetLow(rm);
+                            ref readonly Register sourceReg = ref _regTable.GetLow(reg);
+                            destination = destReg.Type.ToString();
+                            source = sourceReg.Type.ToString();
+                        }
+                        break;
+                    case OpCode.MOV_R16_R16:
+                        {
+                            ref readonly Register destReg = ref _regTable.GetWide(rm);
+                            ref readonly Register sourceReg = ref _regTable.GetWide(reg);
+                            destination = destReg.Type.ToString();
+                            source = sourceReg.Type.ToString();
+                        }
+                        break;
+                    case OpCode.MOV_AX_IMM16:
+                        {
+                            byte low = data[1];
+                            byte high = data[2];
+                            int value = low | high << 8;
+                            destination = RegisterType.AX.ToString();
+                            source = $"0{value:X}h";
                         }
                         break;
                     default:
-                        return new Error(ErrorCode.ModeNotImplemented, $"Not implemented mode '{mode}'");
+                        return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction for opcode '{instruction.OpCode}'!");
                 }
 
                 s.Append(opCodeName);
                 s.Append(' ');
-                s.Append(destination);
+                s.Append(destination.ToLower());
                 s.Append(", ");
-                s.Append(source);
+                s.Append(source.ToLower());
                 s.AppendLine();
 
-                cur = cur.Slice(2);
+                cur = cur.Slice(instruction.Length);
             }
             return s.ToString();
         }

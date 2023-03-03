@@ -49,27 +49,7 @@ namespace CPU8086
         }
     }
 
-    public enum ErrorCode
-    {
-        Unknown = 0,
-        OpCodeNotImplemented,
-        OpCodeMismatch,
-        ModeNotImplemented,
-    }
-
-    public readonly struct Error
-    {
-        public ErrorCode Code { get; }
-        public string Message { get; }
-
-        public Error(ErrorCode code, string message)
-        {
-            Code = code;
-            Message = message;
-        }
-
-        public override string ToString() => $"[{Code}] {Message}";
-    }
+    
 
     
 }

@@ -28,9 +28,9 @@ namespace CPU8086
 
     public enum ModeEncoding : byte
     {
-        MemoryModeNoDisplacement = 0b00,
-        MemoryMode8Bit = 0b01,
-        MemoryMode16Bit = 0b10,
+        MemoryNoDisplacement = 0b00,
+        MemoryByteDisplacement = 0b01,
+        MemoryWordDisplacement = 0b10,
         RegisterMode = 0b11,
     }
 

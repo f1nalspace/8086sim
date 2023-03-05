@@ -1,12 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CPU8086</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="OneOf" Version="3.0.223" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
   </ItemGroup>
 
 </Project>

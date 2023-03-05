@@ -1,7 +1,6 @@
 ﻿using OneOf;
 using System;
 using System.IO;
-using System.Text;
 
 namespace CPU8086
 {
@@ -49,7 +48,7 @@ namespace CPU8086
         }
     }
 
-    
 
-    
+
+
 }

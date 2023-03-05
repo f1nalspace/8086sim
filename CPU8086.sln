@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU8086", "CPU8086\CPU8086.csproj", "{73037A49-6E8B-4ED9-931F-68B4F79B04AB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CPU8086", "CPU8086\CPU8086.csproj", "{73037A49-6E8B-4ED9-931F-68B4F79B04AB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU8086Simulator", "CPU8086Simulator\CPU8086Simulator.csproj", "{58B3369A-9755-45B9-A1A1-95F1F0AB094F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{73037A49-6E8B-4ED9-931F-68B4F79B04AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73037A49-6E8B-4ED9-931F-68B4F79B04AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73037A49-6E8B-4ED9-931F-68B4F79B04AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -7,33 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\listing-0039_more_movs" />
-    <None Remove="Resources\listing-0039_more_movs.asm" />
-    <None Remove="Resources\listing-0040_challenge_movs" />
-    <None Remove="Resources\listing-0040_challenge_movs.asm" />
-    <None Remove="Resources\listing_0037_single_register_mov" />
-    <None Remove="Resources\listing_0037_single_register_mov.asm" />
-    <None Remove="Resources\listing_0038_many_register_mov" />
-    <None Remove="Resources\listing_0038_many_register_mov.asm" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="OneOf" Version="3.0.223" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Resources\listing-0039_more_movs" />
-    <Resource Include="Resources\listing-0039_more_movs.asm" />
-    <Resource Include="Resources\listing-0040_challenge_movs" />
-    <Resource Include="Resources\listing-0040_challenge_movs.asm" />
-    <Resource Include="Resources\listing_0037_single_register_mov" />
-    <Resource Include="Resources\listing_0037_single_register_mov.asm" />
-    <Resource Include="Resources\listing_0038_many_register_mov" />
-    <Resource Include="Resources\listing_0038_many_register_mov.asm" />
   </ItemGroup>
 
 </Project>

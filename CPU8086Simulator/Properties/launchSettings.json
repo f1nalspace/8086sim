@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "CPU8086Simulator": {
+      "commandName": "Project",
+      "commandLineArgs": "\"$(ProjectDir)Resources\\listing-0039_more_movs\""
+    }
+  }
+}

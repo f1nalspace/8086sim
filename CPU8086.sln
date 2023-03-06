@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CPU8086", "CPU8086\CPU8086.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU8086Simulator", "CPU8086Simulator\CPU8086Simulator.csproj", "{58B3369A-9755-45B9-A1A1-95F1F0AB094F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU8086Tests", "CPU8086Tests\CPU8086Tests.csproj", "{31916614-ED9D-41BC-A132-02849DAB71CC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58B3369A-9755-45B9-A1A1-95F1F0AB094F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31916614-ED9D-41BC-A132-02849DAB71CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31916614-ED9D-41BC-A132-02849DAB71CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31916614-ED9D-41BC-A132-02849DAB71CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31916614-ED9D-41BC-A132-02849DAB71CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

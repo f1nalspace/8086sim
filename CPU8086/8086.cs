@@ -108,25 +108,21 @@ namespace CPU8086
         /// </summary>
         Unknown = 0,
         /// <summary>
-        /// MOV REG8/MEM8, REG8
+        /// MOV REG8/MEM8, REG8/MEM8
         /// </summary>
-        MOV_dREG8_dMEM8_sREG8,
+        Move8_RegOrMem_Reg,
         /// <summary>
-        /// MOV REG16/MEM16/REG816
+        /// MOV REG16/MEM16, REG16/MEM16
         /// </summary>
-        MOV_dREG16_dMEM16_sREG16,
-        /// <summary>
-        /// MOV REG16, REG16/MEM16
-        /// </summary>
-        MOV_dREG16_sMEM16_sREG16,
+        Move16_RegOrMem_Reg,
         /// <summary>
         /// MOV REG8, IMM8 
         /// </summary>
-        MOV_dREG8___sIMM8,
+        Move8_Reg_Imm8,
         /// <summary>
         /// MOV REG16, IMM16 
         /// </summary>
-        MOV_dREG16___sIMM16,
+        Move16_Reg_Imm,
     }
 
     public enum EffectiveAddressCalculation
@@ -296,28 +292,28 @@ namespace CPU8086
             //
 
             // 1 0 0 0 1 0 d w
-            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.MOV_dREG8_dMEM8_sREG8, 2, 3, "MOV", "8-bit Register to 8-bit Register/Memory");
-            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.MOV_dREG16_dMEM16_sREG16, 2, 4, "MOV", "16-bit Register to 16-bit Register/Memory");
-            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.MOV_dREG8_dMEM8_sREG8, 2, 3, "MOV", "8-bit Register/Memory to 8-bit Register");
-            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.MOV_dREG16_sMEM16_sREG16, 2, 4, "MOV", "8-bit Register/Memory to 8-bit Register");
+            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, 2, 3, "MOV", "8-bit Register to 8-bit Register/Memory");
+            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, 2, 4, "MOV", "16-bit Register to 16-bit Register/Memory");
+            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, 2, 3, "MOV", "8-bit Register/Memory to 8-bit Register");
+            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, 2, 4, "MOV", "8-bit Register/Memory to 8-bit Register");
 
             // 1 0 1 1 w reg
-            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.AL + " Register");
-            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.CL + " Register");
-            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.DL + " Register");
-            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.BL + " Register");
-            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.AH + " Register");
-            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.CH + " Register");
-            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.DH + " Register");
-            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.MOV_dREG8___sIMM8, 2, "MOV", "8-bit Immediate to " + RegisterType.BH + " Register");
-            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.AX + " Register");
-            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.CX + " Register");
-            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.DX + " Register");
-            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.BX + " Register");
-            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.SP + " Register");
-            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.BP + " Register");
-            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.SI + " Register");
-            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.MOV_dREG16___sIMM16, 3, "MOV", "16-bit Immediate to " + RegisterType.DI + " Register");
+            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.AL + " Register");
+            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.CL + " Register");
+            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.DL + " Register");
+            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.BL + " Register");
+            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.AH + " Register");
+            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.CH + " Register");
+            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.DH + " Register");
+            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm8, 2, "MOV", "8-bit Immediate to " + RegisterType.BH + " Register");
+            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.AX + " Register");
+            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.CX + " Register");
+            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.DX + " Register");
+            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.BX + " Register");
+            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.SP + " Register");
+            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.BP + " Register");
+            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.SI + " Register");
+            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.Move16_Reg_Imm, 3, "MOV", "16-bit Immediate to " + RegisterType.DI + " Register");
         }
     }
 
@@ -540,7 +536,7 @@ namespace CPU8086
 
                 switch (instruction.Family)
                 {
-                    case OpFamily.MOV_dREG8_dMEM8_sREG8:
+                    case OpFamily.Move8_RegOrMem_Reg:
                         {
                             if (mode == Mode.RegisterMode)
                             {
@@ -571,7 +567,7 @@ namespace CPU8086
                         }
                         break;
 
-                    case OpFamily.MOV_dREG16_sMEM16_sREG16:
+                    case OpFamily.Move16_RegOrMem_Reg:
                         {
                             if (mode == Mode.RegisterMode)
                             {
@@ -601,46 +597,7 @@ namespace CPU8086
                             }
                         }
                         break;
-
-                    case OpFamily.MOV_dREG16_dMEM16_sREG16:
-                        {
-                            if (mode == Mode.RegisterMode)
-                            {
-                                if (directionIsToRegister)
-                                {
-                                    destination = $"{_regTable.GetWord(reg)}";
-                                    if (mode == Mode.RegisterMode)
-                                        source = $"{_regTable.GetWord(rm)}";
-                                    else
-                                        source = GetAssembly(eac, displacement);
-                                }
-                                else
-                                {
-                                    destination = $"{_regTable.GetWord(rm)}";
-                                    if (mode == Mode.RegisterMode)
-                                        source = $"{_regTable.GetWord(reg)}";
-                                    else
-                                        source = GetAssembly(eac, displacement);
-                                }
-                            }
-                            else
-                            {
-                                if (directionIsToRegister)
-                                {
-                                    destination = $"{_regTable.GetWord(reg)}";
-                                    source = GetAssembly(eac, displacement);
-                                }
-                                else
-                                {
-                                    destination = GetAssembly(eac, displacement);
-                                    source = $"{_regTable.GetWord(reg)}";
-                                }
-                            }
-                            
-
-                        }
-                        break;
-                    case OpFamily.MOV_dREG8___sIMM8:
+                    case OpFamily.Move8_Reg_Imm8:
                         {
                             byte r = (byte)(opCode & 0b00000111);
                             byte imm8 = data[1];
@@ -649,7 +606,7 @@ namespace CPU8086
                             source = $"0x{imm8:X}";
                         }
                         break;
-                    case OpFamily.MOV_dREG16___sIMM16:
+                    case OpFamily.Move16_Reg_Imm:
                         {
                             byte r = (byte)(opCode & 0b00000111);
                             byte immLow = data[1];

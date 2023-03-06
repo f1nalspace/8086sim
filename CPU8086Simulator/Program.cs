@@ -26,7 +26,7 @@ namespace CPU8086
 
             CPU cpu = new CPU();
 
-            OneOf<string, Error> assemblyRes = cpu.GetAssembly(data, filePath);
+            OneOf<string, Error> assemblyRes = cpu.GetAssembly(data, filePath, OutputValueMode.AsInteger);
 
             int resultCode = assemblyRes.Match(
                 assembly =>

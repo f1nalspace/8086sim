@@ -404,7 +404,23 @@ namespace CPU8086
 
         public static string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
         {
-            string address = GetAssembly(displacementOrAddress, outputMode);
+            
+
+            string append;
+            if (displacementOrAddress == 0)
+                append = string.Empty;
+            else
+            {
+                char op = '+';
+                if (displacementOrAddress < 0)
+                {
+                    op = '-';
+                    displacementOrAddress = Math.Abs(displacementOrAddress);
+                }
+                string address = GetAssembly(displacementOrAddress, outputMode);
+                append = $" {op} {address}";
+            }
+          
             return eac switch
             {
                 EffectiveAddressCalculation.BX_SI => "[bx + si]",
@@ -413,24 +429,24 @@ namespace CPU8086
                 EffectiveAddressCalculation.BP_DI => "[bp + di]",
                 EffectiveAddressCalculation.SI => "[si]",
                 EffectiveAddressCalculation.DI => "[di]",
-                EffectiveAddressCalculation.DirectAddress => $"[{address}]",
+                EffectiveAddressCalculation.DirectAddress => $"[{GetAssembly(displacementOrAddress, OutputValueMode.AsHex16)}]",
                 EffectiveAddressCalculation.BX => "[bx]",
-                EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si + {address}]",
-                EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di + {address}]",
-                EffectiveAddressCalculation.BP_SI_D8 => $"[bp + si + {address}]",
-                EffectiveAddressCalculation.BP_DI_D8 => $"[bp + di + {address}]",
-                EffectiveAddressCalculation.SI_D8 => $"[si + {address}]",
-                EffectiveAddressCalculation.DI_D8 => $"[di + {address}]",
-                EffectiveAddressCalculation.BP_D8 => $"[bp + {address}]",
-                EffectiveAddressCalculation.BX_D8 => $"[bx + {address}]",
-                EffectiveAddressCalculation.BX_SI_D16 => $"[bx + si + {address}]",
-                EffectiveAddressCalculation.BX_DI_D16 => $"[bx + di + {address}]",
-                EffectiveAddressCalculation.BP_SI_D16 => $"[bp + si + {address}]",
-                EffectiveAddressCalculation.BP_DI_D16 => $"[bp + di + {address}]",
-                EffectiveAddressCalculation.SI_D16 => $"[si + {address}]",
-                EffectiveAddressCalculation.DI_D16 => $"[di + {address}]",
-                EffectiveAddressCalculation.BP_D16 => $"[bp + {address}]",
-                EffectiveAddressCalculation.BX_D16 => $"[bx + {address}]",
+                EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si{append}]",
+                EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di{append}]",
+                EffectiveAddressCalculation.BP_SI_D8 => $"[bp + si{append}]",
+                EffectiveAddressCalculation.BP_DI_D8 => $"[bp + di{append}]",
+                EffectiveAddressCalculation.SI_D8 => $"[si{append}]",
+                EffectiveAddressCalculation.DI_D8 => $"[di{append}]",
+                EffectiveAddressCalculation.BP_D8 => $"[bp{append}]",
+                EffectiveAddressCalculation.BX_D8 => $"[bx{append}]",
+                EffectiveAddressCalculation.BX_SI_D16 => $"[bx + si{append}]",
+                EffectiveAddressCalculation.BX_DI_D16 => $"[bx + di{append}]",
+                EffectiveAddressCalculation.BP_SI_D16 => $"[bp + si{append}]",
+                EffectiveAddressCalculation.BP_DI_D16 => $"[bp + di{append}]",
+                EffectiveAddressCalculation.SI_D16 => $"[si{append}]",
+                EffectiveAddressCalculation.DI_D16 => $"[di{append}]",
+                EffectiveAddressCalculation.BP_D16 => $"[bp{append}]",
+                EffectiveAddressCalculation.BX_D16 => $"[bx{append}]",
                 _ => throw new NotImplementedException($"Not supported effective address calculation of '{eac}'"),
             };
         }

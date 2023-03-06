@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CPU8086</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\listing_0037_single_register_mov" />
+    <None Remove="Resources\listing_0037_single_register_mov.asm" />
+    <None Remove="Resources\listing_0038_many_register_mov" />
+    <None Remove="Resources\listing_0038_many_register_mov.asm" />
+    <None Remove="Resources\listing_0039_more_movs" />
+    <None Remove="Resources\listing_0039_more_movs.asm" />
+    <None Remove="Resources\listing_0040_challenge_movs" />
+    <None Remove="Resources\listing_0040_challenge_movs.asm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\listing_0039_more_movs" />
+    <EmbeddedResource Include="Resources\listing_0039_more_movs.asm" />
+    <EmbeddedResource Include="Resources\listing_0040_challenge_movs" />
+    <EmbeddedResource Include="Resources\listing_0040_challenge_movs.asm" />
+    <EmbeddedResource Include="Resources\listing_0037_single_register_mov" />
+    <EmbeddedResource Include="Resources\listing_0037_single_register_mov.asm" />
+    <EmbeddedResource Include="Resources\listing_0038_many_register_mov" />
+    <EmbeddedResource Include="Resources\listing_0038_many_register_mov.asm" />
+  </ItemGroup>
+
+</Project>

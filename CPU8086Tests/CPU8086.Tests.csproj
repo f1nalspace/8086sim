@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\CPU8086.Resources\CPU8086.Resources.csproj" />
     <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
   </ItemGroup>
 

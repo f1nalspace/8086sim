@@ -1,6 +1,7 @@
 ﻿using OneOf;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -472,6 +473,14 @@ namespace CPU8086
         };
 
         public static string GetAssembly(Register reg) => GetAssembly(reg?.Type ?? RegisterType.Unknown);
+
+        public OneOf<string, Error> GetAssembly(Stream stream, string name, OutputValueMode outputMode)
+        {
+            long len = stream.Length;
+            byte[] data = new byte[len];
+            stream.Read(data);
+            return GetAssembly(data, name, outputMode);
+        }
 
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
         {

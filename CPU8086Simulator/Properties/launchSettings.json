@@ -2,7 +2,7 @@
   "profiles": {
     "CPU8086Simulator": {
       "commandName": "Project",
-      "commandLineArgs": "\"$(SolutionDir)Resources\\listing-0039_more_movs\""
+      "commandLineArgs": "\"$(SolutionDir)CPU8086\\Resources\\listing-0039_more_movs\""
     }
   }
 }

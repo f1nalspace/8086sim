@@ -7,6 +7,39 @@ using System.Text;
 
 namespace CPU8086
 {
+    public enum ErrorCode
+    {
+        Unknown = 0,
+        UnexpectedEndOfStream,
+        OpCodeNotImplemented,
+        OpCodeMismatch,
+        InstructionNotImplemented,
+        InstructionMissingAdditionalData,
+        ModeNotImplemented,
+    }
+
+    public readonly struct Error
+    {
+        public ErrorCode Code { get; }
+        public string Message { get; }
+
+        public Error(ErrorCode code, string message)
+        {
+            Code = code;
+            Message = message;
+        }
+
+        public override string ToString() => $"[{Code}] {Message}";
+    }
+
+    public enum OutputValueMode
+    {
+        AsInteger = 0,
+        AsHex8,
+        AsHex16,
+        AsHexAuto,
+    }
+
     public enum RegisterType
     {
         Unknown = 0,
@@ -84,6 +117,11 @@ namespace CPU8086
         MOV_dREG8_sMEM8_sREG8 = 0x8A,
         MOV_dREG16_sMEM16_sREG16 = 0x8B,
 
+        MOV_dAL_sMEM8 = 0xA0,
+        MOV_dAX_sMEM16 = 0xA1,
+        MOV_dMEM8_sAL = 0xA2,
+        MOV_dMEM16_sAX = 0xA3,
+
         MOV_dAL_sIMM8 = 0xB0,
         MOV_dCL_sIMM8 = 0xB1,
         MOV_dDL_sIMM8 = 0xB2,
@@ -134,9 +172,25 @@ namespace CPU8086
         /// MOV MEM16, IMM16
         /// </summary>
         Move16_Mem_Imm,
+        /// <summary>
+        /// MOV AL, MEM8
+        /// </summary>
+        Move8_AL_Mem,
+        /// <summary>
+        /// MOV AX, MEM16
+        /// </summary>
+        Move16_AX_Mem,
+        /// <summary>
+        /// MOV MEM8, AL
+        /// </summary>
+        Move8_Mem_AL,
+        /// <summary>
+        /// MOV MEM16, AL
+        /// </summary>
+        Move16_Mem_AX,
     }
 
-    public enum EffectiveAddressCalculation
+    public enum EffectiveAddressCalculation : byte
     {
         None = 0,
 
@@ -176,6 +230,37 @@ namespace CPU8086
     {
         None = 0,
         ModRM = 1 << 0,
+    }
+
+    public class RegisterTable
+    {
+        private readonly Register[] _table;
+
+        public RegisterTable()
+        {
+            _table = new Register[16];
+
+            _table[0] = new Register(0b000, RegisterType.AL);
+            _table[1] = new Register(0b001, RegisterType.CL);
+            _table[2] = new Register(0b010, RegisterType.DL);
+            _table[3] = new Register(0b011, RegisterType.BL);
+            _table[4] = new Register(0b100, RegisterType.AH);
+            _table[5] = new Register(0b101, RegisterType.CH);
+            _table[6] = new Register(0b110, RegisterType.DH);
+            _table[7] = new Register(0b111, RegisterType.BH);
+
+            _table[8] = new Register(0b000, RegisterType.AX);
+            _table[9] = new Register(0b001, RegisterType.CX);
+            _table[10] = new Register(0b010, RegisterType.DX);
+            _table[11] = new Register(0b011, RegisterType.BX);
+            _table[12] = new Register(0b100, RegisterType.SP);
+            _table[13] = new Register(0b101, RegisterType.BP);
+            _table[14] = new Register(0b110, RegisterType.SI);
+            _table[15] = new Register(0b111, RegisterType.DI);
+        }
+
+        public ref readonly Register GetByte(byte index) => ref _table[index];
+        public ref readonly Register GetWord(byte index) => ref _table[index + 8];
     }
 
     public class Instruction
@@ -242,6 +327,7 @@ namespace CPU8086
     {
         // R/M + MOD = 8 * 3
         public readonly EffectiveAddressCalculation[] _table;
+        private readonly byte[] _displacementLengths;
 
         public EffectiveAddressCalculationTable()
         {
@@ -273,6 +359,27 @@ namespace CPU8086
             _table[0b10 * 8 + 0b101] = EffectiveAddressCalculation.DI_D16;
             _table[0b10 * 8 + 0b110] = EffectiveAddressCalculation.BP_D16;
             _table[0b10 * 8 + 0b111] = EffectiveAddressCalculation.BX_D16;
+
+            _displacementLengths = new byte[32];
+
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_SI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_DI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_SI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_DI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.SI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.DI_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_D8] = 1;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_D8] = 1;
+
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_SI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_DI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_SI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_DI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.SI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.DI_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BP_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.BX_D16] = 2;
+            _displacementLengths[(byte)EffectiveAddressCalculation.DirectAddress] = 2;
         }
 
         public EffectiveAddressCalculation Get(byte rm, byte mod)
@@ -280,6 +387,8 @@ namespace CPU8086
             byte index = (byte)(mod * 8 + rm);
             return _table[index];
         }
+
+        public byte GetDisplacementLength(EffectiveAddressCalculation eac) => _displacementLengths[(byte)eac];
     }
 
     public class InstructionTable
@@ -311,98 +420,42 @@ namespace CPU8086
             //
             // Move instructions (Table 4-12, Page: 164 or 174-175)
             //
+            // Bug(Page 174) $A3: MOV16, AL is wrong, use MOV16, AX instead
+            //
 
             // 1 0 0 0 1 0 d w
-            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "8-bit Register to 8-bit Register/Memory");
-            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "16-bit Register to 16-bit Register/Memory");
-            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "8-bit Register/Memory to 8-bit Register");
-            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "8-bit Register/Memory to 8-bit Register");
+            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
+            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 16-bit Register to 16-bit Register/Memory");
+            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
+            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
+
+            // 1 0 1 0 0 0 0 0 to 1 0 1 0 0 0 1 1
+            _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_AL_Mem, FieldEncoding.None, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
+            _table[0xA1 /* 1010001 */] = new Instruction(OpCode.MOV_dAX_sMEM16, OpFamily.Move16_AX_Mem, FieldEncoding.None, 3, "MOV", "Copy 16-bit Memory to 16-bit " + RegisterType.AX + " Register");
+            _table[0xA2 /* 1010010 */] = new Instruction(OpCode.MOV_dMEM8_sAL, OpFamily.Move8_Mem_AL, FieldEncoding.None, 3, "MOV", "Copy 8-bit " + RegisterType.AX + " Register to 8-bit Memory");
+            _table[0xA3 /* 1010011 */] = new Instruction(OpCode.MOV_dMEM16_sAX, OpFamily.Move16_Mem_AX, FieldEncoding.None, 3, "MOV", "Copy 16-bit " + RegisterType.AX + " Register to 16-bit Memory"); // BUG(final): Page 174, instruction $A3: MOV16, AL is wrong, correct is MOV16, AX
 
             // 1 0 1 1 w reg
-            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
-            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.CL + " Register");
-            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.DL + " Register");
-            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.BL + " Register");
-            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.AH + " Register");
-            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.CH + " Register");
-            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.DH + " Register");
-            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "8-bit Immediate to 8-bit " + RegisterType.BH + " Register");
-            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
-            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.CX + " Register");
-            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.DX + " Register");
-            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.BX + " Register");
-            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.SP + " Register");
-            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.BP + " Register");
-            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.SI + " Register");
-            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "16-bit Immediate to 16-bit " + RegisterType.DI + " Register");
+            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
+            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CL + " Register");
+            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DL + " Register");
+            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BL + " Register");
+            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AH + " Register");
+            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CH + " Register");
+            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DH + " Register");
+            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BH + " Register");
+            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
+            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.CX + " Register");
+            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DX + " Register");
+            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BX + " Register");
+            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SP + " Register");
+            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BP + " Register");
+            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SI + " Register");
+            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DI + " Register");
 
-            _table[0xC6 /* 1100 0110 */] = new Instruction(OpCode.MOV_dMEM8_sIMM8, OpFamily.Move8_Mem_Imm, FieldEncoding.ModRM, 3, 5, "MOV", "8-bit Immediate to 8-bit Memory");
-            _table[0xC7 /* 1100 0111 */] = new Instruction(OpCode.MOV_dMEM16_sIMM16, OpFamily.Move16_Mem_Imm, FieldEncoding.ModRM, 4, 6, "MOV", "16-bit Immediate to 16-bit Memory");
+            _table[0xC6 /* 1100 0110 */] = new Instruction(OpCode.MOV_dMEM8_sIMM8, OpFamily.Move8_Mem_Imm, FieldEncoding.ModRM, 3, 5, "MOV", "Copy 8-bit Immediate to 8-bit Memory");
+            _table[0xC7 /* 1100 0111 */] = new Instruction(OpCode.MOV_dMEM16_sIMM16, OpFamily.Move16_Mem_Imm, FieldEncoding.ModRM, 4, 6, "MOV", "Copy 16-bit Immediate to 16-bit Memory");
         }
-    }
-
-    public class RegisterTable
-    {
-        private readonly Register[] _table;
-
-        public RegisterTable()
-        {
-            _table = new Register[16];
-
-            _table[0] = new Register(0b000, RegisterType.AL);
-            _table[1] = new Register(0b001, RegisterType.CL);
-            _table[2] = new Register(0b010, RegisterType.DL);
-            _table[3] = new Register(0b011, RegisterType.BL);
-            _table[4] = new Register(0b100, RegisterType.AH);
-            _table[5] = new Register(0b101, RegisterType.CH);
-            _table[6] = new Register(0b110, RegisterType.DH);
-            _table[7] = new Register(0b111, RegisterType.BH);
-
-            _table[8] = new Register(0b000, RegisterType.AX);
-            _table[9] = new Register(0b001, RegisterType.CX);
-            _table[10] = new Register(0b010, RegisterType.DX);
-            _table[11] = new Register(0b011, RegisterType.BX);
-            _table[12] = new Register(0b100, RegisterType.SP);
-            _table[13] = new Register(0b101, RegisterType.BP);
-            _table[14] = new Register(0b110, RegisterType.SI);
-            _table[15] = new Register(0b111, RegisterType.DI);
-        }
-
-        public ref readonly Register GetByte(byte index) => ref _table[index];
-        public ref readonly Register GetWord(byte index) => ref _table[index + 8];
-    }
-
-    public enum ErrorCode
-    {
-        Unknown = 0,
-        UnexpectedEndOfStream,
-        OpCodeNotImplemented,
-        OpCodeMismatch,
-        InstructionNotImplemented,
-        InstructionMissingAdditionalData,
-        ModeNotImplemented,
-    }
-
-    public readonly struct Error
-    {
-        public ErrorCode Code { get; }
-        public string Message { get; }
-
-        public Error(ErrorCode code, string message)
-        {
-            Code = code;
-            Message = message;
-        }
-
-        public override string ToString() => $"[{Code}] {Message}";
-    }
-
-    public enum OutputValueMode
-    {
-        AsInteger = 0,
-        AsHex8,
-        AsHex16,
-        AsHexAuto,
     }
 
     public class CPU
@@ -415,9 +468,9 @@ namespace CPU8086
         {
         }
 
-        public static string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
+        public string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
         {
-
+            byte displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
 
             string append;
             if (displacementOrAddress == 0)
@@ -425,10 +478,21 @@ namespace CPU8086
             else
             {
                 char op = '+';
-                if (displacementOrAddress < 0)
+                if (displacementLength == 1)
                 {
-                    op = '-';
-                    displacementOrAddress = Math.Abs(displacementOrAddress);
+                    if ((sbyte)displacementOrAddress < 0)
+                    {
+                        op = '-';
+                        displacementOrAddress = Math.Abs((sbyte)displacementOrAddress);
+                    }
+                }
+                else
+                {
+                    if (displacementOrAddress < 0)
+                    {
+                        op = '-';
+                        displacementOrAddress = Math.Abs(displacementOrAddress);
+                    }
                 }
                 string address = GetAssembly(displacementOrAddress, outputMode);
                 append = $" {op} {address}";
@@ -442,7 +506,7 @@ namespace CPU8086
                 EffectiveAddressCalculation.BP_DI => "[bp + di]",
                 EffectiveAddressCalculation.SI => "[si]",
                 EffectiveAddressCalculation.DI => "[di]",
-                EffectiveAddressCalculation.DirectAddress => $"[{GetAssembly(displacementOrAddress, OutputValueMode.AsHex16)}]",
+                EffectiveAddressCalculation.DirectAddress => $"[{GetAssembly(displacementOrAddress, outputMode)}]",
                 EffectiveAddressCalculation.BX => "[bx]",
                 EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si{append}]",
                 EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di{append}]",
@@ -763,6 +827,47 @@ namespace CPU8086
                             destination = GetAssembly(eac, displacement, outputMode);
                         }
                         break;
+                    case OpFamily.Move8_AL_Mem:
+                        {
+                            Debug.Assert(len == 3);
+                            byte memLow = data[len - 2];
+                            byte memHigh = data[len - 1];
+                            short mem16 = (short)(memLow | memHigh << 8);
+                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            destination = GetAssembly(RegisterType.AL);
+                        }
+                        break;
+                    case OpFamily.Move16_AX_Mem:
+                        {
+                            Debug.Assert(len == 3);
+                            byte memLow = data[len - 2];
+                            byte memHigh = data[len - 1];
+                            short mem16 = (short)(memLow | memHigh << 8);
+                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            destination = GetAssembly(RegisterType.AX);
+                        }
+                        break;
+                    case OpFamily.Move8_Mem_AL:
+                        {
+                            Debug.Assert(len == 3);
+                            byte memLow = data[len - 2];
+                            byte memHigh = data[len - 1];
+                            short mem16 = (short)(memLow | memHigh << 8);
+                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            source = GetAssembly(RegisterType.AL);
+                        }
+                        break;
+                    case OpFamily.Move16_Mem_AX:
+                        {
+                            Debug.Assert(len == 3);
+                            byte memLow = data[len - 2];
+                            byte memHigh = data[len - 1];
+                            short mem16 = (short)(memLow | memHigh << 8);
+                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            source = GetAssembly(RegisterType.AX);
+                        }
+                        break;
+                    case OpFamily.Unknown:
                     default:
                         return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction '{instruction}'!");
                 }

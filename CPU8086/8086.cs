@@ -272,30 +272,13 @@ namespace CPU8086
         public OpCode OpCode { get; }
         public OpFamily Family { get; }
         public FieldEncoding Encoding { get; }
+        public RegisterType Register { get; }
         public byte MinLength { get; }
         public byte MaxLength { get; }
         public string Mnemonic { get; }
         public string Description { get; }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, string mnemonic, string description)
-        {
-            if (opCode == OpCode.Unknown)
-                throw new ArgumentNullException(nameof(opCode));
-            if (family == OpFamily.Unknown)
-                throw new ArgumentNullException(nameof(family));
-            if (minLength < 1 || minLength > 6)
-                throw new ArgumentOutOfRangeException(nameof(minLength), minLength, $"Instruction length can only be in range of 1 - 6!");
-            if (string.IsNullOrWhiteSpace(mnemonic))
-                throw new ArgumentNullException(nameof(mnemonic));
-            OpCode = opCode;
-            Family = family;
-            Encoding = encoding;
-            MinLength = MaxLength = minLength;
-            Mnemonic = mnemonic;
-            Description = description;
-        }
-
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, string mnemonic, string description)
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, byte maxLength, string mnemonic, string description)
         {
             if (opCode == OpCode.Unknown)
                 throw new ArgumentNullException(nameof(opCode));
@@ -312,18 +295,31 @@ namespace CPU8086
             OpCode = opCode;
             Family = family;
             Encoding = encoding;
+            Register = register;
             MinLength = minLength;
             MaxLength = maxLength;
             Mnemonic = mnemonic;
             Description = description;
         }
 
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, string mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, maxLength, mnemonic, description)
+        {
+        }
+
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, string mnemonic, string description) : this(opCode, family, encoding, register, minLength, minLength, mnemonic, description)
+        {
+        }
+
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, string mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, minLength, mnemonic, description)
+        {
+        }
+
         public override string ToString()
         {
             if (MinLength == MaxLength)
-                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} bytes, family: {Family}, encoding: {Encoding})";
+                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} bytes, family: {Family}, encoding: {Encoding}, target-register: {Register})";
             else
-                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} to {MaxLength} bytes, family: {Family}, encoding: {Encoding})";
+                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} to {MaxLength} bytes, family: {Family}, encoding: {Encoding}, target-register: {Register})";
         }
     }
 
@@ -434,28 +430,28 @@ namespace CPU8086
             _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
 
             // 1 0 1 0 0 0 0 0 to 1 0 1 0 0 0 1 1
-            _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_AL_Mem, FieldEncoding.None, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
-            _table[0xA1 /* 1010001 */] = new Instruction(OpCode.MOV_dAX_sMEM16, OpFamily.Move16_AX_Mem, FieldEncoding.None, 3, "MOV", "Copy 16-bit Memory to 16-bit " + RegisterType.AX + " Register");
-            _table[0xA2 /* 1010010 */] = new Instruction(OpCode.MOV_dMEM8_sAL, OpFamily.Move8_Mem_AL, FieldEncoding.None, 3, "MOV", "Copy 8-bit " + RegisterType.AX + " Register to 8-bit Memory");
-            _table[0xA3 /* 1010011 */] = new Instruction(OpCode.MOV_dMEM16_sAX, OpFamily.Move16_Mem_AX, FieldEncoding.None, 3, "MOV", "Copy 16-bit " + RegisterType.AX + " Register to 16-bit Memory"); // BUG(final): Page 174, instruction $A3: MOV16, AL is wrong, correct is MOV16, AX
+            _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_AL_Mem, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
+            _table[0xA1 /* 1010001 */] = new Instruction(OpCode.MOV_dAX_sMEM16, OpFamily.Move16_AX_Mem, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit Memory to 16-bit " + RegisterType.AX + " Register");
+            _table[0xA2 /* 1010010 */] = new Instruction(OpCode.MOV_dMEM8_sAL, OpFamily.Move8_Mem_AL, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit " + RegisterType.AL + " Register to 8-bit Memory");
+            _table[0xA3 /* 1010011 */] = new Instruction(OpCode.MOV_dMEM16_sAX, OpFamily.Move16_Mem_AX, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit " + RegisterType.AX + " Register to 16-bit Memory"); // BUG(final): Page 174, instruction $A3: MOV16, AL is wrong, correct is MOV16, AX
 
             // 1 0 1 1 w reg
-            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
-            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CL + " Register");
-            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DL + " Register");
-            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BL + " Register");
-            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AH + " Register");
-            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CH + " Register");
-            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DH + " Register");
-            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BH + " Register");
-            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
-            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.CX + " Register");
-            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DX + " Register");
-            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BX + " Register");
-            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SP + " Register");
-            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BP + " Register");
-            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SI + " Register");
-            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DI + " Register");
+            _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.AL, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
+            _table[0xB1 /* 1011 0 001 */] = new Instruction(OpCode.MOV_dCL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.CL, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CL + " Register");
+            _table[0xB2 /* 1011 0 010 */] = new Instruction(OpCode.MOV_dDL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.DL, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DL + " Register");
+            _table[0xB3 /* 1011 0 011 */] = new Instruction(OpCode.MOV_dBL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.BL, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BL + " Register");
+            _table[0xB4 /* 1011 0 100 */] = new Instruction(OpCode.MOV_dAH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.AH, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AH + " Register");
+            _table[0xB5 /* 1011 0 101 */] = new Instruction(OpCode.MOV_dCH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.CH, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.CH + " Register");
+            _table[0xB6 /* 1011 0 110 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.DH, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.DH + " Register");
+            _table[0xB7 /* 1011 0 111 */] = new Instruction(OpCode.MOV_dDH_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.BH, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.BH + " Register");
+            _table[0xB8 /* 1011 1 000 */] = new Instruction(OpCode.MOV_dAX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
+            _table[0xB9 /* 1011 1 001 */] = new Instruction(OpCode.MOV_dCX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.CX, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.CX + " Register");
+            _table[0xBA /* 1011 1 010 */] = new Instruction(OpCode.MOV_dDX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.DX, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DX + " Register");
+            _table[0xBB /* 1011 1 011 */] = new Instruction(OpCode.MOV_dBX_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.BX, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BX + " Register");
+            _table[0xBC /* 1011 1 100 */] = new Instruction(OpCode.MOV_dSP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.SP, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SP + " Register");
+            _table[0xBD /* 1011 1 101 */] = new Instruction(OpCode.MOV_dBP_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.BP, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.BP + " Register");
+            _table[0xBE /* 1011 1 110 */] = new Instruction(OpCode.MOV_dSI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.SI, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.SI + " Register");
+            _table[0xBF /* 1011 1 111 */] = new Instruction(OpCode.MOV_dDI_sIMM16, OpFamily.Move16_Reg_Imm, FieldEncoding.None, RegisterType.DI, 3, "MOV", "Copy 16-bit Immediate to 16-bit " + RegisterType.DI + " Register");
 
             _table[0xC6 /* 1100 0110 */] = new Instruction(OpCode.MOV_dMEM8_sIMM8, OpFamily.Move8_Mem_Imm, FieldEncoding.ModRM, 3, 5, "MOV", "Copy 8-bit Immediate to 8-bit Memory");
             _table[0xC7 /* 1100 0111 */] = new Instruction(OpCode.MOV_dMEM16_sIMM16, OpFamily.Move16_Mem_Imm, FieldEncoding.ModRM, 4, 6, "MOV", "Copy 16-bit Immediate to 16-bit Memory");

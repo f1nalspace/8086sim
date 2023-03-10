@@ -11,6 +11,7 @@ namespace CPU8086
     {
         Unknown = 0,
         UnexpectedEndOfStream,
+        NotEnoughBytesInStream,
         OpCodeNotImplemented,
         OpCodeMismatch,
         InstructionNotImplemented,
@@ -466,6 +467,35 @@ namespace CPU8086
 
         public CPU()
         {
+        }
+
+        private static OneOf<Error, byte> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
+        {
+            if (stream.Length < 1)
+                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read U8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
+            byte result = stream[0];
+            stream = stream.Slice(1);
+            return result;
+        }
+
+        private static OneOf<Error, sbyte> ReadS8(ref ReadOnlySpan<byte> stream, string streamName)
+        {
+            if (stream.Length < 1)
+                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
+            sbyte result = (sbyte)stream[0];
+            stream = stream.Slice(1);
+            return result;
+        }
+
+        private static OneOf<Error, short> ReadS16(ref ReadOnlySpan<byte> stream, string streamName)
+        {
+            if (stream.Length < 2)
+                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S16, because stream '{streamName}' is already finished or is not long enough for 2 bytes");
+            byte first = stream[0];
+            byte second = stream[1];
+            short result = (short)(first | second << 8);
+            stream = stream.Slice(2);
+            return result;
         }
 
         public string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)

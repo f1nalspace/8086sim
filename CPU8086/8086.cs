@@ -28,14 +28,14 @@ namespace CPU8086
         {
             Code = code;
             Message = message;
-            throw new Exception(message);
+            Debug.Fail(message);
         }
 
         public Error(Error error, string message)
         {
             Code = error.Code;
             Message = $"{message}: {error.Message}";
-            throw new Exception(message);
+            Debug.Fail(message);
         }
 
         public override string ToString() => $"[{Code}] {Message}";

@@ -157,44 +157,49 @@ namespace CPU8086
         /// Unknown
         /// </summary>
         Unknown = 0,
+
         /// <summary>
-        /// MOV REG8/MEM8, REG8/MEM8
+        /// Move 8-bit register/memory to 8-bit register/memory (MOV REG8/MEM8, REG8/MEM8)
         /// </summary>
-        Move8_RegOrMem_Reg,
+        Move8_RegOrMem_RegOrMem,
         /// <summary>
-        /// MOV REG8, IMM8 
+        /// Move 16-bit register/memory to 16-bit register/memory (MOV REG16/MEM16, REG16/MEM16)
+        /// </summary>
+        Move16_RegOrMem_RegOrMem,
+
+        /// <summary>
+        /// Move 8-bit immediate to 8-bit register (MOV REG8, IMM8)
         /// </summary>
         Move8_Reg_Imm,
         /// <summary>
-        /// MOV MEM8, IMM8
+        /// Move 16-bit immediate to 16-bit register (MOV REG16, IMM16)
+        /// </summary>
+        Move16_Reg_Imm,
+
+        /// <summary>
+        /// Move 8-bit immediate to 8-bit memory (MOV MEM8, IMM8)
         /// </summary>
         Move8_Mem_Imm,
         /// <summary>
-        /// MOV REG16/MEM16, REG16/MEM16
-        /// </summary>
-        Move16_RegOrMem_Reg,
-        /// <summary>
-        /// MOV REG16, IMM16 
-        /// </summary>
-        Move16_Reg_Imm,
-        /// <summary>
-        /// MOV MEM16, IMM16
+        /// Move 16-bit immediate to 16-bit memory (MOV MEM16, IMM16)
         /// </summary>
         Move16_Mem_Imm,
+
         /// <summary>
-        /// MOV AL, MEM8
+        /// Move 8-bit memory to 8-bit fixed register (MOV AL, MEM8)
         /// </summary>
         Move8_FixedReg_Mem,
         /// <summary>
-        /// MOV AX, MEM16
+        /// Move 16-bit memory to 16-bit fixed register (MOV AX, MEM16)
         /// </summary>
         Move16_FixedReg_Mem,
+
         /// <summary>
-        /// MOV MEM8, AL
+        /// Move 8-bit fixed register to 168bit memory (MOV MEM8, AL)
         /// </summary>
         Move8_Mem_FixedReg,
         /// <summary>
-        /// MOV MEM16, AL
+        /// Move 16-bit fixed register to 16-bit memory (MOV MEM16, AX)
         /// </summary>
         Move16_Mem_FixedReg,
     }
@@ -429,10 +434,10 @@ namespace CPU8086
             //
 
             // 1 0 0 0 1 0 d w
-            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
-            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 16-bit Register to 16-bit Register/Memory");
-            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
-            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
+            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_RegOrMem, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
+            _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_RegOrMem, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 16-bit Register to 16-bit Register/Memory");
+            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_RegOrMem, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
+            _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_RegOrMem, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
 
             // 1 0 1 0 0 0 0 0 to 1 0 1 0 0 0 1 1
             _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_FixedReg_Mem, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
@@ -746,8 +751,8 @@ namespace CPU8086
 
                 switch (instruction.Family)
                 {
-                    case OpFamily.Move8_RegOrMem_Reg:
-                    case OpFamily.Move16_RegOrMem_Reg:
+                    case OpFamily.Move8_RegOrMem_RegOrMem:
+                    case OpFamily.Move16_RegOrMem_RegOrMem:
                         {
                             // Get word or byte flag and direction
                             bool isWord = (opCode & 0b00000001) == 0b00000001;

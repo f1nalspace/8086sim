@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Final.ITP</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="x86asmref.htm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="x86asmref.htm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="30.0.1" />
+    <PackageReference Include="TableSpans.HtmlAgilityPack" Version="1.0.1" />
+  </ItemGroup>
+
+</Project>

@@ -468,6 +468,25 @@ namespace CPU8086
         }
     }
 
+    public readonly struct AssemblyLine
+    {
+        public string Mnemonic { get; }
+        public string Destination { get; }
+        public string Source { get; }
+
+        public AssemblyLine(string mnemonic, string destination = null, string source = null)
+        {
+            Mnemonic = mnemonic.ToLower();
+            Destination = destination?.ToLower();
+            Source = source?.ToLower();
+        }
+
+        public AssemblyLine WithDestinationAndSource(string destination, string source)
+            => new AssemblyLine(Mnemonic, destination, source);
+
+        public override string ToString() => $"{Mnemonic} {Destination}, {Source}";
+    }
+
     public class CPU
     {
         private static readonly InstructionTable _opTable = new InstructionTable();
@@ -745,9 +764,7 @@ namespace CPU8086
                     displacement = displacementRes.AsT0;
                 }
 
-                string opCodeName = instruction.Mnemonic.ToLower();
-                string destination = string.Empty;
-                string source = string.Empty;
+                AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic);
 
                 switch (instruction.Family)
                 {
@@ -758,6 +775,7 @@ namespace CPU8086
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
                             bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
 
+                            string destination, source;
                             if (modRegRM.Mode == Mode.RegisterMode)
                             {
                                 if (isWord)
@@ -822,6 +840,7 @@ namespace CPU8086
                                     }
                                 }
                             }
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
 
@@ -832,8 +851,9 @@ namespace CPU8086
                             if (imm8.IsT1)
                                 return imm8.AsT1;
                             byte reg = (byte)(opCode & 0b00000111);
-                            destination = GetAssembly(_regTable.GetByte(reg));
-                            source = GetAssembly(imm8.AsT0, outputMode);
+                            string destination = GetAssembly(_regTable.GetByte(reg));
+                            string source = GetAssembly(imm8.AsT0, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
                     case OpFamily.Move8_Mem_Imm:
@@ -842,8 +862,9 @@ namespace CPU8086
                             OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
                             if (imm8.IsT1)
                                 return imm8.AsT1;
-                            source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
-                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            string source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
+                            string destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
 
@@ -854,8 +875,9 @@ namespace CPU8086
                             if (imm16.IsT1)
                                 return imm16.AsT1;
                             byte reg = (byte)(opCode & 0b00000111);
-                            destination = GetAssembly(_regTable.GetWord(reg));
-                            source = GetAssembly(imm16.AsT0, outputMode);
+                            string destination = GetAssembly(_regTable.GetWord(reg));
+                            string source = GetAssembly(imm16.AsT0, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
                     case OpFamily.Move16_Mem_Imm:
@@ -864,8 +886,9 @@ namespace CPU8086
                             OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
                             if (imm16.IsT1)
                                 return imm16.AsT1;
-                            source = $"word {GetAssembly(imm16.AsT0, outputMode)}";
-                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            string source = $"word {GetAssembly(imm16.AsT0, outputMode)}";
+                            string destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
 
@@ -883,6 +906,7 @@ namespace CPU8086
                             RegisterType reg = instruction.Register;
                             Debug.Assert(reg != RegisterType.Unknown);
 
+                            string source, destination;
                             if (directionIsToMemory)
                             {
                                 source = GetAssembly(reg);
@@ -893,6 +917,9 @@ namespace CPU8086
                                 source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                                 destination = GetAssembly(reg);
                             }
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                        }
+                        break;
                         }
                         break;
 
@@ -901,14 +928,7 @@ namespace CPU8086
                         return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction '{instruction}'!");
                 }
 
-                StringBuilder line = new StringBuilder();
-                line.Append(opCodeName);
-                line.Append(' ');
-                line.Append(destination.ToLower());
-                line.Append(", ");
-                line.Append(source.ToLower());
-
-                s.AppendLine(line.ToString());
+                s.AppendLine(assemblyLine.ToString());
 
                 int delta = start.Length - cur.Length;
                 if (delta < instruction.MinLength)

@@ -317,9 +317,9 @@ namespace CPU8086
         public override string ToString()
         {
             if (MinLength == MaxLength)
-                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} bytes, family: {Family}, encoding: {Encoding}, target-register: {Register})";
+                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} bytes, family: {Family}, encoding: {Encoding}, register: {Register})";
             else
-                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} to {MaxLength} bytes, family: {Family}, encoding: {Encoding}, target-register: {Register})";
+                return $"{OpCode}/{((byte)OpCode).ToBinary()} ({MinLength} to {MaxLength} bytes, family: {Family}, encoding: {Encoding}, register: {Register})";
         }
     }
 

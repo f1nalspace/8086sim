@@ -70,5 +70,13 @@ namespace CPU8086
         [TestMethod]
         public void Test_listing_0040_challenge_movs()
             => TestAssembly("listing_0040_challenge_movs");
+
+        [TestMethod]
+        public void Test_listing_0041_add_sub_cmp_jnz()
+            => TestAssembly("listing_0041_add_sub_cmp_jnz");
+
+        [TestMethod]
+        public void Test_listing_0042_completionist_decode()
+            => TestAssembly("listing_0042_completionist_decode");
     }
 }

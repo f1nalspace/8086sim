@@ -1,8 +1,6 @@
 ﻿using OneOf;
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace CPU8086
@@ -10,7 +8,6 @@ namespace CPU8086
     public enum ErrorCode
     {
         Unknown = 0,
-        UnexpectedEndOfStream,
         NotEnoughBytesInStream,
         OpCodeNotImplemented,
         OpCodeMismatch,
@@ -28,6 +25,12 @@ namespace CPU8086
         {
             Code = code;
             Message = message;
+        }
+
+        public Error(Error error, string message)
+        {
+            Code = error.Code;
+            Message = $"{message}: {error.Message}";
         }
 
         public override string ToString() => $"[{Code}] {Message}";
@@ -469,7 +472,7 @@ namespace CPU8086
         {
         }
 
-        private static OneOf<Error, byte> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
+        private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
         {
             if (stream.Length < 1)
                 return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read U8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
@@ -478,7 +481,7 @@ namespace CPU8086
             return result;
         }
 
-        private static OneOf<Error, sbyte> ReadS8(ref ReadOnlySpan<byte> stream, string streamName)
+        private static OneOf<sbyte, Error> ReadS8(ref ReadOnlySpan<byte> stream, string streamName)
         {
             if (stream.Length < 1)
                 return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
@@ -487,7 +490,7 @@ namespace CPU8086
             return result;
         }
 
-        private static OneOf<Error, short> ReadS16(ref ReadOnlySpan<byte> stream, string streamName)
+        private static OneOf<short, Error> ReadS16(ref ReadOnlySpan<byte> stream, string streamName)
         {
             if (stream.Length < 2)
                 return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S16, because stream '{streamName}' is already finished or is not long enough for 2 bytes");
@@ -605,6 +608,84 @@ namespace CPU8086
             return GetAssembly(data, name, outputMode);
         }
 
+        readonly struct ModRegRM
+        {
+            public byte ModField { get; }
+            public byte RegField { get; }
+            public byte RMField { get; }
+
+            public Mode Mode { get; }
+            public EffectiveAddressCalculation EAC { get; }
+
+            public ModRegRM(byte modField, byte regField, byte rmField)
+            {
+                ModField = modField;
+                RegField = regField;
+                RMField = rmField;
+                Mode = (Mode)modField;
+                EAC = Mode switch
+                {
+                    Mode.RegisterMode => EffectiveAddressCalculation.None,
+                    _ => _effectiveAddressCalculationTable.Get(rmField, modField)
+                };
+            }
+        }
+
+        private static ModRegRM ReadModRegRM(byte value)
+        {
+            byte modField = (byte)((value >> 6) & 0b111);
+            byte regField = (byte)((value >> 3) & 0b111);
+            byte rmField = (byte)((value >> 0) & 0b111);
+            ModRegRM result = new ModRegRM(modField, regField, rmField);
+            return result;
+        }
+
+        private static OneOf<short, Error> LoadDisplacementOrZero(EffectiveAddressCalculation eac, ref ReadOnlySpan<byte> stream, string streamName)
+        {
+            byte len = eac switch
+            {
+                // Mod == 01
+                EffectiveAddressCalculation.BX_SI_D8 or
+                EffectiveAddressCalculation.BX_DI_D8 or
+                EffectiveAddressCalculation.BP_SI_D8 or
+                EffectiveAddressCalculation.BP_DI_D8 or
+                EffectiveAddressCalculation.SI_D8 or
+                EffectiveAddressCalculation.DI_D8 or
+                EffectiveAddressCalculation.BP_D8 or
+                EffectiveAddressCalculation.BX_D8 => 1,
+
+                // Mod == 10
+                EffectiveAddressCalculation.DirectAddress or
+                EffectiveAddressCalculation.BX_SI_D16 or
+                EffectiveAddressCalculation.BX_DI_D16 or
+                EffectiveAddressCalculation.BP_SI_D16 or
+                EffectiveAddressCalculation.BP_DI_D16 or
+                EffectiveAddressCalculation.SI_D16 or
+                EffectiveAddressCalculation.DI_D16 or
+                EffectiveAddressCalculation.BP_D16 or
+                EffectiveAddressCalculation.BX_D16 => 2,
+
+                _ => 0,
+            };
+
+            if (len == 1)
+            {
+                OneOf<byte, Error> u8 = ReadU8(ref stream, streamName);
+                if (u8.IsT1)
+                    return new Error(u8.AsT1, $"Cannot load 8-bit displacement for EAC '{eac}'");
+                return u8.AsT0;
+            }
+            else if (len == 2)
+            {
+                OneOf<short, Error> s16 = ReadS16(ref stream, streamName);
+                if (s16.IsT1)
+                    return new Error(s16.AsT1, $"Cannot load 16-bit displacement for EAC '{eac}'");
+                return s16.AsT0;
+            }
+            else
+                return 0;
+        }
+
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
         {
             StringBuilder s = new StringBuilder();
@@ -620,32 +701,45 @@ namespace CPU8086
             s.AppendLine("bits 16");
             s.AppendLine();
 
-            Span<byte> data = stackalloc byte[6];
-
             ReadOnlySpan<byte> cur = stream;
             while (cur.Length > 0)
             {
-                // Clear data
-                for (int i = 0; i < data.Length; ++i)
-                    data[i] = 0;
+                ReadOnlySpan<byte> start = cur;
 
-                byte opCode = data[0] = cur[0];
+                OneOf<byte, Error> opCodeRes = ReadU8(ref cur, streamName);
+                if (opCodeRes.IsT1)
+                    return opCodeRes.AsT1;
+
+                byte opCode = opCodeRes.AsT0;
 
                 Instruction instruction = _opTable[opCode];
                 if (instruction == null)
                     return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
                 else if ((byte)instruction.OpCode != opCode)
                     return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instruction.OpCode}'");
-                if (cur.Length < instruction.MinLength)
-                    return new Error(ErrorCode.UnexpectedEndOfStream, $"The stream has not enough bytes for the instruction '{instruction}, expect {instruction.MinLength} bytes, but got left {cur.Length}'!");
 
-                byte index = 1;
-                byte len = instruction.MinLength;
+                // Load MOD, REG and R/M field, if needed
+                ModRegRM modRegRM;
+                if (instruction.Encoding.HasFlag(FieldEncoding.ModRM))
+                {
+                    OneOf<byte, Error> u8 = ReadU8(ref cur, streamName);
+                    if (u8.IsT1)
+                        return u8.AsT1;
+                    modRegRM = ReadModRegRM(u8.AsT0);
+                }
+                else
+                    modRegRM = new ModRegRM();
 
-                // Load data for instruction
-                for (index = 1; index < instruction.MinLength; ++index)
-                    data[index] = cur[index];
+                // Load displacement, if needed
+                short displacement;
+                {
+                    OneOf<short, Error> displacementRes = LoadDisplacementOrZero(modRegRM.EAC, ref cur, streamName);
+                    if (displacementRes.IsT1)
+                        return displacementRes.AsT1;
+                    displacement = displacementRes.AsT0;
+                }
 
+#if false
                 // Get direction is to register
                 bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
 
@@ -741,6 +835,7 @@ namespace CPU8086
 
                     _ => 0,
                 };
+#endif
 
                 string opCodeName = instruction.Mnemonic.ToLower();
                 string destination = string.Empty;
@@ -749,151 +844,156 @@ namespace CPU8086
                 switch (instruction.Family)
                 {
                     case OpFamily.Move8_RegOrMem_Reg:
+                    case OpFamily.Move16_RegOrMem_Reg:
                         {
-                            if (mode == Mode.RegisterMode)
+                            // Get word or byte flag
+                            bool isWord = (opCode & 0b00000001) == 0b00000001;
+
+                            // Get direction is to register
+                            bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
+
+                            if (modRegRM.Mode == Mode.RegisterMode)
                             {
-                                // 8-bit Register to Register
-                                if (directionIsToRegister)
+                                if (isWord)
                                 {
-                                    destination = GetAssembly(_regTable.GetByte(regField));
-                                    source = GetAssembly(_regTable.GetByte(rmField));
+                                    // 16-bit Register to Register
+                                    if (directionIsToRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
                                 }
                                 else
                                 {
-                                    destination = GetAssembly(_regTable.GetByte(rmField));
-                                    source = GetAssembly(_regTable.GetByte(regField));
+                                    // 8-bit Register to Register
+                                    if (directionIsToRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
                                 }
                             }
                             else
                             {
-                                if (directionIsToRegister)
+                                if (isWord)
                                 {
-                                    // 8-bit Memory to Register
-                                    destination = GetAssembly(_regTable.GetByte(regField));
-                                    source = GetAssembly(eac, displacement, outputMode);
+                                    if (directionIsToRegister)
+                                    {
+                                        // 16-bit Memory to Register
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        // 16-bit Register to Memory
+                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
                                 }
                                 else
                                 {
-                                    // 8-bit Register to Memory
-                                    destination = GetAssembly(eac, displacement, outputMode);
-                                    source = GetAssembly(_regTable.GetByte(regField));
+                                    if (directionIsToRegister)
+                                    {
+                                        // 8-bit Memory to Register
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        // 8-bit Register to Memory
+                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
                                 }
                             }
                         }
                         break;
 
-                    case OpFamily.Move16_RegOrMem_Reg:
-                        {
-                            if (mode == Mode.RegisterMode)
-                            {
-                                // 16-bit Register to Register
-                                if (directionIsToRegister)
-                                {
-                                    destination = GetAssembly(_regTable.GetWord(regField));
-                                    source = GetAssembly(_regTable.GetWord(rmField));
-                                }
-                                else
-                                {
-                                    destination = GetAssembly(_regTable.GetWord(rmField));
-                                    source = GetAssembly(_regTable.GetWord(regField));
-                                }
-                            }
-                            else
-                            {
-                                if (directionIsToRegister)
-                                {
-                                    // 16-bit Memory to Register
-                                    destination = GetAssembly(_regTable.GetWord(regField));
-                                    source = GetAssembly(eac, displacement, outputMode);
-                                }
-                                else
-                                {
-                                    // 16-bit Register to Memory
-                                    destination = GetAssembly(eac, displacement, outputMode);
-                                    source = GetAssembly(_regTable.GetWord(regField));
-                                }
-                            }
-                        }
-                        break;
                     case OpFamily.Move8_Reg_Imm:
                         {
                             // 8-bit Immediate To Register
-                            Debug.Assert(len >= 2);
-                            byte r = (byte)(opCode & 0b00000111);
-                            byte imm8 = data[len - 1];
-                            destination = GetAssembly(_regTable.GetByte(r));
-                            source = GetAssembly(imm8, outputMode);
+                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+                            byte reg = (byte)(opCode & 0b00000111);
+                            destination = GetAssembly(_regTable.GetByte(reg));
+                            source = GetAssembly(imm8.AsT0, outputMode);
                         }
                         break;
                     case OpFamily.Move16_Reg_Imm:
                         {
                             // 16-bit Immediate To Register
-                            Debug.Assert(len >= 3);
-                            byte r = (byte)(opCode & 0b00000111);
-                            byte immLow = data[len - 2];
-                            byte immHigh = data[len - 1];
-                            short imm16 = (short)(immLow | immHigh << 8);
-                            destination = GetAssembly(_regTable.GetWord(r));
-                            source = GetAssembly(imm16, outputMode);
+                            OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
+                            if (imm16.IsT1)
+                                return imm16.AsT1;
+                            byte reg = (byte)(opCode & 0b00000111);
+                            destination = GetAssembly(_regTable.GetWord(reg));
+                            source = GetAssembly(imm16.AsT0, outputMode);
                         }
                         break;
                     case OpFamily.Move8_Mem_Imm:
                         {
                             // 8-bit Explicit Immediate to Memory
-                            Debug.Assert(len >= 3);
-                            byte imm8 = data[len - 1];
-                            source = $"byte {GetAssembly(imm8, outputMode)}";
-                            destination = GetAssembly(eac, displacement, outputMode);
+                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+                            source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
+                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
                         }
                         break;
                     case OpFamily.Move16_Mem_Imm:
                         {
                             // 16-bit Explicit Immediate to Memory
-                            Debug.Assert(len >= 4);
-                            byte immLow = data[len - 2];
-                            byte immHigh = data[len - 1];
-                            short imm16 = (short)(immLow | immHigh << 8);
-                            source = $"word {GetAssembly(imm16, outputMode)}";
-                            destination = GetAssembly(eac, displacement, outputMode);
+                            OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
+                            if (imm16.IsT1)
+                                return imm16.AsT1;
+                            source = $"word {GetAssembly(imm16.AsT0, outputMode)}";
+                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
                         }
                         break;
                     case OpFamily.Move8_AL_Mem:
                         {
-                            Debug.Assert(len == 3);
-                            byte memLow = data[len - 2];
-                            byte memHigh = data[len - 1];
-                            short mem16 = (short)(memLow | memHigh << 8);
-                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
+                            if (mem16.IsT1)
+                                return mem16.AsT1;
+                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                             destination = GetAssembly(RegisterType.AL);
                         }
                         break;
                     case OpFamily.Move16_AX_Mem:
                         {
-                            Debug.Assert(len == 3);
-                            byte memLow = data[len - 2];
-                            byte memHigh = data[len - 1];
-                            short mem16 = (short)(memLow | memHigh << 8);
-                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
+                            if (mem16.IsT1)
+                                return mem16.AsT1;
+                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                             destination = GetAssembly(RegisterType.AX);
                         }
                         break;
                     case OpFamily.Move8_Mem_AL:
                         {
-                            Debug.Assert(len == 3);
-                            byte memLow = data[len - 2];
-                            byte memHigh = data[len - 1];
-                            short mem16 = (short)(memLow | memHigh << 8);
-                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
+                            if (mem16.IsT1)
+                                return mem16.AsT1;
+                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                             source = GetAssembly(RegisterType.AL);
                         }
                         break;
                     case OpFamily.Move16_Mem_AX:
                         {
-                            Debug.Assert(len == 3);
-                            byte memLow = data[len - 2];
-                            byte memHigh = data[len - 1];
-                            short mem16 = (short)(memLow | memHigh << 8);
-                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16, outputMode);
+                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
+                            if (mem16.IsT1)
+                                return mem16.AsT1;
+                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                             source = GetAssembly(RegisterType.AX);
                         }
                         break;
@@ -911,7 +1011,8 @@ namespace CPU8086
 
                 s.AppendLine(line.ToString());
 
-                cur = cur.Slice(len);
+                if (cur.Length >= start.Length)
+                    throw new InvalidOperationException($"Stream '{streamName}' was not properly advanced!");
             }
             return s.ToString();
         }

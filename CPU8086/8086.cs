@@ -567,15 +567,15 @@ namespace CPU8086
             return result;
         }
 
-        public string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
+        public static string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
         {
-            byte displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
-
             string append;
             if (displacementOrAddress == 0)
                 append = string.Empty;
             else
             {
+                byte displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
+
                 char op = '+';
                 if (displacementLength == 1)
                 {

@@ -117,9 +117,9 @@ namespace CPU8086
         public override string ToString() => GetName(Type);
     }
 
-    public enum OpCode : byte
+    public enum OpCode : int
     {
-        Unknown = 0,
+        Unknown = -1,
 
         MOV_dREG8_dMEM8_sREG8 = 0x88,
         MOV_dREG16_dMEM16_sREG16 = 0x89,

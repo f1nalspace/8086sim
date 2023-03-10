@@ -121,6 +121,13 @@ namespace CPU8086
     {
         Unknown = -1,
 
+        ADD_dREG8_dMEM8_sREG8 = 0x00,
+        ADD_dREG16_dMEM16_sREG16 = 0x01,
+        ADD_dREG8_sREG8_sMEM8 = 0x02,
+        ADD_dREG16_sREG16_sMEM16 = 0x03,
+        ADD_dAL_sIMM8 = 0x04,
+        ADD_dAX_sIMM16 = 0x05,
+
         MOV_dREG8_dMEM8_sREG8 = 0x88,
         MOV_dREG16_dMEM16_sREG16 = 0x89,
         MOV_dREG8_sMEM8_sREG8 = 0x8A,
@@ -202,6 +209,33 @@ namespace CPU8086
         /// Move 16-bit fixed register to 16-bit memory (MOV MEM16, AX)
         /// </summary>
         Move16_Mem_FixedReg,
+
+        /// <summary>
+        /// Add 8-bit register to 8-bit register/memory (ADD REG8/MEM8, REG8)
+        /// </summary>
+        Add8_RegOrMem_Reg,
+        /// <summary>
+        /// Add 16-bit register to 16-bit register/memory (ADD REG16/MEM16, REG16)
+        /// </summary>
+        Add16_RegOrMem_Reg,
+
+        /// <summary>
+        /// Add 8-bit register/memory to 8-bit register (ADD REG8, REG8/MEM8)
+        /// </summary>
+        Add8_Reg_RegOrMem,
+        /// <summary>
+        /// Add 16-bit register/memory to 16-bit register (ADD REG16, REG16/MEM16)
+        /// </summary>
+        Add16_Reg_RegOrMem,
+
+        /// <summary>
+        /// Add 8-bit immediate to 8-bit fixed register (ADD AL, IMM8)
+        /// </summary>
+        Add8_FixedReg_Imm,
+        /// <summary>
+        /// Add 16-bit immediate to 16-bit fixed register (ADD AX, IMM8)
+        /// </summary>
+        Add16_FixedReg_Imm,
     }
 
     public enum EffectiveAddressCalculation : byte
@@ -432,6 +466,13 @@ namespace CPU8086
             //
             // Bug(Page 174) $A3: MOV16, AL is wrong, use MOV16, AX instead
             //
+
+            _table[0x00 /* 0000 0000 */] = new Instruction(OpCode.ADD_dREG8_dMEM8_sREG8, OpFamily.Add8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "ADD", "Adds 8-bit Register to 8-bit Register/Memory");
+            _table[0x01 /* 0000 0001 */] = new Instruction(OpCode.ADD_dREG16_dMEM16_sREG16, OpFamily.Add16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "ADD", "Adds 16-bit Register to 16-bit Register/Memory");
+            _table[0x02 /* 0000 0010 */] = new Instruction(OpCode.ADD_dREG8_sREG8_sMEM8, OpFamily.Add8_Reg_RegOrMem, FieldEncoding.ModRM, 2, 4, "ADD", "Adds 8-bit Register/Memory to 8-bit Register");
+            _table[0x03 /* 0000 0011 */] = new Instruction(OpCode.ADD_dREG16_sREG16_sMEM16, OpFamily.Add16_Reg_RegOrMem, FieldEncoding.ModRM, 2, 4, "ADD", "Adds 16-bit Register/Memory to 16-bit Register");
+            _table[0x04 /* 0000 0100 */] = new Instruction(OpCode.ADD_dAL_sIMM8, OpFamily.Add8_FixedReg_Imm, FieldEncoding.None, 2, "ADD", "Adds 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
+            _table[0x05 /* 0000 0101 */] = new Instruction(OpCode.ADD_dAX_sIMM16, OpFamily.Add16_FixedReg_Imm, FieldEncoding.None, 3, "ADD", "Adds 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
 
             // 1 0 0 0 1 0 d w
             _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_RegOrMem, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
@@ -920,6 +961,104 @@ namespace CPU8086
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
+
+                    case OpFamily.Add8_RegOrMem_Reg:
+                    case OpFamily.Add16_RegOrMem_Reg:
+                    case OpFamily.Add8_Reg_RegOrMem:
+                    case OpFamily.Add16_Reg_RegOrMem:
+                        {
+                            bool targetIsRegister = (opCode & 0b00000010) == 0b00000010;
+                            bool isWord = (opCode & 0b00000001) == 0b00000001;
+
+                            string destination, source;
+                            if (modRegRM.Mode == Mode.RegisterMode)
+                            {
+                                if (isWord)
+                                {
+                                    if (targetIsRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
+                                }
+                                else
+                                {
+                                    if (targetIsRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (isWord)
+                                {
+                                    if (targetIsRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
+                                }
+                                else
+                                {
+                                    if (targetIsRegister)
+                                    {
+                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
+                                }
+                            }
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                        }
+                        break;
+
+                    case OpFamily.Add8_FixedReg_Imm:
+                        {
+                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+
+                            RegisterType reg = instruction.Register;
+                            Debug.Assert(reg != RegisterType.Unknown);
+
+                            string destination = GetAssembly(reg);
+                            string source = GetAssembly(imm8.AsT0, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                        }
+                        break;
+                    case OpFamily.Add16_FixedReg_Imm:
+                        {
+                            OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
+                            if (imm16.IsT1)
+                                return imm16.AsT1;
+
+                            RegisterType reg = instruction.Register;
+                            Debug.Assert(reg != RegisterType.Unknown);
+
+                            string destination = GetAssembly(reg);
+                            string source = GetAssembly(imm16.AsT0, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
 

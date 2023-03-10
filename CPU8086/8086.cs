@@ -1,5 +1,6 @@
 ﻿using OneOf;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -179,19 +180,19 @@ namespace CPU8086
         /// <summary>
         /// MOV AL, MEM8
         /// </summary>
-        Move8_AL_Mem,
+        Move8_FixedReg_Mem,
         /// <summary>
         /// MOV AX, MEM16
         /// </summary>
-        Move16_AX_Mem,
+        Move16_FixedReg_Mem,
         /// <summary>
         /// MOV MEM8, AL
         /// </summary>
-        Move8_Mem_AL,
+        Move8_Mem_FixedReg,
         /// <summary>
         /// MOV MEM16, AL
         /// </summary>
-        Move16_Mem_AX,
+        Move16_Mem_FixedReg,
     }
 
     public enum EffectiveAddressCalculation : byte
@@ -430,10 +431,10 @@ namespace CPU8086
             _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
 
             // 1 0 1 0 0 0 0 0 to 1 0 1 0 0 0 1 1
-            _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_AL_Mem, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
-            _table[0xA1 /* 1010001 */] = new Instruction(OpCode.MOV_dAX_sMEM16, OpFamily.Move16_AX_Mem, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit Memory to 16-bit " + RegisterType.AX + " Register");
-            _table[0xA2 /* 1010010 */] = new Instruction(OpCode.MOV_dMEM8_sAL, OpFamily.Move8_Mem_AL, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit " + RegisterType.AL + " Register to 8-bit Memory");
-            _table[0xA3 /* 1010011 */] = new Instruction(OpCode.MOV_dMEM16_sAX, OpFamily.Move16_Mem_AX, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit " + RegisterType.AX + " Register to 16-bit Memory"); // BUG(final): Page 174, instruction $A3: MOV16, AL is wrong, correct is MOV16, AX
+            _table[0xA0 /* 1010000 */] = new Instruction(OpCode.MOV_dAL_sMEM8, OpFamily.Move8_FixedReg_Mem, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit Memory to 8-bit " + RegisterType.AL + " Register");
+            _table[0xA1 /* 1010001 */] = new Instruction(OpCode.MOV_dAX_sMEM16, OpFamily.Move16_FixedReg_Mem, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit Memory to 16-bit " + RegisterType.AX + " Register");
+            _table[0xA2 /* 1010010 */] = new Instruction(OpCode.MOV_dMEM8_sAL, OpFamily.Move8_Mem_FixedReg, FieldEncoding.None, RegisterType.AL, 3, "MOV", "Copy 8-bit " + RegisterType.AL + " Register to 8-bit Memory");
+            _table[0xA3 /* 1010011 */] = new Instruction(OpCode.MOV_dMEM16_sAX, OpFamily.Move16_Mem_FixedReg, FieldEncoding.None, RegisterType.AX, 3, "MOV", "Copy 16-bit " + RegisterType.AX + " Register to 16-bit Memory"); // BUG(final): Page 174, instruction $A3: MOV16, AL is wrong, correct is MOV16, AX
 
             // 1 0 1 1 w reg
             _table[0xB0 /* 1011 0 000 */] = new Instruction(OpCode.MOV_dAL_sIMM8, OpFamily.Move8_Reg_Imm, FieldEncoding.None, RegisterType.AL, 2, "MOV", "Copy 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
@@ -842,10 +843,8 @@ namespace CPU8086
                     case OpFamily.Move8_RegOrMem_Reg:
                     case OpFamily.Move16_RegOrMem_Reg:
                         {
-                            // Get word or byte flag
+                            // Get word or byte flag and direction
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
-
-                            // Get direction is to register
                             bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
 
                             if (modRegRM.Mode == Mode.RegisterMode)
@@ -926,6 +925,17 @@ namespace CPU8086
                             source = GetAssembly(imm8.AsT0, outputMode);
                         }
                         break;
+                    case OpFamily.Move8_Mem_Imm:
+                        {
+                            // 8-bit Explicit Immediate to Memory
+                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+                            source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
+                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                        }
+                        break;
+
                     case OpFamily.Move16_Reg_Imm:
                         {
                             // 16-bit Immediate To Register
@@ -935,16 +945,6 @@ namespace CPU8086
                             byte reg = (byte)(opCode & 0b00000111);
                             destination = GetAssembly(_regTable.GetWord(reg));
                             source = GetAssembly(imm16.AsT0, outputMode);
-                        }
-                        break;
-                    case OpFamily.Move8_Mem_Imm:
-                        {
-                            // 8-bit Explicit Immediate to Memory
-                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
-                            if (imm8.IsT1)
-                                return imm8.AsT1;
-                            source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
-                            destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
                         }
                         break;
                     case OpFamily.Move16_Mem_Imm:
@@ -957,42 +957,34 @@ namespace CPU8086
                             destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
                         }
                         break;
-                    case OpFamily.Move8_AL_Mem:
+
+                    case OpFamily.Move8_FixedReg_Mem:
+                    case OpFamily.Move16_FixedReg_Mem:
+                    case OpFamily.Move8_Mem_FixedReg:
+                    case OpFamily.Move16_Mem_FixedReg:
                         {
+                            bool directionIsToMemory = (opCode & 0b00000010) == 0b00000010;
+
                             OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
                             if (mem16.IsT1)
                                 return mem16.AsT1;
-                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
-                            destination = GetAssembly(RegisterType.AL);
+
+                            RegisterType reg = instruction.Register;
+                            Debug.Assert(reg != RegisterType.Unknown);
+
+                            if (directionIsToMemory)
+                            {
+                                source = GetAssembly(reg);
+                                destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
+                            }
+                            else
+                            {
+                                source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
+                                destination = GetAssembly(reg);
+                            }
                         }
                         break;
-                    case OpFamily.Move16_AX_Mem:
-                        {
-                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
-                            if (mem16.IsT1)
-                                return mem16.AsT1;
-                            source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
-                            destination = GetAssembly(RegisterType.AX);
-                        }
-                        break;
-                    case OpFamily.Move8_Mem_AL:
-                        {
-                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
-                            if (mem16.IsT1)
-                                return mem16.AsT1;
-                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
-                            source = GetAssembly(RegisterType.AL);
-                        }
-                        break;
-                    case OpFamily.Move16_Mem_AX:
-                        {
-                            OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
-                            if (mem16.IsT1)
-                                return mem16.AsT1;
-                            destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
-                            source = GetAssembly(RegisterType.AX);
-                        }
-                        break;
+
                     case OpFamily.Unknown:
                     default:
                         return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction '{instruction}'!");

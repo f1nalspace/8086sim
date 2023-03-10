@@ -10,6 +10,8 @@ namespace CPU8086
     {
         Unknown = 0,
         NotEnoughBytesInStream,
+        TooSmallAdvancementInStream,
+        TooLargeAdvancementInStream,
         OpCodeNotImplemented,
         OpCodeMismatch,
         InstructionNotImplemented,
@@ -26,12 +28,14 @@ namespace CPU8086
         {
             Code = code;
             Message = message;
+            throw new Exception(message);
         }
 
         public Error(Error error, string message)
         {
             Code = error.Code;
             Message = $"{message}: {error.Message}";
+            throw new Exception(message);
         }
 
         public override string ToString() => $"[{Code}] {Message}";
@@ -425,9 +429,9 @@ namespace CPU8086
             //
 
             // 1 0 0 0 1 0 d w
-            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
+            _table[0x88 /* 100010 00 */] = new Instruction(OpCode.MOV_dREG8_dMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register to 8-bit Register/Memory");
             _table[0x89 /* 100010 01 */] = new Instruction(OpCode.MOV_dREG16_dMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 16-bit Register to 16-bit Register/Memory");
-            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 3, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
+            _table[0x8A /* 100010 10 */] = new Instruction(OpCode.MOV_dREG8_sMEM8_sREG8, OpFamily.Move8_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
             _table[0x8B /* 100010 11 */] = new Instruction(OpCode.MOV_dREG16_sMEM16_sREG16, OpFamily.Move16_RegOrMem_Reg, FieldEncoding.ModRM, 2, 4, "MOV", "Copy 8-bit Register/Memory to 8-bit Register");
 
             // 1 0 1 0 0 0 0 0 to 1 0 1 0 0 0 1 1
@@ -736,104 +740,6 @@ namespace CPU8086
                     displacement = displacementRes.AsT0;
                 }
 
-#if false
-                // Get direction is to register
-                bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
-
-                // Get mod, reg, r/m fields or leave it zero
-                Mode mode;
-                EffectiveAddressCalculation eac;
-                byte modField, regField, rmField;
-                if (instruction.Encoding.HasFlag(FieldEncoding.ModRM))
-                {
-                    modField = (byte)((data[1] >> 6) & 0b111);
-                    regField = (byte)((data[1] >> 3) & 0b111);
-                    rmField = (byte)((data[1] >> 0) & 0b111);
-
-                    // Translate into effective address calculation
-                    mode = (Mode)modField;
-                    eac = mode switch
-                    {
-                        Mode.RegisterMode => EffectiveAddressCalculation.None,
-                        _ => _effectiveAddressCalculationTable.Get(rmField, modField)
-                    };
-                }
-                else
-                {
-                    modField = regField = rmField = 0;
-                    mode = Mode.MemoryNoDisplacement;
-                    eac = EffectiveAddressCalculation.None;
-                }
-
-                // Load additional data for variable length instructions
-                if (instruction.MaxLength > instruction.MinLength && mode != Mode.RegisterMode)
-                {
-                    byte dataLen = eac switch
-                    {
-                        EffectiveAddressCalculation.BX_SI or
-                        EffectiveAddressCalculation.BX_DI or
-                        EffectiveAddressCalculation.BP_SI or
-                        EffectiveAddressCalculation.BP_DI or
-                        EffectiveAddressCalculation.SI or
-                        EffectiveAddressCalculation.DI or
-                        EffectiveAddressCalculation.BX => 0,
-
-                        EffectiveAddressCalculation.DirectAddress => 2,
-                        EffectiveAddressCalculation.BX_SI_D8 or
-                        EffectiveAddressCalculation.BX_DI_D8 or
-                        EffectiveAddressCalculation.BP_SI_D8 or
-                        EffectiveAddressCalculation.BP_DI_D8 => 1,
-                        EffectiveAddressCalculation.SI_D8 or
-                        EffectiveAddressCalculation.DI_D8 or
-                        EffectiveAddressCalculation.BP_D8 or
-                        EffectiveAddressCalculation.BX_D8 => 1,
-
-                        EffectiveAddressCalculation.BX_SI_D16 or
-                        EffectiveAddressCalculation.BX_DI_D16 or
-                        EffectiveAddressCalculation.BP_SI_D16 or
-                        EffectiveAddressCalculation.BP_DI_D16 or
-                        EffectiveAddressCalculation.SI_D16 or
-                        EffectiveAddressCalculation.DI_D16 or
-                        EffectiveAddressCalculation.BP_D16 or
-                        EffectiveAddressCalculation.BX_D16 => 2,
-
-                        _ => throw new NotImplementedException($"Instruction '{instruction}' is not properly configured"),
-                    };
-                    if (dataLen > 0)
-                    {
-                        for (; index < instruction.MinLength + dataLen; ++index)
-                            data[index] = cur[index];
-                        len += dataLen;
-                    }
-                }
-
-                short displacement = eac switch
-                {
-                    // Mod == 01
-                    EffectiveAddressCalculation.BX_SI_D8 or
-                    EffectiveAddressCalculation.BX_DI_D8 or
-                    EffectiveAddressCalculation.BP_SI_D8 or
-                    EffectiveAddressCalculation.BP_DI_D8 or
-                    EffectiveAddressCalculation.SI_D8 or
-                    EffectiveAddressCalculation.DI_D8 or
-                    EffectiveAddressCalculation.BP_D8 or
-                    EffectiveAddressCalculation.BX_D8 => data[2],
-
-                    // Mod == 10
-                    EffectiveAddressCalculation.DirectAddress or
-                    EffectiveAddressCalculation.BX_SI_D16 or
-                    EffectiveAddressCalculation.BX_DI_D16 or
-                    EffectiveAddressCalculation.BP_SI_D16 or
-                    EffectiveAddressCalculation.BP_DI_D16 or
-                    EffectiveAddressCalculation.SI_D16 or
-                    EffectiveAddressCalculation.DI_D16 or
-                    EffectiveAddressCalculation.BP_D16 or
-                    EffectiveAddressCalculation.BX_D16 => (short)(data[2] | data[3] << 8),
-
-                    _ => 0,
-                };
-#endif
-
                 string opCodeName = instruction.Mnemonic.ToLower();
                 string destination = string.Empty;
                 string source = string.Empty;
@@ -999,8 +905,11 @@ namespace CPU8086
 
                 s.AppendLine(line.ToString());
 
-                if (cur.Length >= start.Length)
-                    throw new InvalidOperationException($"Stream '{streamName}' was not properly advanced!");
+                int delta = start.Length - cur.Length;
+                if (delta < instruction.MinLength)
+                    return new Error(ErrorCode.TooSmallAdvancementInStream, $"Stream '{streamName}' was not properly advanced, expect minimum advancement of '{instruction.MinLength}' but got '{delta}'!");
+                if (delta > instruction.MaxLength)
+                    return new Error(ErrorCode.TooLargeAdvancementInStream, $"Stream '{streamName}' was not properly advanced, expect maximum advancement of '{instruction.MaxLength}' but got '{delta}'!");
             }
             return s.ToString();
         }

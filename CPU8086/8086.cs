@@ -327,6 +327,16 @@ namespace CPU8086
         PUSH_ES = 0x06,
         POP_ES = 0x07,
 
+        OR_dREG8_dMEM8_sREG8 = 0x08,
+        OR_dREG16_dMEM16_sREG16 = 0x09,
+        OR_dREG8_sREG8_sMEM8 = 0x0A,
+        OR_dREG16_sREG16_sMEM16 = 0x0B,
+        OR_dAL_sIMM8 = 0x0C,
+        OR_dAX_sIMM16 = 0x0D,
+
+        PUSH_CS = 0x0E,
+        // Unused = 0x0F,
+
         /// <summary>
         /// <para>8-bit Arithmetic instructions such as ADD, ADC, SBB, SUB, CMP, etc. writing to register or memory, using an immediate as source.</para>
         /// <para>REG field decides what type of arithmetic operating it actually is.</para>
@@ -456,6 +466,24 @@ namespace CPU8086
         /// Add 16-bit immediate to 16-bit fixed register (ADD AX, IMM8)
         /// </summary>
         Add16_FixedReg_Imm,
+
+        /// <summary>
+        /// Logical OR to 8-bit register/memory with 8-bit immediate (OR AL, BH)
+        /// </summary>
+        Or8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Logical OR to 16-bit register/memory with 16-bit immediate (OR AX, BX)
+        /// </summary>
+        Or16_RegOrMem_RegOrMem,
+
+        /// <summary>
+        /// Logical OR to 8-bit fixed register with 8-bit immediate (OR AL, IMM8)
+        /// </summary>
+        Or8_FixedReg_Imm,
+        /// <summary>
+        /// Logical OR to 16-bit fixed register with 16-bit immediate (OR AX, IMM16)
+        /// </summary>
+        Or16_FixedReg_Imm,
 
         /// <summary>
         /// <para>Arithmetic operation 8-bit immediate to 8-bit register/memory (ADD REG8/MEM8, IMM8).</para>
@@ -823,6 +851,16 @@ namespace CPU8086
             // 00000110 to 00000111 (PUSH/POP)
             _table[0x06 /* 0000 0110 */] = new Instruction(OpCode.PUSH_ES, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Push, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
             _table[0x07 /* 0000 0111 */] = new Instruction(OpCode.POP_ES, OpFamily.Pop_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Pop, "Increments the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
+
+            // 00001000 to 0000 1111
+            _table[0x08 /* 0000 1000 */] = new Instruction(OpCode.OR_dREG8_dMEM8_sREG8, OpFamily.Or8_RegOrMem_RegOrMem, FieldEncoding.None, 2, 4, Mnemonics.Or, "Logical or 8-bit Register with 8-bit Register/Memory");
+            _table[0x09 /* 0000 1001 */] = new Instruction(OpCode.OR_dREG16_dMEM16_sREG16, OpFamily.Or8_RegOrMem_RegOrMem, FieldEncoding.None, 2, 4, Mnemonics.Or, "Logical or 16-bit Register with 16-bit Register/Memory");
+            _table[0x0A /* 0000 1010 */] = new Instruction(OpCode.OR_dREG8_sREG8_sMEM8, OpFamily.Or8_RegOrMem_RegOrMem, FieldEncoding.None, 2, 4, Mnemonics.Or, "Logical or 8-bit Register/Memory with 8-bit Register");
+            _table[0x0B /* 0000 1011 */] = new Instruction(OpCode.OR_dREG16_sREG16_sMEM16, OpFamily.Or16_RegOrMem_RegOrMem, FieldEncoding.None, 2, 4, Mnemonics.Or, "Logical or 16-bit Register/Memory with 16-bit Register");
+            _table[0x0C /* 0000 1100 */] = new Instruction(OpCode.OR_dAL_sIMM8, OpFamily.Or8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Or, "Logical or 8-bit Immediate with 8-bit " + RegisterType.AL + " Register");
+            _table[0x0D /* 0000 1101 */] = new Instruction(OpCode.OR_dAX_sIMM16, OpFamily.Or16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Or, "Logical or 16-bit Immediate with 16-bit " + RegisterType.AX + " Register");
+            _table[0x0E /* 0000 1110 */] = new Instruction(OpCode.PUSH_CS, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.CS, 1, Mnemonics.Or, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.CS + " Register");
+            _table[0x0F /* 0000 1111 */] = null; // Unused
 
             // 10000000 (ADD/ADC/SUB,etc.)
             _table[0x80 /* 1000 0000 */] = new Instruction(OpCode.ARITHMETIC_dREG8_dMEM8_sIMM8, OpFamily.Arithmetic8_RegOrMem_Imm, FieldEncoding.ModRemRM, 3, 5, Mnemonics.Dynamic, "Arithmetic 8-bit Immediate to 8-bit Register/Memory");
@@ -1423,6 +1461,106 @@ namespace CPU8086
                             string destination = GetRegisterAssembly(reg);
                             string source = GetValueAssembly(imm16.AsT0, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                        }
+                        break;
+
+                    case OpFamily.Or8_RegOrMem_RegOrMem:
+                    case OpFamily.Or16_RegOrMem_RegOrMem:
+                        {
+                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
+                            bool isWord = (opCode & 0b00000001) == 0b00000001;
+
+                            string destination, source;
+                            if (modRegRM.Mode == Mode.RegisterMode)
+                            {
+                                if (isWord)
+                                {
+                                    if (destinationIsRegister)
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
+                                }
+                                else
+                                {
+                                    if (destinationIsRegister)
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                    }
+                                    else
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (isWord)
+                                {
+                                    if (destinationIsRegister)
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                    }
+                                }
+                                else
+                                {
+                                    if (destinationIsRegister)
+                                    {
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                    }
+                                    else
+                                    {
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                    }
+                                }
+                            }
+                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                        }
+                        break;
+
+                    case OpFamily.Or8_FixedReg_Imm:
+                    case OpFamily.Or16_FixedReg_Imm:
+                        {
+                            bool isWord = (opCode & 0b00000001) == 0b00000001;
+
+                            RegisterType reg = instruction.Register;
+                            Debug.Assert(reg != RegisterType.Unknown);
+
+                            string destination = GetRegisterAssembly(reg);
+
+                            if (isWord)
+                            {
+                                OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
+                                if (imm16.IsT1)
+                                    return imm16.AsT1;
+
+                                string source = GetValueAssembly(imm16.AsT0, outputMode);
+                                assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                            }
+                            else
+                            {
+                                OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
+                                if (imm8.IsT1)
+                                    return imm8.AsT1;
+
+                                string source = GetValueAssembly(imm8.AsT0, outputMode);
+                                assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
+                            }
                         }
                         break;
 

@@ -10,7 +10,6 @@ namespace CPU8086
     [TestClass]
     public class InstructionDecodes
     {
-        private static readonly CPU cpu = new CPU();
         private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
 
         private static IEnumerable<string> CleanAssembly(string value)
@@ -49,7 +48,7 @@ namespace CPU8086
             using Stream assemblyCodeStream = _resources.Get(name + ".asm");
             using StreamReader reader = new StreamReader(assemblyCodeStream, leaveOpen: true);
             string expectedAssembly = reader.ReadToEnd();
-            OneOf.OneOf<string, Error> res = cpu.GetAssembly(machineCodeStream, name, OutputValueMode.AsInteger);
+            OneOf.OneOf<string, Error> res = CPU.GetAssembly(machineCodeStream, name, OutputValueMode.AsInteger);
             res.Switch(
                 actualAssembly => AssertAssembly(expectedAssembly, actualAssembly),
                 error => Assert.Fail(error.ToString()));

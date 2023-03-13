@@ -1057,7 +1057,7 @@ namespace CPU8086
 
         public static string GetRegisterAssembly(Register reg) => GetRegisterAssembly(reg?.Type ?? RegisterType.Unknown);
 
-        public OneOf<string, Error> GetAssembly(Stream stream, string name, OutputValueMode outputMode)
+        public static OneOf<string, Error> GetAssembly(Stream stream, string name, OutputValueMode outputMode)
         {
             long len = stream.Length;
             byte[] data = new byte[len];
@@ -1213,7 +1213,7 @@ namespace CPU8086
             return (destination, source);
         }
 
-        public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
+        public static OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
         {
             StringBuilder s = new StringBuilder();
 

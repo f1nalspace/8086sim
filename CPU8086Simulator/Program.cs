@@ -24,9 +24,7 @@ namespace CPU8086
 
             byte[] data = File.ReadAllBytes(filePath);
 
-            CPU cpu = new CPU();
-
-            OneOf<string, Error> assemblyRes = cpu.GetAssembly(data, filePath, OutputValueMode.AsInteger);
+            OneOf<string, Error> assemblyRes = CPU.GetAssembly(data, filePath, OutputValueMode.AsInteger);
 
             int resultCode = assemblyRes.Match(
                 assembly =>

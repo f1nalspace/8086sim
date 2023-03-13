@@ -824,13 +824,17 @@ namespace CPU8086
             };
         }
 
-        public static string GetAssembly(byte value, OutputValueMode outputMode) => outputMode switch
+        public static string GetAssembly(byte value, OutputValueMode outputMode)
         {
-            OutputValueMode.AsHexAuto => $"0x{value:X}",
-            OutputValueMode.AsHex8 => $"0x{value:X2}",
-            OutputValueMode.AsHex16 => $"0x{value:X4}",
-            _ => value.ToString(),
-        };
+            short v = (value & 0b10000000) == 0b10000000 ? (sbyte)value : value;
+            return outputMode switch
+            {
+                OutputValueMode.AsHexAuto => $"0x{v:X}",
+                OutputValueMode.AsHex8 => $"0x{v:X2}",
+                OutputValueMode.AsHex16 => $"0x{v:X4}",
+                _ => v.ToString(),
+            };
+        }
 
         public static string GetAssembly(short value, OutputValueMode outputMode) => outputMode switch
         {

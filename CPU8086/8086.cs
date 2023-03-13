@@ -225,6 +225,40 @@ namespace CPU8086
             };
         }
 
+        public static string GetLowerName(RegisterType name)
+        {
+            return name switch
+            {
+                RegisterType.AX => "ax",
+                RegisterType.AL => "al",
+                RegisterType.AH => "ah",
+
+                RegisterType.BX => "bx",
+                RegisterType.BL => "bl",
+                RegisterType.BH => "bh",
+
+                RegisterType.CX => "cx",
+                RegisterType.CL => "cl",
+                RegisterType.CH => "ch",
+
+                RegisterType.DX => "dx",
+                RegisterType.DL => "dl",
+                RegisterType.DH => "dh",
+
+                RegisterType.SP => "sp",
+                RegisterType.BP => "bp",
+                RegisterType.SI => "si",
+                RegisterType.DI => "di",
+
+                RegisterType.CS => "cs",
+                RegisterType.DS => "ds",
+                RegisterType.SS => "ss",
+                RegisterType.ES => "es",
+
+                _ => null
+            };
+        }
+
         public static string GetName(RegisterType name)
         {
             return name switch
@@ -950,7 +984,7 @@ namespace CPU8086
             _ => value.ToString(),
         };
 
-        public static string GetAssembly(RegisterType regType) => Register.GetName(regType)?.ToLower();
+        public static string GetAssembly(RegisterType regType) => Register.GetLowerName(regType);
 
         public static string GetAssembly(Register reg) => GetAssembly(reg?.Type ?? RegisterType.Unknown);
 

@@ -1339,6 +1339,8 @@ namespace CPU8086
 
                 s.AppendLine(assemblyLine.ToString());
 
+                Debug.WriteLine(assemblyLine.ToString());
+
                 int delta = start.Length - cur.Length;
                 if (delta < instruction.MinLength)
                     return new Error(ErrorCode.TooSmallAdvancementInStream, $"Stream '{streamName}' was not properly advanced, expect minimum advancement of '{instruction.MinLength}' but got '{delta}'!");

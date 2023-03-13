@@ -1143,6 +1143,76 @@ namespace CPU8086
                 return 0;
         }
 
+        private static (string destination, string source)GetDestinationAndSource(ModRegRM modRegRM, bool directionIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
+        {
+            string destination, source;
+            if (modRegRM.Mode == Mode.RegisterMode)
+            {
+                if (isWord)
+                {
+                    // 16-bit Register to Register
+                    if (directionIsToRegister)
+                    {
+                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                    }
+                    else
+                    {
+                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                    }
+                }
+                else
+                {
+                    // 8-bit Register to Register
+                    if (directionIsToRegister)
+                    {
+                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                    }
+                    else
+                    {
+                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                    }
+                }
+            }
+            else
+            {
+                if (isWord)
+                {
+                    if (directionIsToRegister)
+                    {
+                        // 16-bit Memory to Register
+                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                    }
+                    else
+                    {
+                        // 16-bit Register to Memory
+                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                    }
+                }
+                else
+                {
+                    if (directionIsToRegister)
+                    {
+                        // 8-bit Memory to Register
+                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                    }
+                    else
+                    {
+                        // 8-bit Register to Memory
+                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                    }
+                }
+            }
+            return (destination, source);
+        }
+
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
         {
             StringBuilder s = new StringBuilder();
@@ -1211,75 +1281,9 @@ namespace CPU8086
                     case OpFamily.Move8_RegOrMem_RegOrMem:
                     case OpFamily.Move16_RegOrMem_RegOrMem:
                         {
-                            // Get word or byte flag and direction
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
-                            bool directionIsToRegister = (opCode & 0b00000010) == 0b00000010;
-
-                            string destination, source;
-                            if (modRegRM.Mode == Mode.RegisterMode)
-                            {
-                                if (isWord)
-                                {
-                                    // 16-bit Register to Register
-                                    if (directionIsToRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    // 8-bit Register to Register
-                                    if (directionIsToRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (isWord)
-                                {
-                                    if (directionIsToRegister)
-                                    {
-                                        // 16-bit Memory to Register
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        // 16-bit Register to Memory
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    if (directionIsToRegister)
-                                    {
-                                        // 8-bit Memory to Register
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        // 8-bit Register to Memory
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
+                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
+                            (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1369,68 +1373,7 @@ namespace CPU8086
                         {
                             bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
-
-                            // Is the same as Move8_RegOrMem_RegOrMem, Move16_RegOrMem_RegOrMem
-
-                            string destination, source;
-                            if (modRegRM.Mode == Mode.RegisterMode)
-                            {
-                                if (isWord)
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (isWord)
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
+                            (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1469,66 +1412,7 @@ namespace CPU8086
                         {
                             bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
-
-                            string destination, source;
-                            if (modRegRM.Mode == Mode.RegisterMode)
-                            {
-                                if (isWord)
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                    }
-                                    else
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                if (isWord)
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                                    }
-                                }
-                                else
-                                {
-                                    if (destinationIsRegister)
-                                    {
-                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                    }
-                                    else
-                                    {
-                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                                    }
-                                }
-                            }
+                            (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;

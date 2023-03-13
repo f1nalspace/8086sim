@@ -7,23 +7,37 @@ using System.Text;
 
 namespace CPU8086
 {
+    public readonly struct Mnemonic
+    {
+        public string Upper { get; }
+        public string Lower { get; }
+
+        public Mnemonic(string upper, string lower)
+        {
+            Upper = upper;
+            Lower = lower;
+        }
+
+        public override string ToString() => Upper;
+    }
+
     static class Mnemonics
     {
-        public const string Push = "PUSH";
-        public const string Pop = "POP";
+        public static readonly Mnemonic Push = new Mnemonic("PUSH", "push");
+        public static readonly Mnemonic Pop = new Mnemonic("POP", "pop");
 
-        public const string Mov = "MOV";
+        public static readonly Mnemonic Mov = new Mnemonic("MOV", "mov");
 
-        public const string Add = "ADD";
-        public const string Or = "OR";
-        public const string AddWithCarry = "ADC";
-        public const string SubWithBorrow = "SBB";
-        public const string And = "AND";
-        public const string Sub = "SUB";
-        public const string Xor = "XOR";
-        public const string Cmp = "CMP";
+        public static readonly Mnemonic Add = new Mnemonic("ADD", "add");
+        public static readonly Mnemonic Or = new Mnemonic("OR", "or");
+        public static readonly Mnemonic AddWithCarry = new Mnemonic("ADC", "adc");
+        public static readonly Mnemonic SubWithBorrow = new Mnemonic("SBB", "sbb");
+        public static readonly Mnemonic And = new Mnemonic("AND", "and");
+        public static readonly Mnemonic Sub = new Mnemonic("SUB", "sub");
+        public static readonly Mnemonic Xor = new Mnemonic("XOR", "xor");
+        public static readonly Mnemonic Cmp = new Mnemonic("cMP", "cmp");
 
-        public const string Dynamic = "(dynamic)";
+        public static readonly Mnemonic Dynamic = new Mnemonic("(DYNAMIC)", "(dynamic)");
     }
 
     public enum ErrorCode
@@ -652,10 +666,10 @@ namespace CPU8086
         public RegisterType Register { get; }
         public byte MinLength { get; }
         public byte MaxLength { get; }
-        public string Mnemonic { get; }
+        public Mnemonic Mnemonic { get; }
         public string Description { get; }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, byte maxLength, string mnemonic, string description)
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, byte maxLength, Mnemonic mnemonic, string description)
         {
             if (opCode == OpCode.Unknown)
                 throw new ArgumentNullException(nameof(opCode));
@@ -667,8 +681,6 @@ namespace CPU8086
                 throw new ArgumentOutOfRangeException(nameof(maxLength), maxLength, $"Instruction max-length '{maxLength}' can only be in range of 1 - 6!");
             if (maxLength < minLength)
                 throw new ArgumentOutOfRangeException(nameof(maxLength), maxLength, $"Instruction max-length '{maxLength}' must be greater than min-length of '{minLength}'!");
-            if (string.IsNullOrWhiteSpace(mnemonic))
-                throw new ArgumentNullException(nameof(mnemonic));
             OpCode = opCode;
             Family = family;
             Encoding = encoding;
@@ -679,15 +691,15 @@ namespace CPU8086
             Description = description;
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, string mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, maxLength, mnemonic, description)
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, maxLength, mnemonic, description)
         {
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, string mnemonic, string description) : this(opCode, family, encoding, register, minLength, minLength, mnemonic, description)
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, register, minLength, minLength, mnemonic, description)
         {
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, string mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, minLength, mnemonic, description)
+        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, minLength, mnemonic, description)
         {
         }
 
@@ -862,9 +874,9 @@ namespace CPU8086
 
         public AssemblyLine(string mnemonic, string destination = null, string source = null)
         {
-            Mnemonic = mnemonic.ToLower();
-            Destination = destination?.ToLower();
-            Source = source?.ToLower();
+            Mnemonic = mnemonic;
+            Destination = destination;
+            Source = source;
         }
 
         public AssemblyLine WithDestinationAndSource(string destination, string source)
@@ -923,7 +935,7 @@ namespace CPU8086
             return result;
         }
 
-        public static string GetAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
+        public static string GetAddressAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
         {
             string append;
             if (displacementOrAddress == 0)
@@ -949,7 +961,7 @@ namespace CPU8086
                         displacementOrAddress = Math.Abs(displacementOrAddress);
                     }
                 }
-                string address = GetAssembly(displacementOrAddress, outputMode);
+                string address = GetValueAssembly(displacementOrAddress, outputMode);
                 append = $" {op} {address}";
             }
 
@@ -961,7 +973,7 @@ namespace CPU8086
                 EffectiveAddressCalculation.BP_DI => "[bp + di]",
                 EffectiveAddressCalculation.SI => "[si]",
                 EffectiveAddressCalculation.DI => "[di]",
-                EffectiveAddressCalculation.DirectAddress => $"[{GetAssembly(displacementOrAddress, outputMode)}]",
+                EffectiveAddressCalculation.DirectAddress => $"[{GetValueAssembly(displacementOrAddress, outputMode)}]",
                 EffectiveAddressCalculation.BX => "[bx]",
                 EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si{append}]",
                 EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di{append}]",
@@ -983,29 +995,29 @@ namespace CPU8086
             };
         }
 
-        public static string GetAssembly(byte value, OutputValueMode outputMode)
+        public static string GetValueAssembly(byte value, OutputValueMode outputMode)
         {
             short v = (value & 0b10000000) == 0b10000000 ? (sbyte)value : value;
             return outputMode switch
             {
-                OutputValueMode.AsHexAuto => $"0x{v:X}",
-                OutputValueMode.AsHex8 => $"0x{v:X2}",
-                OutputValueMode.AsHex16 => $"0x{v:X4}",
+                OutputValueMode.AsHexAuto => $"0x{v:x}",
+                OutputValueMode.AsHex8 => $"0x{v:x2}",
+                OutputValueMode.AsHex16 => $"0x{v:x4}",
                 _ => v.ToString(),
             };
         }
 
-        public static string GetAssembly(short value, OutputValueMode outputMode) => outputMode switch
+        public static string GetValueAssembly(short value, OutputValueMode outputMode) => outputMode switch
         {
-            OutputValueMode.AsHexAuto => $"0x{value:X}",
-            OutputValueMode.AsHex8 => $"0x{value:X2}",
-            OutputValueMode.AsHex16 => $"0x{value:X4}",
+            OutputValueMode.AsHexAuto => $"0x{value:x}",
+            OutputValueMode.AsHex8 => $"0x{value:x2}",
+            OutputValueMode.AsHex16 => $"0x{value:x4}",
             _ => value.ToString(),
         };
 
-        public static string GetAssembly(RegisterType regType) => Register.GetLowerName(regType);
+        public static string GetRegisterAssembly(RegisterType regType) => Register.GetLowerName(regType);
 
-        public static string GetAssembly(Register reg) => GetAssembly(reg?.Type ?? RegisterType.Unknown);
+        public static string GetRegisterAssembly(Register reg) => GetRegisterAssembly(reg?.Type ?? RegisterType.Unknown);
 
         public OneOf<string, Error> GetAssembly(Stream stream, string name, OutputValueMode outputMode)
         {
@@ -1146,14 +1158,14 @@ namespace CPU8086
                     displacement = displacementRes.AsT0;
                 }
 
-                AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic);
+                AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic.Lower);
 
                 switch (instruction.Family)
                 {
                     case OpFamily.Push_FixedReg:
                     case OpFamily.Pop_FixedReg:
                         {
-                            string destination = GetAssembly(RegisterType.ES);
+                            string destination = GetRegisterAssembly(RegisterType.ES);
                             assemblyLine = assemblyLine.WithDestinationOnly(destination);
                         }
                         break;
@@ -1173,13 +1185,13 @@ namespace CPU8086
                                     // 16-bit Register to Register
                                     if (directionIsToRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
                                     }
                                 }
                                 else
@@ -1187,13 +1199,13 @@ namespace CPU8086
                                     // 8-bit Register to Register
                                     if (directionIsToRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
                                     }
                                 }
                             }
@@ -1204,14 +1216,14 @@ namespace CPU8086
                                     if (directionIsToRegister)
                                     {
                                         // 16-bit Memory to Register
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
                                     }
                                     else
                                     {
                                         // 16-bit Register to Memory
-                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
                                     }
                                 }
                                 else
@@ -1219,14 +1231,14 @@ namespace CPU8086
                                     if (directionIsToRegister)
                                     {
                                         // 8-bit Memory to Register
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
                                     }
                                     else
                                     {
                                         // 8-bit Register to Memory
-                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
                                     }
                                 }
                             }
@@ -1241,8 +1253,8 @@ namespace CPU8086
                             if (imm8.IsT1)
                                 return imm8.AsT1;
                             byte reg = (byte)(opCode & 0b00000111);
-                            string destination = GetAssembly(_regTable.GetByte(reg));
-                            string source = GetAssembly(imm8.AsT0, outputMode);
+                            string destination = GetRegisterAssembly(_regTable.GetByte(reg));
+                            string source = GetValueAssembly(imm8.AsT0, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1252,8 +1264,8 @@ namespace CPU8086
                             OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
                             if (imm8.IsT1)
                                 return imm8.AsT1;
-                            string source = $"byte {GetAssembly(imm8.AsT0, outputMode)}";
-                            string destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            string destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                            string source = $"byte {GetValueAssembly(imm8.AsT0, outputMode)}";
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1265,8 +1277,8 @@ namespace CPU8086
                             if (imm16.IsT1)
                                 return imm16.AsT1;
                             byte reg = (byte)(opCode & 0b00000111);
-                            string destination = GetAssembly(_regTable.GetWord(reg));
-                            string source = GetAssembly(imm16.AsT0, outputMode);
+                            string destination = GetRegisterAssembly(_regTable.GetWord(reg));
+                            string source = GetValueAssembly(imm16.AsT0, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1276,8 +1288,8 @@ namespace CPU8086
                             OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
                             if (imm16.IsT1)
                                 return imm16.AsT1;
-                            string source = $"word {GetAssembly(imm16.AsT0, outputMode)}";
-                            string destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                            string destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                            string source = $"word {GetValueAssembly(imm16.AsT0, outputMode)}";
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1287,7 +1299,8 @@ namespace CPU8086
                     case OpFamily.Move8_Mem_FixedReg:
                     case OpFamily.Move16_Mem_FixedReg:
                         {
-                            bool directionIsToMemory = (opCode & 0b00000010) == 0b00000010;
+                            // @NOTE(final): D parameter is swapped!
+                            bool destinationIsMemory = (opCode & 0b00000010) == 0b00000010;
 
                             OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
                             if (mem16.IsT1)
@@ -1297,15 +1310,15 @@ namespace CPU8086
                             Debug.Assert(reg != RegisterType.Unknown);
 
                             string source, destination;
-                            if (directionIsToMemory)
+                            if (destinationIsMemory)
                             {
-                                source = GetAssembly(reg);
-                                destination = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
+                                destination = GetAddressAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
+                                source = GetRegisterAssembly(reg);
                             }
                             else
                             {
-                                source = GetAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
-                                destination = GetAssembly(reg);
+                                destination = GetRegisterAssembly(reg);
+                                source = GetAddressAssembly(EffectiveAddressCalculation.DirectAddress, mem16.AsT0, outputMode);
                             }
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
@@ -1316,36 +1329,38 @@ namespace CPU8086
                     case OpFamily.Add8_Reg_RegOrMem:
                     case OpFamily.Add16_Reg_RegOrMem:
                         {
-                            bool targetIsRegister = (opCode & 0b00000010) == 0b00000010;
+                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
                             bool isWord = (opCode & 0b00000001) == 0b00000001;
+
+                            // Is the same as Move8_RegOrMem_RegOrMem, Move16_RegOrMem_RegOrMem
 
                             string destination, source;
                             if (modRegRM.Mode == Mode.RegisterMode)
                             {
                                 if (isWord)
                                 {
-                                    if (targetIsRegister)
+                                    if (destinationIsRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
                                     }
                                 }
                                 else
                                 {
-                                    if (targetIsRegister)
+                                    if (destinationIsRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
                                     }
                                 }
                             }
@@ -1353,28 +1368,28 @@ namespace CPU8086
                             {
                                 if (isWord)
                                 {
-                                    if (targetIsRegister)
+                                    if (destinationIsRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RegField));
-                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetAssembly(_regTable.GetWord(modRegRM.RegField));
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
                                     }
                                 }
                                 else
                                 {
-                                    if (targetIsRegister)
+                                    if (destinationIsRegister)
                                     {
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RegField));
-                                        source = GetAssembly(modRegRM.EAC, displacement, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
                                     }
                                     else
                                     {
-                                        destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                        source = GetAssembly(_regTable.GetByte(modRegRM.RegField));
+                                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
                                     }
                                 }
                             }
@@ -1391,8 +1406,8 @@ namespace CPU8086
                             RegisterType reg = instruction.Register;
                             Debug.Assert(reg != RegisterType.Unknown);
 
-                            string destination = GetAssembly(reg);
-                            string source = GetAssembly(imm8.AsT0, outputMode);
+                            string destination = GetRegisterAssembly(reg);
+                            string source = GetValueAssembly(imm8.AsT0, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1405,8 +1420,8 @@ namespace CPU8086
                             RegisterType reg = instruction.Register;
                             Debug.Assert(reg != RegisterType.Unknown);
 
-                            string destination = GetAssembly(reg);
-                            string source = GetAssembly(imm16.AsT0, outputMode);
+                            string destination = GetRegisterAssembly(reg);
+                            string source = GetValueAssembly(imm16.AsT0, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
                         break;
@@ -1431,15 +1446,15 @@ namespace CPU8086
                                 if (modRegRM.Mode == Mode.RegisterMode)
                                 {
                                     if (isWord)
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
                                     else
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
-                                    source = GetAssembly(imm8.AsT0, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                    source = GetValueAssembly(imm8.AsT0, outputMode);
                                 }
                                 else
                                 {
-                                    destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                    source = GetAssembly(imm8.AsT0, outputMode);
+                                    destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                    source = GetValueAssembly(imm8.AsT0, outputMode);
                                 }
                             }
                             else
@@ -1454,15 +1469,15 @@ namespace CPU8086
                                 if (modRegRM.Mode == Mode.RegisterMode)
                                 {
                                     if (isWord)
-                                        destination = GetAssembly(_regTable.GetWord(modRegRM.RMField));
+                                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
                                     else
-                                        destination = GetAssembly(_regTable.GetByte(modRegRM.RMField));
-                                    source = GetAssembly(imm16.AsT0, outputMode);
+                                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
+                                    source = GetValueAssembly(imm16.AsT0, outputMode);
                                 }
                                 else
                                 {
-                                    destination = GetAssembly(modRegRM.EAC, displacement, outputMode);
-                                    source = GetAssembly(imm16.AsT0, outputMode);
+                                    destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
+                                    source = GetValueAssembly(imm16.AsT0, outputMode);
                                 }
                             }
 

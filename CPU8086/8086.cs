@@ -9,6 +9,9 @@ namespace CPU8086
 {
     static class Mnemonics
     {
+        public const string Push = "PUSH";
+        public const string Pop = "POP";
+
         public const string Mov = "MOV";
 
         public const string Add = "ADD";
@@ -307,6 +310,9 @@ namespace CPU8086
         ADD_dAL_sIMM8 = 0x04,
         ADD_dAX_sIMM16 = 0x05,
 
+        PUSH_ES = 0x06,
+        POP_ES = 0x07,
+
         /// <summary>
         /// <para>8-bit Arithmetic instructions such as ADD, ADC, SBB, SUB, CMP, etc. writing to register or memory, using an immediate as source.</para>
         /// <para>REG field decides what type of arithmetic operating it actually is.</para>
@@ -355,6 +361,15 @@ namespace CPU8086
         /// Unknown
         /// </summary>
         Unknown = 0,
+
+        /// <summary>
+        /// Decrements the <see cref="RegisterType.SP"/> by the value of a fixed register
+        /// </summary>
+        Push_FixedReg,
+        /// <summary>
+        /// Increments the <see cref="RegisterType.SP"/> by the value of a fixed register
+        /// </summary>
+        Pop_FixedReg,
 
         /// <summary>
         /// Move 8-bit register/memory to 8-bit register/memory (MOV REG8/MEM8, REG8/MEM8)
@@ -793,6 +808,10 @@ namespace CPU8086
             _table[0x04 /* 0000 0100 */] = new Instruction(OpCode.ADD_dAL_sIMM8, OpFamily.Add8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Add, "Adds 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
             _table[0x05 /* 0000 0101 */] = new Instruction(OpCode.ADD_dAX_sIMM16, OpFamily.Add16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Add, "Adds 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
 
+            // 00000110 to 00000111 (PUSH/POP)
+            _table[0x06 /* 0000 0110 */] = new Instruction(OpCode.PUSH_ES, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Push, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
+            _table[0x07 /* 0000 0111 */] = new Instruction(OpCode.POP_ES, OpFamily.Pop_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Pop, "Increments the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
+
             // 10000000 (ADD/ADC/SUB,etc.)
             _table[0x80 /* 1000 0000 */] = new Instruction(OpCode.ARITHMETIC_dREG8_dMEM8_sIMM8, OpFamily.Arithmetic8_RegOrMem_Imm, FieldEncoding.ModRemRM, 3, 5, Mnemonics.Dynamic, "Arithmetic 8-bit Immediate to 8-bit Register/Memory");
 
@@ -1131,6 +1150,14 @@ namespace CPU8086
 
                 switch (instruction.Family)
                 {
+                    case OpFamily.Push_FixedReg:
+                    case OpFamily.Pop_FixedReg:
+                        {
+                            string destination = GetAssembly(RegisterType.ES);
+                            assemblyLine = assemblyLine.WithDestinationOnly(destination);
+                        }
+                        break;
+
                     case OpFamily.Move8_RegOrMem_RegOrMem:
                     case OpFamily.Move16_RegOrMem_RegOrMem:
                         {

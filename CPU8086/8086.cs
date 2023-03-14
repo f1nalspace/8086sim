@@ -667,11 +667,11 @@ namespace Final.CPU8086
 
                             Mnemonic mnemonic = atype switch
                             {
-                                ArithmeticType.Add => Mnemonics.Add,
+                                ArithmeticType.Add => Mnemonics.Addition,
                                 ArithmeticType.AddWithCarry => Mnemonics.AddWithCarry,
-                                ArithmeticType.SubWithBorrow => Mnemonics.SubWithBorrow,
-                                ArithmeticType.Sub => Mnemonics.Sub,
-                                ArithmeticType.Compare => Mnemonics.Cmp,
+                                ArithmeticType.SubWithBorrow => Mnemonics.SubtractWithBorrow,
+                                ArithmeticType.Sub => Mnemonics.Subtrace,
+                                ArithmeticType.Compare => Mnemonics.Compare,
                                 _ => throw new NotSupportedException($"Arithmetic type '{atype}' is not supported for instruction '{instruction}'!")
                             };
 

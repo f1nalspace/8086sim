@@ -33,12 +33,12 @@
             //
 
             // 0000 0000 to 0000 1111 (ADD/OR, PUSH/POP ES/CS)
-            _table[0x00 /* 0000 0000 */] = new Instruction(OpCode.ADD_dREG8_dMEM8_sREG8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register to 8-bit Register/Memory");
-            _table[0x01 /* 0000 0001 */] = new Instruction(OpCode.ADD_dREG16_dMEM16_sREG16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register to 16-bit Register/Memory");
-            _table[0x02 /* 0000 0010 */] = new Instruction(OpCode.ADD_dREG8_sREG8_sMEM8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register/Memory to 8-bit Register");
-            _table[0x03 /* 0000 0011 */] = new Instruction(OpCode.ADD_dREG16_sREG16_sMEM16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register/Memory to 16-bit Register");
-            _table[0x04 /* 0000 0100 */] = new Instruction(OpCode.ADD_dAL_sIMM8, OpFamily.Add8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Add, "Adds 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
-            _table[0x05 /* 0000 0101 */] = new Instruction(OpCode.ADD_dAX_sIMM16, OpFamily.Add16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Add, "Adds 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
+            _table[0x00 /* 0000 0000 */] = new Instruction(OpCode.ADD_dREG8_dMEM8_sREG8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Addition, "Adds 8-bit Register to 8-bit Register/Memory");
+            _table[0x01 /* 0000 0001 */] = new Instruction(OpCode.ADD_dREG16_dMEM16_sREG16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Addition, "Adds 16-bit Register to 16-bit Register/Memory");
+            _table[0x02 /* 0000 0010 */] = new Instruction(OpCode.ADD_dREG8_sREG8_sMEM8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Addition, "Adds 8-bit Register/Memory to 8-bit Register");
+            _table[0x03 /* 0000 0011 */] = new Instruction(OpCode.ADD_dREG16_sREG16_sMEM16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Addition, "Adds 16-bit Register/Memory to 16-bit Register");
+            _table[0x04 /* 0000 0100 */] = new Instruction(OpCode.ADD_dAL_sIMM8, OpFamily.Add8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Addition, "Adds 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
+            _table[0x05 /* 0000 0101 */] = new Instruction(OpCode.ADD_dAX_sIMM16, OpFamily.Add16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Addition, "Adds 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
             _table[0x06 /* 0000 0110 */] = new Instruction(OpCode.PUSH_ES, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Push, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
             _table[0x07 /* 0000 0111 */] = new Instruction(OpCode.POP_ES, OpFamily.Pop_FixedReg, FieldEncoding.None, RegisterType.ES, 1, Mnemonics.Pop, "Increments the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.ES + " Register");
             _table[0x08 /* 0000 1000 */] = new Instruction(OpCode.OR_dREG8_dMEM8_sREG8, OpFamily.Or8_RegOrMem_RegOrMem, FieldEncoding.None, 2, 4, Mnemonics.Or, "Logical OR 8-bit Register with 8-bit Register/Memory");
@@ -59,12 +59,12 @@
             _table[0x15 /* 0001 0101 */] = new Instruction(OpCode.ADC_dAX_sIMM16, OpFamily.Adc16_FixedReg_Imm, FieldEncoding.None, 3, Mnemonics.AddWithCarry, "Add with Carry 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
             _table[0x16 /* 0001 0110 */] = new Instruction(OpCode.PUSH_SS, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.SS, 1, Mnemonics.Push, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.SS + " Register");
             _table[0x17 /* 0001 0111 */] = new Instruction(OpCode.POP_SS, OpFamily.Pop_FixedReg, FieldEncoding.None, RegisterType.SS, 1, Mnemonics.Push, "Increments the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.SS + " Register");
-            _table[0x18 /* 0001 1000 */] = new Instruction(OpCode.SBB_dREG8_dMEM8_sREG8, OpFamily.Sbb8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubWithBorrow, "Sub with Borrow 8-bit Register from 8-bit Register/Memory");
-            _table[0x19 /* 0001 1001 */] = new Instruction(OpCode.SBB_dREG16_dMEM16_sREG16, OpFamily.Sbb16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubWithBorrow, "Sub with Borrow 16-bit Register from 16-bit Register/Memory");
-            _table[0x1A /* 0001 1010 */] = new Instruction(OpCode.SBB_dREG8_sREG8_MEM8, OpFamily.Sbb8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubWithBorrow, "Sub with Borrow 8-bit Register/Memory from 8-bit Register");
-            _table[0x1B /* 0001 1011 */] = new Instruction(OpCode.SBB_dREG16_sREG16_MEM16, OpFamily.Sbb16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubWithBorrow, "Sub with Borrow 16-bit Register/Memory from 16-bit Register");
-            _table[0x1C /* 0001 1100 */] = new Instruction(OpCode.SBB_dAL_sIMM8, OpFamily.Sbb8_FixedReg_Imm, FieldEncoding.None, 2, Mnemonics.SubWithBorrow, "Sub with Borrow 8-bit Immediate from 8-bit " + RegisterType.AL + " Register");
-            _table[0x1D /* 0001 1101 */] = new Instruction(OpCode.SBB_dAX_sIMM16, OpFamily.Sbb16_FixedReg_Imm, FieldEncoding.None, 3, Mnemonics.SubWithBorrow, "Sub with Borrow 16-bit Immediate from 16-bit " + RegisterType.AX + " Register");
+            _table[0x18 /* 0001 1000 */] = new Instruction(OpCode.SBB_dREG8_dMEM8_sREG8, OpFamily.Sbb8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubtractWithBorrow, "Sub with Borrow 8-bit Register from 8-bit Register/Memory");
+            _table[0x19 /* 0001 1001 */] = new Instruction(OpCode.SBB_dREG16_dMEM16_sREG16, OpFamily.Sbb16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubtractWithBorrow, "Sub with Borrow 16-bit Register from 16-bit Register/Memory");
+            _table[0x1A /* 0001 1010 */] = new Instruction(OpCode.SBB_dREG8_sREG8_MEM8, OpFamily.Sbb8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubtractWithBorrow, "Sub with Borrow 8-bit Register/Memory from 8-bit Register");
+            _table[0x1B /* 0001 1011 */] = new Instruction(OpCode.SBB_dREG16_sREG16_MEM16, OpFamily.Sbb16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.SubtractWithBorrow, "Sub with Borrow 16-bit Register/Memory from 16-bit Register");
+            _table[0x1C /* 0001 1100 */] = new Instruction(OpCode.SBB_dAL_sIMM8, OpFamily.Sbb8_FixedReg_Imm, FieldEncoding.None, 2, Mnemonics.SubtractWithBorrow, "Sub with Borrow 8-bit Immediate from 8-bit " + RegisterType.AL + " Register");
+            _table[0x1D /* 0001 1101 */] = new Instruction(OpCode.SBB_dAX_sIMM16, OpFamily.Sbb16_FixedReg_Imm, FieldEncoding.None, 3, Mnemonics.SubtractWithBorrow, "Sub with Borrow 16-bit Immediate from 16-bit " + RegisterType.AX + " Register");
             _table[0x1E /* 0001 1110 */] = new Instruction(OpCode.PUSH_DS, OpFamily.Push_FixedReg, FieldEncoding.None, RegisterType.DS, 1, Mnemonics.Push, "Decrements the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.DS + " Register");
             _table[0x1F /* 0001 1111 */] = new Instruction(OpCode.POP_DS, OpFamily.Pop_FixedReg, FieldEncoding.None, RegisterType.DS, 1, Mnemonics.Push, "Increments the 16-bit " + RegisterType.SP + " by the amount of the " + RegisterType.DS + " Register");
 
@@ -77,12 +77,12 @@
             _table[0x25 /* 0010 0101 */] = new Instruction(OpCode.AND_dAX_sIMM16, OpFamily.And16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.And, "Logical AND 16-bit Immediate with 16-bit " + RegisterType.AX + " Register");
             // @TODO(final): 0x26 ES: segment override prefix
             // @TODO(final): 0x27 DAA
-            _table[0x28 /* 0010 1000 */] = new Instruction(OpCode.SUB_dREG8_dMEM8_sREG8, OpFamily.Sub8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Sub, "Sub 8-bit Register from 8-bit Register/Memory");
-            _table[0x29 /* 0010 1001 */] = new Instruction(OpCode.SUB_dREG16_dMEM16_sREG16, OpFamily.Sub16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Sub, "Sub 16-bit Register from 16-bit Register/Memory");
-            _table[0x2A /* 0010 1010 */] = new Instruction(OpCode.SUB_dREG8_sREG8_MEM8, OpFamily.Sub8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Sub, "Sub 8-bit Register/Memory from 8-bit Register");
-            _table[0x2B /* 0010 1011 */] = new Instruction(OpCode.SUB_dREG16_sREG16_MEM16, OpFamily.Sub16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Sub, "Sub 16-bit Register/Memory from 16-bit Register");
-            _table[0x2C /* 0010 1100 */] = new Instruction(OpCode.SUB_dAL_sIMM8, OpFamily.Sub8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Sub, "Sub 8-bit Immediate from 8-bit " + RegisterType.AL + " Register");
-            _table[0x2D /* 0010 1101 */] = new Instruction(OpCode.SUB_dAX_sIMM16, OpFamily.Sub16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Sub, "Sub 16-bit Immediate from 16-bit " + RegisterType.AX + " Register");
+            _table[0x28 /* 0010 1000 */] = new Instruction(OpCode.SUB_dREG8_dMEM8_sREG8, OpFamily.Sub8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Subtrace, "Sub 8-bit Register from 8-bit Register/Memory");
+            _table[0x29 /* 0010 1001 */] = new Instruction(OpCode.SUB_dREG16_dMEM16_sREG16, OpFamily.Sub16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Subtrace, "Sub 16-bit Register from 16-bit Register/Memory");
+            _table[0x2A /* 0010 1010 */] = new Instruction(OpCode.SUB_dREG8_sREG8_MEM8, OpFamily.Sub8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Subtrace, "Sub 8-bit Register/Memory from 8-bit Register");
+            _table[0x2B /* 0010 1011 */] = new Instruction(OpCode.SUB_dREG16_sREG16_MEM16, OpFamily.Sub16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Subtrace, "Sub 16-bit Register/Memory from 16-bit Register");
+            _table[0x2C /* 0010 1100 */] = new Instruction(OpCode.SUB_dAL_sIMM8, OpFamily.Sub8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Subtrace, "Sub 8-bit Immediate from 8-bit " + RegisterType.AL + " Register");
+            _table[0x2D /* 0010 1101 */] = new Instruction(OpCode.SUB_dAX_sIMM16, OpFamily.Sub16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Subtrace, "Sub 16-bit Immediate from 16-bit " + RegisterType.AX + " Register");
             // @TODO(final): 0x2E CS: segment override prefix
             // @TODO(final): 0x2F DAS
 
@@ -95,12 +95,12 @@
             _table[0x35 /* 0011 0101 */] = new Instruction(OpCode.XOR_dAX_sIMM16, OpFamily.Xor16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Xor, "Logical XOR 16-bit Immediate with 16-bit " + RegisterType.AX + " Register");
             // @TODO(final): 0x36 SS: segment override prefix
             // @TODO(final): 0x37 AAA
-            _table[0x38 /* 0011 1000 */] = new Instruction(OpCode.CMP_dREG8_dMEM8_sREG8, OpFamily.Cmp8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Cmp, "Compare 8-bit Register with 8-bit Register/Memory");
-            _table[0x39 /* 0011 1001 */] = new Instruction(OpCode.CMP_dREG16_dMEM16_sREG16, OpFamily.Cmp16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Cmp, "Compare 16-bit Register with 16-bit Register/Memory");
-            _table[0x3A /* 0011 1010 */] = new Instruction(OpCode.CMP_dREG8_sREG8_MEM8, OpFamily.Cmp8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Cmp, "Compare 8-bit Register/Memory with 8-bit Register");
-            _table[0x3B /* 0011 1011 */] = new Instruction(OpCode.CMP_dREG16_sREG16_MEM16, OpFamily.Cmp16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Cmp, "Compare 16-bit Register/Memory with 16-bit Register");
-            _table[0x3C /* 0011 1100 */] = new Instruction(OpCode.CMP_dAL_sIMM8, OpFamily.Cmp8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Cmp, "Compare 8-bit Immediate with 8-bit " + RegisterType.AL + " Register");
-            _table[0x3D /* 0011 1101 */] = new Instruction(OpCode.CMP_dAX_sIMM16, OpFamily.Cmp16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Cmp, "Compare 16-bit Immediate with 16-bit " + RegisterType.AX + " Register");
+            _table[0x38 /* 0011 1000 */] = new Instruction(OpCode.CMP_dREG8_dMEM8_sREG8, OpFamily.Cmp8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Compare, "Compare 8-bit Register with 8-bit Register/Memory");
+            _table[0x39 /* 0011 1001 */] = new Instruction(OpCode.CMP_dREG16_dMEM16_sREG16, OpFamily.Cmp16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Compare, "Compare 16-bit Register with 16-bit Register/Memory");
+            _table[0x3A /* 0011 1010 */] = new Instruction(OpCode.CMP_dREG8_sREG8_MEM8, OpFamily.Cmp8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Compare, "Compare 8-bit Register/Memory with 8-bit Register");
+            _table[0x3B /* 0011 1011 */] = new Instruction(OpCode.CMP_dREG16_sREG16_MEM16, OpFamily.Cmp16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Compare, "Compare 16-bit Register/Memory with 16-bit Register");
+            _table[0x3C /* 0011 1100 */] = new Instruction(OpCode.CMP_dAL_sIMM8, OpFamily.Cmp8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Compare, "Compare 8-bit Immediate with 8-bit " + RegisterType.AL + " Register");
+            _table[0x3D /* 0011 1101 */] = new Instruction(OpCode.CMP_dAX_sIMM16, OpFamily.Cmp16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Compare, "Compare 16-bit Immediate with 16-bit " + RegisterType.AX + " Register");
             // @TODO(final): 0x3E DS: segment override prefix
             // @TODO(final): 0x3F AAS
 

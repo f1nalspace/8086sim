@@ -375,6 +375,7 @@ namespace CPU8086
         MOV_dBP_sIMM16 = 0xBD,
         MOV_dSI_sIMM16 = 0xBE,
         MOV_dDI_sIMM16 = 0xBF,
+
         MOV_dMEM8_sIMM8 = 0xC6,
         MOV_dMEM16_sIMM16 = 0xC7,
     }
@@ -443,21 +444,11 @@ namespace CPU8086
         /// <summary>
         /// Add 8-bit register to 8-bit register/memory (ADD REG8/MEM8, REG8)
         /// </summary>
-        Add8_RegOrMem_Reg,
+        Add8_RegOrMem_RegOrMem,
         /// <summary>
         /// Add 16-bit register to 16-bit register/memory (ADD REG16/MEM16, REG16)
         /// </summary>
-        Add16_RegOrMem_Reg,
-
-        /// <summary>
-        /// Add 8-bit register/memory to 8-bit register (ADD REG8, REG8/MEM8)
-        /// </summary>
-        Add8_Reg_RegOrMem,
-        /// <summary>
-        /// Add 16-bit register/memory to 16-bit register (ADD REG16, REG16/MEM16)
-        /// </summary>
-        Add16_Reg_RegOrMem,
-
+        Add16_RegOrMem_RegOrMem,
         /// <summary>
         /// Add 8-bit immediate to 8-bit fixed register (ADD AL, IMM8)
         /// </summary>
@@ -475,7 +466,6 @@ namespace CPU8086
         /// Logical OR to 16-bit register/memory with 16-bit immediate (OR AX, BX)
         /// </summary>
         Or16_RegOrMem_RegOrMem,
-
         /// <summary>
         /// Logical OR to 8-bit fixed register with 8-bit immediate (OR AL, IMM8)
         /// </summary>
@@ -841,10 +831,10 @@ namespace CPU8086
             //
 
             // 00000000 to 00000111 (ADD)
-            _table[0x00 /* 0000 0000 */] = new Instruction(OpCode.ADD_dREG8_dMEM8_sREG8, OpFamily.Add8_RegOrMem_Reg, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register to 8-bit Register/Memory");
-            _table[0x01 /* 0000 0001 */] = new Instruction(OpCode.ADD_dREG16_dMEM16_sREG16, OpFamily.Add16_RegOrMem_Reg, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register to 16-bit Register/Memory");
-            _table[0x02 /* 0000 0010 */] = new Instruction(OpCode.ADD_dREG8_sREG8_sMEM8, OpFamily.Add8_Reg_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register/Memory to 8-bit Register");
-            _table[0x03 /* 0000 0011 */] = new Instruction(OpCode.ADD_dREG16_sREG16_sMEM16, OpFamily.Add16_Reg_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register/Memory to 16-bit Register");
+            _table[0x00 /* 0000 0000 */] = new Instruction(OpCode.ADD_dREG8_dMEM8_sREG8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register to 8-bit Register/Memory");
+            _table[0x01 /* 0000 0001 */] = new Instruction(OpCode.ADD_dREG16_dMEM16_sREG16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register to 16-bit Register/Memory");
+            _table[0x02 /* 0000 0010 */] = new Instruction(OpCode.ADD_dREG8_sREG8_sMEM8, OpFamily.Add8_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 8-bit Register/Memory to 8-bit Register");
+            _table[0x03 /* 0000 0011 */] = new Instruction(OpCode.ADD_dREG16_sREG16_sMEM16, OpFamily.Add16_RegOrMem_RegOrMem, FieldEncoding.ModRemRM, 2, 4, Mnemonics.Add, "Adds 16-bit Register/Memory to 16-bit Register");
             _table[0x04 /* 0000 0100 */] = new Instruction(OpCode.ADD_dAL_sIMM8, OpFamily.Add8_FixedReg_Imm, FieldEncoding.None, RegisterType.AL, 2, Mnemonics.Add, "Adds 8-bit Immediate to 8-bit " + RegisterType.AL + " Register");
             _table[0x05 /* 0000 0101 */] = new Instruction(OpCode.ADD_dAX_sIMM16, OpFamily.Add16_FixedReg_Imm, FieldEncoding.None, RegisterType.AX, 3, Mnemonics.Add, "Adds 16-bit Immediate to 16-bit " + RegisterType.AX + " Register");
 
@@ -1366,10 +1356,8 @@ namespace CPU8086
                         }
                         break;
 
-                    case OpFamily.Add8_RegOrMem_Reg:
-                    case OpFamily.Add16_RegOrMem_Reg:
-                    case OpFamily.Add8_Reg_RegOrMem:
-                    case OpFamily.Add16_Reg_RegOrMem:
+                    case OpFamily.Add8_RegOrMem_RegOrMem:
+                    case OpFamily.Add16_RegOrMem_RegOrMem:
                         {
                             bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
                             bool isWord = (opCode & 0b00000001) == 0b00000001;

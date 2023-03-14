@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>CPU8086</RootNamespace>
+    <RootNamespace>Final.CPU8086</RootNamespace>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 

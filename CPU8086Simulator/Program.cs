@@ -2,7 +2,7 @@
 using System;
 using System.IO;
 
-namespace CPU8086
+namespace Final.CPU8086
 {
     public class Program
     {

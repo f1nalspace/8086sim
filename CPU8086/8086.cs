@@ -5,7 +5,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CPU8086
+namespace Final.CPU8086
 {
     public enum InstructionDataType : byte
     {
@@ -262,9 +262,9 @@ namespace CPU8086
 
         private static ModRegRM ReadModRegRM(byte value)
         {
-            byte modField = (byte)((value >> 6) & 0b111);
-            byte regField = (byte)((value >> 3) & 0b111);
-            byte rmField = (byte)((value >> 0) & 0b111);
+            byte modField = (byte)(value >> 6 & 0b111);
+            byte regField = (byte)(value >> 3 & 0b111);
+            byte rmField = (byte)(value >> 0 & 0b111);
             ModRegRM result = new ModRegRM(modField, regField, rmField);
             return result;
         }
@@ -315,7 +315,7 @@ namespace CPU8086
                 return 0;
         }
 
-        private static (string destination, string source)GetDestinationAndSource(ModRegRM modRegRM, bool directionIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
+        private static (string destination, string source) GetDestinationAndSource(ModRegRM modRegRM, bool directionIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
         {
             string destination, source;
             if (modRegRM.Mode == Mode.RegisterMode)
@@ -632,7 +632,7 @@ namespace CPU8086
 
                             string destination, source;
 
-                            if ((isWord && specialCase) || !isWord)
+                            if (isWord && specialCase || !isWord)
                             {
                                 // @NOTE(final): 8-bit immediate, but 16-bit register or memory
                                 OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace CPU8086
+namespace Final.CPU8086
 {
     [TestClass]
     public class InstructionDecodes

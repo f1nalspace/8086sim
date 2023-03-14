@@ -1,4 +1,4 @@
-﻿namespace CPU8086
+﻿namespace Final.CPU8086
 {
     public class InstructionTable
     {

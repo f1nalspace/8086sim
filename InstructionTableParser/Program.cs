@@ -34,7 +34,10 @@ namespace Final.ITP
             using (CsvWriter csv = new CsvWriter(writer, config, leaveOpen: true))
             {
                 csv.WriteConvertedField("mnemonics", typeof(string));
-                csv.WriteConvertedField("op xx xx xx xx xx", typeof(string));
+                csv.WriteConvertedField("op byte", typeof(byte));
+                csv.WriteConvertedField("op hex", typeof(string));
+                csv.WriteConvertedField("op bits", typeof(string));
+                csv.WriteConvertedField("v1 v2 v3 v4 v5", typeof(string));
                 csv.WriteConvertedField("sw", typeof(string));
                 csv.WriteConvertedField("minlen", typeof(int));
                 csv.WriteConvertedField("maxlen", typeof(int));
@@ -42,7 +45,11 @@ namespace Final.ITP
                 csv.WriteConvertedField("family", typeof(string));
                 csv.WriteConvertedField("title", typeof(string));
                 csv.WriteConvertedField("platform", typeof(string));
+                csv.WriteConvertedField("", typeof(string));
+                csv.WriteConvertedField("", typeof(string));
+                csv.WriteConvertedField("", typeof(string));
                 csv.WriteConvertedField("len", typeof(string));
+                csv.WriteConvertedField("op", typeof(string));
                 csv.NextRecord();
 
                 Assembly asm = typeof(Program).Assembly;
@@ -131,8 +138,36 @@ namespace Final.ITP
                         if (maxLen == 0)
                             maxLen = minLen;
 
+                        if (string.IsNullOrWhiteSpace(swText))
+                            swText = "  ";
+
+                        swText = Regex.Replace(swText, "\\s", "*");
+                        flagsText = Regex.Replace(flagsText, "-", "*");
+
+                        opAndFields = opAndFields.Replace("|", "");
+
+                        string[] opSplit = opAndFields.Split(' ');
+                        byte op = 0;
+                        string fields = string.Empty;
+                        if (opSplit.Length > 0)
+                        {
+                            op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
+                            if (opSplit.Length > 1)
+                            {
+                                for (int i = 1; i < opSplit.Length; i++)
+                                {
+                                    fields += opSplit[i];
+                                    if (i < opSplit.Length - 1)
+                                        fields += " ";
+                                }
+                            }
+                        }
+
                         csv.WriteField(mnemonics, true);
-                        csv.WriteField(opAndFields, true);
+                        csv.WriteField(op);
+                        csv.WriteField(op.ToString("X2"));
+                        csv.WriteField(op.ToBinary());
+                        csv.WriteField(fields, true);
                         csv.WriteField(swText, true);
                         csv.WriteField(minLen);
                         csv.WriteField(maxLen);
@@ -140,7 +175,11 @@ namespace Final.ITP
                         csv.WriteField(family, true);
                         csv.WriteField(title, true);
                         csv.WriteField(platform, true);
+                        csv.WriteField(string.Empty);
+                        csv.WriteField(string.Empty);
+                        csv.WriteField(string.Empty);
                         csv.WriteField(lenText);
+                        csv.WriteField(opAndFields);
                         csv.NextRecord();
                     }
 

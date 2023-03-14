@@ -24,6 +24,54 @@
         PUSH_CS = 0x0E,
         // Unused = 0x0F,
 
+        ADC_dREG8_dMEM8_sREG8 = 0x10,
+        ADC_dREG16_dMEM16_sREG16 = 0x11,
+        ADC_dREG8_sREG8_MEM8 = 0x12,
+        ADC_dREG16_sREG16_MEM16 = 0x13,
+        ADC_dAL_sIMM8 = 0x14,
+        ADC_dAX_sIMM16 = 0x15,
+
+        PUSH_SS = 0x16,
+        POP_SS = 0x17,
+
+        SBB_dREG8_dMEM8_sREG8 = 0x18,
+        SBB_dREG16_dMEM16_sREG16 = 0x19,
+        SBB_dREG8_sREG8_MEM8 = 0x1A,
+        SBB_dREG16_sREG16_MEM16 = 0x1B,
+        SBB_dAL_sIMM8 = 0x1C,
+        SBB_dAX_sIMM16 = 0x1D,
+
+        PUSH_DS = 0x1E,
+        POP_DS = 0x1F,
+
+        AND_dREG8_dMEM8_sREG8 = 0x20,
+        AND_dREG16_dMEM16_sREG16 = 0x21,
+        AND_dREG8_sREG8_MEM8 = 0x22,
+        AND_dREG16_sREG16_MEM16 = 0x23,
+        AND_dAL_sIMM8 = 0x24,
+        AND_dAX_sIMM16 = 0x25,
+
+        SUB_dREG8_dMEM8_sREG8 = 0x28,
+        SUB_dREG16_dMEM16_sREG16 = 0x29,
+        SUB_dREG8_sREG8_MEM8 = 0x2A,
+        SUB_dREG16_sREG16_MEM16 = 0x2B,
+        SUB_dAL_sIMM8 = 0x2C,
+        SUB_dAX_sIMM16 = 0x2D,
+
+        XOR_dREG8_dMEM8_sREG8 = 0x30,
+        XOR_dREG16_dMEM16_sREG16 = 0x31,
+        XOR_dREG8_sREG8_MEM8 = 0x32,
+        XOR_dREG16_sREG16_MEM16 = 0x33,
+        XOR_dAL_sIMM8 = 0x34,
+        XOR_dAX_sIMM16 = 0x35,
+
+        CMP_dREG8_dMEM8_sREG8 = 0x38,
+        CMP_dREG16_dMEM16_sREG16 = 0x39,
+        CMP_dREG8_sREG8_MEM8 = 0x3A,
+        CMP_dREG16_sREG16_MEM16 = 0x3B,
+        CMP_dAL_sIMM8 = 0x3C,
+        CMP_dAX_sIMM16 = 0x3D,
+
         /// <summary>
         /// <para>8-bit Arithmetic instructions such as ADD, ADC, SBB, SUB, CMP, etc. writing to register or memory, using an immediate as source.</para>
         /// <para>REG field decides what type of arithmetic operating it actually is.</para>

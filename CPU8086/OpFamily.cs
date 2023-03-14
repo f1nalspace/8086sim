@@ -1,6 +1,6 @@
 ﻿namespace Final.CPU8086
 {
-    public enum OpFamily : byte
+    public enum OpFamily : int
     {
         /// <summary>
         /// Unknown
@@ -94,6 +94,108 @@
         /// Logical OR to 16-bit fixed register with 16-bit immediate (OR AX, IMM16)
         /// </summary>
         Or16_FixedReg_Imm,
+
+        /// <summary>
+        /// Add with carry 8-bit register/memory to 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        Adc8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Add with carry 16-bit register/memory to 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        Adc16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Add with carry 8-bit immediate to 8-bit fixed register
+        /// </summary>
+        Adc8_FixedReg_Imm,
+        /// <summary>
+        /// Add with carry 16-bit immediate to 16-bit fixed register
+        /// </summary>
+        Adc16_FixedReg_Imm,
+
+        /// <summary>
+        /// Sub with borrow 8-bit register/memory from 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        Sbb8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Sub with borrow 16-bit register/memory from 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        Sbb16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Sub with borrow 8-bit immediate from 8-bit fixed register
+        /// </summary>
+        Sbb8_FixedReg_Imm,
+        /// <summary>
+        /// Sub with borrow 16-bit immediate from 16-bit fixed register
+        /// </summary>
+        Sbb16_FixedReg_Imm,
+
+        /// <summary>
+        /// Logical AND 8-bit register/memory with 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        And8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Logical AND 16-bit register/memory with 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        And16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Logical AND 8-bit immediate with 8-bit fixed register
+        /// </summary>
+        And8_FixedReg_Imm,
+        /// <summary>
+        /// Logical AND 16-bit immediate with 16-bit fixed register
+        /// </summary>
+        And16_FixedReg_Imm,
+
+        /// <summary>
+        /// Subtract 8-bit register/memory from 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        Sub8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Subtract 16-bit register/memory from 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        Sub16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Subtract 8-bit immediate from 8-bit fixed register
+        /// </summary>
+        Sub8_FixedReg_Imm,
+        /// <summary>
+        /// Subtract 16-bit immediate from 16-bit fixed register
+        /// </summary>
+        Sub16_FixedReg_Imm,
+
+        /// <summary>
+        /// Logical XOR 8-bit register/memory with 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        Xor8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Logical XOR 16-bit register/memory with 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        Xor16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Logical XOR 8-bit immediate with 8-bit fixed register
+        /// </summary>
+        Xor8_FixedReg_Imm,
+        /// <summary>
+        /// Logical XOR 16-bit immediate with 16-bit fixed register
+        /// </summary>
+        Xor16_FixedReg_Imm,
+
+        /// <summary>
+        /// Compare 8-bit register/memory with 8-bit register/memory (ADC AL, BL)
+        /// </summary>
+        Cmp8_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Compare 16-bit register/memory with 16-bit register/memory (ADC AX, BX)
+        /// </summary>
+        Cmp16_RegOrMem_RegOrMem,
+        /// <summary>
+        /// Compare 8-bit immediate with 8-bit fixed register
+        /// </summary>
+        Cmp8_FixedReg_Imm,
+        /// <summary>
+        /// Compare 16-bit immediate with 16-bit fixed register
+        /// </summary>
+        Cmp16_FixedReg_Imm,
 
         /// <summary>
         /// <para>Arithmetic operation 8-bit immediate to 8-bit register/memory (ADD REG8/MEM8, IMM8).</para>

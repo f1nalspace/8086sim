@@ -544,46 +544,20 @@ namespace Final.CPU8086
 
                     case OpFamily.Add8_RegOrMem_RegOrMem:
                     case OpFamily.Add16_RegOrMem_RegOrMem:
-                        {
-                            // 8-bit/16-bit Addition Register/Memory to Register/Memory
-                            (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
-                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
-                        }
-                        break;
-
-                    case OpFamily.Add8_FixedReg_Imm:
-                        {
-                            // 8-bit Addition Immediate to Fixed Register
-                            OneOf<byte, Error> imm8 = ReadU8(ref cur, streamName);
-                            if (imm8.IsT1)
-                                return imm8.AsT1;
-
-                            RegisterType reg = instruction.Register;
-                            Debug.Assert(reg != RegisterType.Unknown);
-
-                            string destination = GetRegisterAssembly(reg);
-                            string source = GetValueAssembly(imm8.AsT0, outputMode);
-                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
-                        }
-                        break;
-                    case OpFamily.Add16_FixedReg_Imm:
-                        {
-                            // 16-bit Addition Immediate to Fixed Register
-                            OneOf<short, Error> imm16 = ReadS16(ref cur, streamName);
-                            if (imm16.IsT1)
-                                return imm16.AsT1;
-
-                            RegisterType reg = instruction.Register;
-                            Debug.Assert(reg != RegisterType.Unknown);
-
-                            string destination = GetRegisterAssembly(reg);
-                            string source = GetValueAssembly(imm16.AsT0, outputMode);
-                            assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
-                        }
-                        break;
-
                     case OpFamily.Or8_RegOrMem_RegOrMem:
                     case OpFamily.Or16_RegOrMem_RegOrMem:
+                    case OpFamily.Adc8_RegOrMem_RegOrMem:
+                    case OpFamily.Adc16_RegOrMem_RegOrMem:
+                    case OpFamily.Sbb8_RegOrMem_RegOrMem:
+                    case OpFamily.Sbb16_RegOrMem_RegOrMem:
+                    case OpFamily.And8_RegOrMem_RegOrMem:
+                    case OpFamily.And16_RegOrMem_RegOrMem:
+                    case OpFamily.Sub8_RegOrMem_RegOrMem:
+                    case OpFamily.Sub16_RegOrMem_RegOrMem:
+                    case OpFamily.Xor8_RegOrMem_RegOrMem:
+                    case OpFamily.Xor16_RegOrMem_RegOrMem:
+                    case OpFamily.Cmp8_RegOrMem_RegOrMem:
+                    case OpFamily.Cmp16_RegOrMem_RegOrMem:
                         {
                             // 8-bit/16-bit Logical OR Register/Memory with Register/Memory
                             (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
@@ -591,8 +565,22 @@ namespace Final.CPU8086
                         }
                         break;
 
+                    case OpFamily.Add8_FixedReg_Imm:
+                    case OpFamily.Add16_FixedReg_Imm:
                     case OpFamily.Or8_FixedReg_Imm:
                     case OpFamily.Or16_FixedReg_Imm:
+                    case OpFamily.Adc8_FixedReg_Imm:
+                    case OpFamily.Adc16_FixedReg_Imm:
+                    case OpFamily.Sbb8_FixedReg_Imm:
+                    case OpFamily.Sbb16_FixedReg_Imm:
+                    case OpFamily.And8_FixedReg_Imm:
+                    case OpFamily.And16_FixedReg_Imm:
+                    case OpFamily.Sub8_FixedReg_Imm:
+                    case OpFamily.Sub16_FixedReg_Imm:
+                    case OpFamily.Xor8_FixedReg_Imm:
+                    case OpFamily.Xor16_FixedReg_Imm:
+                    case OpFamily.Cmp8_FixedReg_Imm:
+                    case OpFamily.Cmp16_FixedReg_Imm:
                         {
                             // 8-bit/16-bit Logical OR Immediate with Fixed Register
                             RegisterType reg = instruction.Register;

@@ -665,17 +665,17 @@ namespace Final.CPU8086
                                 }
                             }
 
-                            string mnemonic = atype switch
+                            Mnemonic mnemonic = atype switch
                             {
-                                ArithmeticType.Add => "ADD",
-                                ArithmeticType.AddWithCarry => "ADC",
-                                ArithmeticType.SubWithBorrow => "SBB",
-                                ArithmeticType.Sub => "SUB",
-                                ArithmeticType.Compare => "CMP",
+                                ArithmeticType.Add => Mnemonics.Add,
+                                ArithmeticType.AddWithCarry => Mnemonics.AddWithCarry,
+                                ArithmeticType.SubWithBorrow => Mnemonics.SubWithBorrow,
+                                ArithmeticType.Sub => Mnemonics.Sub,
+                                ArithmeticType.Compare => Mnemonics.Cmp,
                                 _ => throw new NotSupportedException($"Arithmetic type '{atype}' is not supported for instruction '{instruction}'!")
                             };
 
-                            assemblyLine = new AssemblyLine(mnemonic, destination, source);
+                            assemblyLine = new AssemblyLine(mnemonic.Lower, destination, source);
                         }
                         break;
 

@@ -1256,6 +1256,9 @@ namespace CPU8086
                     displacement = displacementRes.AsT0;
                 }
 
+                bool isWord = (opCode & 0b00000001) == 0b00000001;
+                bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
+
                 AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic.Lower);
 
                 switch (instruction.Family)
@@ -1271,8 +1274,6 @@ namespace CPU8086
                     case OpFamily.Move8_RegOrMem_RegOrMem:
                     case OpFamily.Move16_RegOrMem_RegOrMem:
                         {
-                            bool isWord = (opCode & 0b00000001) == 0b00000001;
-                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
                             (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
@@ -1331,8 +1332,9 @@ namespace CPU8086
                     case OpFamily.Move8_Mem_FixedReg:
                     case OpFamily.Move16_Mem_FixedReg:
                         {
-                            // @NOTE(final): D parameter is swapped!
-                            bool destinationIsMemory = (opCode & 0b00000010) == 0b00000010;
+                            bool destinationIsMemory = !destinationIsRegister;
+
+                            // 8-bit/16-bit Memory to Fixed-Register or 8-bit/16-bit Fixed-Register to Memory
 
                             OneOf<short, Error> mem16 = ReadS16(ref cur, streamName);
                             if (mem16.IsT1)
@@ -1359,8 +1361,6 @@ namespace CPU8086
                     case OpFamily.Add8_RegOrMem_RegOrMem:
                     case OpFamily.Add16_RegOrMem_RegOrMem:
                         {
-                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
-                            bool isWord = (opCode & 0b00000001) == 0b00000001;
                             (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
@@ -1398,8 +1398,6 @@ namespace CPU8086
                     case OpFamily.Or8_RegOrMem_RegOrMem:
                     case OpFamily.Or16_RegOrMem_RegOrMem:
                         {
-                            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
-                            bool isWord = (opCode & 0b00000001) == 0b00000001;
                             (string destination, string source) = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement, outputMode);
                             assemblyLine = assemblyLine.WithDestinationAndSource(destination, source);
                         }
@@ -1408,8 +1406,6 @@ namespace CPU8086
                     case OpFamily.Or8_FixedReg_Imm:
                     case OpFamily.Or16_FixedReg_Imm:
                         {
-                            bool isWord = (opCode & 0b00000001) == 0b00000001;
-
                             RegisterType reg = instruction.Register;
                             Debug.Assert(reg != RegisterType.Unknown);
 
@@ -1439,8 +1435,7 @@ namespace CPU8086
                     case OpFamily.Arithmetic8_RegOrMem_Imm:
                     case OpFamily.Arithmetic16_RegOrMem_Imm:
                         {
-                            bool isWord = (opCode & 0b00000001) == 0b00000001;
-                            bool specialCase = (opCode & 0b00000010) == 0b00000010;
+                            bool specialCase = destinationIsRegister;
 
                             ArithmeticType atype = (ArithmeticType)modRegRM.RegField;
 

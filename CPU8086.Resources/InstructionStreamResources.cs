@@ -14,7 +14,7 @@ namespace Final.CPU8086
 
         public Stream Get(string name)
         {
-            return _asm.GetManifestResourceStream("CPU8086.Resources." + name);
+            return _asm.GetManifestResourceStream("Final.CPU8086.Resources." + name);
         }
     }
 }

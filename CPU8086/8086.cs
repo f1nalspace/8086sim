@@ -35,7 +35,7 @@ namespace CPU8086
         public static readonly Mnemonic And = new Mnemonic("AND", "and");
         public static readonly Mnemonic Sub = new Mnemonic("SUB", "sub");
         public static readonly Mnemonic Xor = new Mnemonic("XOR", "xor");
-        public static readonly Mnemonic Cmp = new Mnemonic("cMP", "cmp");
+        public static readonly Mnemonic Cmp = new Mnemonic("CMP", "cmp");
 
         public static readonly Mnemonic Dynamic = new Mnemonic("(DYNAMIC)", "(dynamic)");
     }

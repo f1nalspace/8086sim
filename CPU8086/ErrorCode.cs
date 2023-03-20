@@ -4,6 +4,7 @@
     {
         Unknown = 0,
         NotEnoughBytesInStream,
+        EndOfStream,
         TooSmallAdvancementInStream,
         TooLargeAdvancementInStream,
         OpCodeNotImplemented,

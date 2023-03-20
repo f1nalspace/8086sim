@@ -2,110 +2,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Final.CPU8086
 {
-    public enum InstructionDataType : byte
-    {
-        None = 0,
-        Register,
-        Memory,
-        Immediate,
-    }
-
-    [StructLayout(LayoutKind.Explicit, Pack = 1, Size = 4)]
-    public readonly struct InstructionLocation
-    {
-        [FieldOffset(0)]
-        public readonly InstructionDataType Type;
-        [FieldOffset(1)]
-        public readonly byte Length;
-        [FieldOffset(2)]
-        public readonly short Mem;
-        [FieldOffset(2)]
-        public readonly short Imm;
-        [FieldOffset(2)]
-        public readonly RegisterType Reg;
-
-        private InstructionLocation(InstructionDataType type, byte u8)
-        {
-            Type = type;
-            Length = 1;
-            Reg = RegisterType.Unknown;
-            Imm = u8;
-            Mem = u8;
-        }
-
-        private InstructionLocation(InstructionDataType type, short s16)
-        {
-            Type = type;
-            Length = 2;
-            Reg = RegisterType.Unknown;
-            Imm = s16;
-            Mem = s16;
-        }
-
-        private InstructionLocation(InstructionDataType type, RegisterType reg)
-        {
-            Type = type;
-            Length = Register.GetLength(reg);
-            Imm = 0;
-            Mem = 0;
-            Reg = reg;
-        }
-
-        public override string ToString()
-        {
-            if (Type == InstructionDataType.Register)
-                return Register.GetName(Reg);
-            else if (Type == InstructionDataType.Memory)
-                return Mem.ToString("[X]");
-            else if (Type == InstructionDataType.Immediate)
-                return Imm.ToString("X");
-            else
-                return "None";
-        }
-
-        public static InstructionLocation AsMemory(short memory)
-            => new InstructionLocation(InstructionDataType.Memory, memory);
-
-        public static InstructionLocation AsImmediate(short imm)
-            => new InstructionLocation(InstructionDataType.Immediate, imm);
-
-        public static InstructionLocation AsRegister(RegisterType reg)
-            => new InstructionLocation(InstructionDataType.Register, reg);
-    }
-
-    public readonly struct InstructionData
-    {
-        public OpCode OpCode { get; }
-        public byte Length { get; }
-        public InstructionLocation Dest { get; }
-        public InstructionLocation Source { get; }
-
-        public InstructionData(OpCode opCode, byte length, InstructionLocation dest, InstructionLocation source)
-        {
-            OpCode = opCode;
-            Length = length;
-            Dest = dest;
-            Source = source;
-        }
-
-        public override string ToString()
-        {
-            if (Dest.Type != InstructionDataType.None && Source.Type != InstructionDataType.None)
-                return $"{OpCode} {Dest}, {Source} ({Length} bytes)";
-            else if (Dest.Type != InstructionDataType.None && Source.Type == InstructionDataType.None)
-                return $"{OpCode} {Dest} ({Length} bytes)";
-            else
-                return $"{OpCode} ({Length} bytes)";
-        }
-    }
-
-    public delegate InstructionData DecodeInstructionEventHandler(ref ReadOnlySpan<byte> stream);
-
     public class CPU
     {
         private static readonly InstructionTable _opTable = new InstructionTable();
@@ -143,6 +43,16 @@ namespace Final.CPU8086
             short result = (short)(first | second << 8);
             stream = stream.Slice(2);
             return result;
+        }
+
+        public static string GetAddressAssembly(byte address8, OutputValueMode outputMode)
+        {
+            short displacement;
+            if ((address8 & 0b10000000) == 0b10000000)
+                displacement = (sbyte)address8;
+            else
+                displacement = address8;
+            return GetValueAssembly(displacement, outputMode);
         }
 
         public static string GetAddressAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
@@ -269,9 +179,9 @@ namespace Final.CPU8086
             return result;
         }
 
-        private static OneOf<short, Error> LoadDisplacementOrZero(EffectiveAddressCalculation eac, ref ReadOnlySpan<byte> stream, string streamName)
+        private static OneOf<short, Error> LoadDisplacementOrZero(EffectiveAddressCalculation eac, ref ReadOnlySpan<byte> stream, string streamName, out byte outLen)
         {
-            byte len = eac switch
+            outLen = eac switch
             {
                 // Mod == 01
                 EffectiveAddressCalculation.BX_SI_D8 or
@@ -297,14 +207,14 @@ namespace Final.CPU8086
                 _ => 0,
             };
 
-            if (len == 1)
+            if (outLen == 1)
             {
                 OneOf<byte, Error> u8 = ReadU8(ref stream, streamName);
                 if (u8.IsT1)
                     return new Error(u8.AsT1, $"Cannot load 8-bit displacement for EAC '{eac}'");
                 return u8.AsT0;
             }
-            else if (len == 2)
+            else if (outLen == 2)
             {
                 OneOf<short, Error> s16 = ReadS16(ref stream, streamName);
                 if (s16.IsT1)
@@ -315,7 +225,7 @@ namespace Final.CPU8086
                 return 0;
         }
 
-        private static (string destination, string source) GetDestinationAndSource(ModRegRM modRegRM, bool directionIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
+        private static (string destination, string source) GetDestinationAndSource(ModRegRM modRegRM, bool destinationIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
         {
             string destination, source;
             if (modRegRM.Mode == Mode.RegisterMode)
@@ -323,7 +233,7 @@ namespace Final.CPU8086
                 if (isWord)
                 {
                     // 16-bit Register to Register
-                    if (directionIsToRegister)
+                    if (destinationIsToRegister)
                     {
                         destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
                         source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
@@ -337,7 +247,7 @@ namespace Final.CPU8086
                 else
                 {
                     // 8-bit Register to Register
-                    if (directionIsToRegister)
+                    if (destinationIsToRegister)
                     {
                         destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
                         source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
@@ -353,7 +263,7 @@ namespace Final.CPU8086
             {
                 if (isWord)
                 {
-                    if (directionIsToRegister)
+                    if (destinationIsToRegister)
                     {
                         // 16-bit Memory to Register
                         destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
@@ -368,7 +278,7 @@ namespace Final.CPU8086
                 }
                 else
                 {
-                    if (directionIsToRegister)
+                    if (destinationIsToRegister)
                     {
                         // 8-bit Memory to Register
                         destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
@@ -383,6 +293,450 @@ namespace Final.CPU8086
                 }
             }
             return (destination, source);
+        }
+
+
+
+        private static (InstructionOperand Dest, InstructionOperand Source) GetDestinationAndSource(ModRegRM modRegRM, bool destinationIsToRegister, bool isWord, short displacement)
+        {
+            if (modRegRM.Mode == Mode.RegisterMode)
+            {
+                if (isWord)
+                {
+                    // 16-bit Register to Register
+                    if (destinationIsToRegister)
+                    {
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField)),
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField))
+                        );
+                    }
+                    else
+                    {
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField)),
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField))
+                        );
+                    }
+                }
+                else
+                {
+                    // 8-bit Register to Register
+                    if (destinationIsToRegister)
+                    {
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField)),
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField))
+                        );
+                    }
+                    else
+                    {
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField)),
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField))
+                        );
+                    }
+                }
+            }
+            else
+            {
+                if (isWord)
+                {
+                    if (destinationIsToRegister)
+                    {
+                        // 16-bit Memory to Register
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField)),
+                            InstructionOperand.AsAddress(modRegRM.EAC, displacement)
+                        );
+                    }
+                    else
+                    {
+                        // 16-bit Register to Memory
+                        return (
+                            InstructionOperand.AsAddress(modRegRM.EAC, displacement),
+                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField))
+                        );
+                    }
+                }
+                else
+                {
+                    if (destinationIsToRegister)
+                    {
+                        // 8-bit Memory to Register
+                        return (
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField)),
+                            InstructionOperand.AsAddress(modRegRM.EAC, displacement)
+                        );
+                    }
+                    else
+                    {
+                        // 8-bit Register to Memory
+                        return (
+                            InstructionOperand.AsAddress(modRegRM.EAC, displacement),
+                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField))
+                        );
+                    }
+                }
+            }
+        }
+
+        public OneOf<DecodedInstruction, Error> DecodeNext(ReadOnlySpan<byte> stream, string streamName)
+        {
+            static InstructionType GetInstructionType(OpFamily family)
+            {
+                return family switch
+                {
+                    OpFamily.Push_FixedReg => InstructionType.PUSH,
+                    OpFamily.Pop_FixedReg => InstructionType.POP,
+
+                    OpFamily.Move8_RegOrMem_RegOrMem or
+                    OpFamily.Move16_RegOrMem_RegOrMem or
+                    OpFamily.Move8_Reg_Imm or
+                    OpFamily.Move16_Reg_Imm or
+                    OpFamily.Move8_Mem_Imm or
+                    OpFamily.Move16_Mem_Imm or
+                    OpFamily.Move8_FixedReg_Mem or
+                    OpFamily.Move16_FixedReg_Mem or
+                    OpFamily.Move8_Mem_FixedReg or
+                    OpFamily.Move16_Mem_FixedReg => InstructionType.MOV,
+
+                    OpFamily.Add8_RegOrMem_RegOrMem or
+                    OpFamily.Add16_RegOrMem_RegOrMem or
+                    OpFamily.Add8_FixedReg_Imm or
+                    OpFamily.Add16_FixedReg_Imm => InstructionType.ADD,
+
+                    OpFamily.Or8_RegOrMem_RegOrMem or
+                    OpFamily.Or16_RegOrMem_RegOrMem or
+                    OpFamily.Or8_FixedReg_Imm or
+                    OpFamily.Or16_FixedReg_Imm => InstructionType.OR,
+
+                    OpFamily.Adc8_RegOrMem_RegOrMem or
+                    OpFamily.Adc16_RegOrMem_RegOrMem or
+                    OpFamily.Adc8_FixedReg_Imm or
+                    OpFamily.Adc16_FixedReg_Imm => InstructionType.ADC,
+
+                    OpFamily.Sbb8_RegOrMem_RegOrMem or
+                    OpFamily.Sbb16_RegOrMem_RegOrMem or
+                    OpFamily.Sbb8_FixedReg_Imm or
+                    OpFamily.Sbb16_FixedReg_Imm => InstructionType.SBB,
+
+                    OpFamily.And8_RegOrMem_RegOrMem or
+                    OpFamily.And16_RegOrMem_RegOrMem or
+                    OpFamily.And8_FixedReg_Imm or
+                    OpFamily.And16_FixedReg_Imm => InstructionType.AND,
+
+                    OpFamily.Sub8_RegOrMem_RegOrMem or
+                    OpFamily.Sub16_RegOrMem_RegOrMem or
+                    OpFamily.Sub8_FixedReg_Imm or
+                    OpFamily.Sub16_FixedReg_Imm => InstructionType.SUB,
+
+                    OpFamily.Xor8_RegOrMem_RegOrMem or
+                    OpFamily.Xor16_RegOrMem_RegOrMem or
+                    OpFamily.Xor8_FixedReg_Imm or
+                    OpFamily.Xor16_FixedReg_Imm => InstructionType.XOR,
+
+                    OpFamily.Cmp8_RegOrMem_RegOrMem or
+                    OpFamily.Cmp16_RegOrMem_RegOrMem or
+                    OpFamily.Cmp8_FixedReg_Imm or
+                    OpFamily.Cmp16_FixedReg_Imm => InstructionType.CMP,
+
+                    _ => InstructionType.None,
+                };
+            }
+
+            byte length = 0;
+
+            OneOf<byte, Error> opCodeRes = ReadU8(ref stream, streamName);
+            if (opCodeRes.IsT1)
+                return opCodeRes.AsT1;
+            ++length;
+
+            byte opCode = opCodeRes.AsT0;
+            Instruction instruction = _opTable[opCode];
+            if (instruction == null)
+                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
+            else if ((byte)instruction.OpCode != opCode)
+                return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instruction.OpCode}'");
+
+            // Load MOD, REG and R/M field, if needed
+            ModRegRM modRegRM;
+            if (instruction.Encoding.HasFlag(FieldEncoding.Mod) ||
+                instruction.Encoding.HasFlag(FieldEncoding.Reg) ||
+                instruction.Encoding.HasFlag(FieldEncoding.RM))
+            {
+                OneOf<byte, Error> u8 = ReadU8(ref stream, streamName);
+                if (u8.IsT1)
+                    return u8.AsT1;
+                ++length;
+                modRegRM = ReadModRegRM(u8.AsT0);
+            }
+            else
+                modRegRM = new ModRegRM();
+
+            // Load displacement, if needed
+            short displacement;
+            {
+                OneOf<short, Error> displacementRes = LoadDisplacementOrZero(modRegRM.EAC, ref stream, streamName, out byte displacementLength);
+                if (displacementRes.IsT1)
+                    return displacementRes.AsT1;
+                length += displacementLength;
+                displacement = displacementRes.AsT0;
+            }
+
+            bool isWord = (opCode & 0b00000001) == 0b00000001;
+            bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
+
+            // @TODO(final): Move this into Register directly
+            DataWidth dataType = isWord ? DataWidth.Word : DataWidth.Byte;
+            InstructionType type = GetInstructionType(instruction.Family);
+            
+            switch (instruction.Family)
+            {
+                case OpFamily.Push_FixedReg:
+                    {
+                        RegisterType register = instruction.Register;
+                        Debug.Assert(register != RegisterType.Unknown);
+                        return new DecodedInstruction(type, DataWidth.Word, length, opCode, InstructionOperand.AsRegister(register));
+                    }
+
+                case OpFamily.Pop_FixedReg:
+                    {
+                        RegisterType register = instruction.Register;
+                        Debug.Assert(register != RegisterType.Unknown);
+                        return new DecodedInstruction(type, DataWidth.Word, length, opCode, InstructionOperand.AsRegister(register));
+                    }
+
+                case OpFamily.Move8_RegOrMem_RegOrMem:
+                case OpFamily.Move16_RegOrMem_RegOrMem:
+                    {
+                        // 8-bit/16-bit Move Register/Register to Register/Register
+                        var ops = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement);
+                        return new DecodedInstruction(type, dataType, length, opCode, ops.Dest, ops.Source);
+                    }
+
+                case OpFamily.Move8_Reg_Imm:
+                    {
+                        // 8-bit Move Immediate To Register
+                        OneOf<byte, Error> imm8 = ReadU8(ref stream, streamName);
+                        if (imm8.IsT1)
+                            return imm8.AsT1;
+                        ++length;
+                        byte reg = (byte)(opCode & 0b00000111);
+                        InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetByte(reg));
+                        InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
+                        return new DecodedInstruction(type, DataWidth.Byte, length, opCode, destination, source);
+                    }
+                case OpFamily.Move8_Mem_Imm:
+                    {
+                        // 8-bit Move Explicit Immediate to Memory
+                        OneOf<byte, Error> imm8 = ReadU8(ref stream, streamName);
+                        if (imm8.IsT1)
+                            return imm8.AsT1;
+                        ++length;
+                        InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
+                        InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
+                        return new DecodedInstruction(type, DataWidth.Byte, length, opCode, destination, source);
+                    }
+
+                case OpFamily.Move16_Reg_Imm:
+                    {
+                        // 16-bit Move Immediate To Register
+                        OneOf<short, Error> imm16 = ReadS16(ref stream, streamName);
+                        if (imm16.IsT1)
+                            return imm16.AsT1;
+                        length += 2;
+                        byte reg = (byte)(opCode & 0b00000111);
+                        InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetWord(reg));
+                        InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
+                        return new DecodedInstruction(type, DataWidth.Word, length, opCode, destination, source);
+                    }
+                case OpFamily.Move16_Mem_Imm:
+                    {
+                        // 16-bit Move Explicit Immediate to Memory
+                        OneOf<short, Error> imm16 = ReadS16(ref stream, streamName);
+                        if (imm16.IsT1)
+                            return imm16.AsT1;
+                        length += 2;
+                        InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
+                        InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
+                        return new DecodedInstruction(type, DataWidth.Word, length, opCode, destination, source);
+                    }
+
+                case OpFamily.Move8_FixedReg_Mem:
+                case OpFamily.Move16_FixedReg_Mem:
+                case OpFamily.Move8_Mem_FixedReg:
+                case OpFamily.Move16_Mem_FixedReg:
+                    {
+                        // 8-bit/16-bit Move Memory to Fixed-Register or 8-bit/16-bit Fixed-Register to Memory
+
+                        bool destinationIsMemory = destinationIsRegister;
+
+                        OneOf<short, Error> mem16 = ReadS16(ref stream, streamName);
+                        if (mem16.IsT1)
+                            return mem16.AsT1;
+                        length += 2;
+
+                        RegisterType reg = instruction.Register;
+                        Debug.Assert(reg != RegisterType.Unknown);
+
+                        (InstructionOperand Dest, InstructionOperand Source) ops;
+                        if (destinationIsMemory)
+                        {
+                            ops = (
+                                InstructionOperand.AsAddress(EffectiveAddressCalculation.DirectAddress, mem16.AsT0),
+                                InstructionOperand.AsRegister(reg)
+                            );
+                        }
+                        else
+                        {
+                            ops = (
+                                InstructionOperand.AsRegister(reg),
+                                InstructionOperand.AsAddress(EffectiveAddressCalculation.DirectAddress, mem16.AsT0)
+                            );
+                        }
+                        return new DecodedInstruction(InstructionType.MOV, dataType, length, opCode, ops.Dest, ops.Source);
+                    }
+
+                case OpFamily.Add8_RegOrMem_RegOrMem:
+                case OpFamily.Add16_RegOrMem_RegOrMem:
+                case OpFamily.Or8_RegOrMem_RegOrMem:
+                case OpFamily.Or16_RegOrMem_RegOrMem:
+                case OpFamily.Adc8_RegOrMem_RegOrMem:
+                case OpFamily.Adc16_RegOrMem_RegOrMem:
+                case OpFamily.Sbb8_RegOrMem_RegOrMem:
+                case OpFamily.Sbb16_RegOrMem_RegOrMem:
+                case OpFamily.And8_RegOrMem_RegOrMem:
+                case OpFamily.And16_RegOrMem_RegOrMem:
+                case OpFamily.Sub8_RegOrMem_RegOrMem:
+                case OpFamily.Sub16_RegOrMem_RegOrMem:
+                case OpFamily.Xor8_RegOrMem_RegOrMem:
+                case OpFamily.Xor16_RegOrMem_RegOrMem:
+                case OpFamily.Cmp8_RegOrMem_RegOrMem:
+                case OpFamily.Cmp16_RegOrMem_RegOrMem:
+                    {
+                        // 8-bit/16-bit math operation Register/Memory with Register/Memory
+                        var ops = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement);
+                        return new DecodedInstruction(type, dataType, length, opCode, ops.Dest, ops.Source);
+                    }
+
+                case OpFamily.Add8_FixedReg_Imm:
+                case OpFamily.Add16_FixedReg_Imm:
+                case OpFamily.Or8_FixedReg_Imm:
+                case OpFamily.Or16_FixedReg_Imm:
+                case OpFamily.Adc8_FixedReg_Imm:
+                case OpFamily.Adc16_FixedReg_Imm:
+                case OpFamily.Sbb8_FixedReg_Imm:
+                case OpFamily.Sbb16_FixedReg_Imm:
+                case OpFamily.And8_FixedReg_Imm:
+                case OpFamily.And16_FixedReg_Imm:
+                case OpFamily.Sub8_FixedReg_Imm:
+                case OpFamily.Sub16_FixedReg_Imm:
+                case OpFamily.Xor8_FixedReg_Imm:
+                case OpFamily.Xor16_FixedReg_Imm:
+                case OpFamily.Cmp8_FixedReg_Imm:
+                case OpFamily.Cmp16_FixedReg_Imm:
+                    {
+                        // 8-bit/16-bit Logical OR Immediate with Fixed Register
+                        RegisterType reg = instruction.Register;
+                        Debug.Assert(reg != RegisterType.Unknown);
+
+                        InstructionOperand destination = InstructionOperand.AsRegister(reg);
+
+                        InstructionOperand source;
+                        if (isWord)
+                        {
+                            OneOf<short, Error> imm16 = ReadS16(ref stream, streamName);
+                            if (imm16.IsT1)
+                                return imm16.AsT1;
+                            length += 2;
+                            source = InstructionOperand.AsImmediate(imm16.AsT0);
+                        }
+                        else
+                        {
+                            OneOf<byte, Error> imm8 = ReadU8(ref stream, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+                            length += 1;
+                            source = InstructionOperand.AsImmediate(imm8.AsT0);
+                        }
+                        return new DecodedInstruction(type, dataType, length, opCode, destination, source);
+                    }
+
+                case OpFamily.Arithmetic8_RegOrMem_Imm:
+                case OpFamily.Arithmetic16_RegOrMem_Imm:
+                    {
+                        // 8-bit/16-bit Arithmetic (ADD, SUB, OR, AND, etc.) Immediate to Register/Memory
+
+                        bool specialCase = destinationIsRegister;
+
+                        ArithmeticType arithmeticType = (ArithmeticType)modRegRM.RegField;
+
+                        InstructionOperand destination, source;
+                        if (isWord && specialCase || !isWord)
+                        {
+                            // @NOTE(final): 8-bit immediate, but 16-bit register or memory
+                            OneOf<byte, Error> imm8 = ReadU8(ref stream, streamName);
+                            if (imm8.IsT1)
+                                return imm8.AsT1;
+                            length += 1;
+
+                            if (modRegRM.Mode == Mode.RegisterMode)
+                            {
+                                if (isWord)
+                                    destination = InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField));
+                                else
+                                    destination = InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField));
+                                source = InstructionOperand.AsImmediate(imm8.AsT0);
+                            }
+                            else
+                            {
+                                destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
+                                source = InstructionOperand.AsImmediate(imm8.AsT0);
+                            }
+                        }
+                        else
+                        {
+                            Debug.Assert(isWord && !specialCase);
+
+                            // @NOTE(final): 16-bit immediate and 16-bit register or memory
+                            OneOf<short, Error> imm16 = ReadS16(ref stream, streamName);
+                            if (imm16.IsT1)
+                                return imm16.AsT1;
+                            length += 2;
+
+                            if (modRegRM.Mode == Mode.RegisterMode)
+                            {
+                                if (isWord)
+                                    destination = InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField));
+                                else
+                                    destination = InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField));
+                                source = InstructionOperand.AsImmediate(imm16.AsT0);
+                            }
+                            else
+                            {
+                                destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
+                                source = InstructionOperand.AsImmediate(imm16.AsT0);
+                            }
+                        }
+
+                        type = arithmeticType switch
+                        {
+                            ArithmeticType.Add => InstructionType.ADD,
+                            ArithmeticType.AddWithCarry => InstructionType.ADC,
+                            ArithmeticType.SubWithBorrow => InstructionType.SBB,
+                            ArithmeticType.Sub => InstructionType.SUB,
+                            ArithmeticType.Compare => InstructionType.CMP,
+                            _ => throw new NotSupportedException($"Arithmetic type '{arithmeticType}' is not supported for instruction '{instruction}'!")
+                        };
+
+                        return new DecodedInstruction(type, dataType, length, opCode, destination, source);
+                    }
+
+                default:
+                    return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction '{instruction}'!");
+
+            }
         }
 
         public static OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)
@@ -432,7 +786,7 @@ namespace Final.CPU8086
                 // Load displacement, if needed
                 short displacement;
                 {
-                    OneOf<short, Error> displacementRes = LoadDisplacementOrZero(modRegRM.EAC, ref cur, streamName);
+                    OneOf<short, Error> displacementRes = LoadDisplacementOrZero(modRegRM.EAC, ref cur, streamName, out _);
                     if (displacementRes.IsT1)
                         return displacementRes.AsT1;
                     displacement = displacementRes.AsT0;
@@ -448,8 +802,11 @@ namespace Final.CPU8086
                     case OpFamily.Push_FixedReg:
                     case OpFamily.Pop_FixedReg:
                         {
+                            RegisterType register = instruction.Register;
+                            Debug.Assert(register != RegisterType.Unknown);
+
                             // Push/Pop Fixed Register
-                            string destination = GetRegisterAssembly(RegisterType.ES);
+                            string destination = GetRegisterAssembly(register);
                             assemblyLine = assemblyLine.WithDestinationOnly(destination);
                         }
                         break;
@@ -676,6 +1033,17 @@ namespace Final.CPU8086
                             };
 
                             assemblyLine = new AssemblyLine(mnemonic.Lower, destination, source);
+                        }
+                        break;
+
+                    case OpFamily.Jump8:
+                        {
+                            // @NOTE(final): Jump to 8-bit offset
+                            OneOf<byte, Error> inc8 = ReadU8(ref cur, streamName);
+                            if (inc8.IsT1)
+                                return inc8.AsT1;
+                            string destination = GetAddressAssembly(inc8.AsT0, outputMode);
+                            assemblyLine = assemblyLine.WithDestinationOnly(destination);
                         }
                         break;
 

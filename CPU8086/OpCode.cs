@@ -72,6 +72,8 @@
         CMP_dAL_sIMM8 = 0x3C,
         CMP_dAX_sIMM16 = 0x3D,
 
+        JNE_JNZ = 0x75,
+
         /// <summary>
         /// <para>8-bit Arithmetic instructions such as ADD, ADC, SBB, SUB, CMP, etc. writing to register or memory, using an immediate as source.</para>
         /// <para>REG field decides what type of arithmetic operating it actually is.</para>

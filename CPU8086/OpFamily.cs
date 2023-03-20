@@ -1,6 +1,7 @@
 ﻿namespace Final.CPU8086
 {
-    public enum OpFamily : int
+    // @TODO(final): Remove OpFamily
+    public enum OpFamily : byte
     {
         /// <summary>
         /// Unknown
@@ -224,5 +225,10 @@
         /// <para>REG (111) = CMP</para>
         /// </summary>
         Arithmetic16_RegOrMem_Imm,
+
+        /// <summary>
+        /// Jump when not equal
+        /// </summary>
+        Jump8,
     }
 }

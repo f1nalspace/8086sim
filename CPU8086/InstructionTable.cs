@@ -104,6 +104,9 @@
             // @TODO(final): 0x3E DS: segment override prefix
             // @TODO(final): 0x3F AAS
 
+            // 0111 0000 to 0111 1111 (Jumps)
+            _table[0x75 /* 0111 0000 */] = new Instruction(OpCode.JNE_JNZ, OpFamily.Jump8, FieldEncoding.None, 2, Mnemonics.JumpNotEqual, "Jump to 8-bit offset when not Equal");
+
             // 1000 0000 (ADD/ADC/SUB,etc.)
             _table[0x80 /* 1000 0000 */] = new Instruction(OpCode.ARITHMETIC_dREG8_dMEM8_sIMM8, OpFamily.Arithmetic8_RegOrMem_Imm, FieldEncoding.ModRemRM, 3, 5, Mnemonics.Dynamic, "Arithmetic 8-bit Immediate to 8-bit Register/Memory");
 

@@ -2,7 +2,7 @@
 
 namespace Final.CPU8086
 {
-    public class Instruction
+    public class InstructionDefinition
     {
         public OpCode OpCode { get; }
         public OpFamily Family { get; }
@@ -13,7 +13,7 @@ namespace Final.CPU8086
         public Mnemonic Mnemonic { get; }
         public string Description { get; }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, byte maxLength, Mnemonic mnemonic, string description)
+        public InstructionDefinition(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, byte maxLength, Mnemonic mnemonic, string description)
         {
             if (opCode == OpCode.Unknown)
                 throw new ArgumentNullException(nameof(opCode));
@@ -35,15 +35,15 @@ namespace Final.CPU8086
             Description = description;
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, maxLength, mnemonic, description)
+        public InstructionDefinition(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, byte maxLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, maxLength, mnemonic, description)
         {
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, register, minLength, minLength, mnemonic, description)
+        public InstructionDefinition(OpCode opCode, OpFamily family, FieldEncoding encoding, RegisterType register, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, register, minLength, minLength, mnemonic, description)
         {
         }
 
-        public Instruction(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, minLength, mnemonic, description)
+        public InstructionDefinition(OpCode opCode, OpFamily family, FieldEncoding encoding, byte minLength, Mnemonic mnemonic, string description) : this(opCode, family, encoding, RegisterType.Unknown, minLength, minLength, mnemonic, description)
         {
         }
 

@@ -453,7 +453,7 @@ namespace Final.CPU8086
             ++length;
 
             byte opCode = opCodeRes.AsT0;
-            Instruction instruction = _opTable[opCode];
+            InstructionDefinition instruction = _opTable[opCode];
             if (instruction == null)
                 return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
             else if ((byte)instruction.OpCode != opCode)
@@ -765,7 +765,7 @@ namespace Final.CPU8086
 
                 byte opCode = opCodeRes.AsT0;
 
-                Instruction instruction = _opTable[opCode];
+                InstructionDefinition instruction = _opTable[opCode];
                 if (instruction == null)
                     return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
                 else if ((byte)instruction.OpCode != opCode)

@@ -1,6 +1,6 @@
 ﻿namespace Final.CPU8086
 {
-    public readonly struct DecodedInstruction
+    public readonly struct Instruction
     {
         public InstructionType Type { get; }
         public DataWidth Width { get; }
@@ -9,7 +9,7 @@
         public InstructionOperand Dest { get; }
         public InstructionOperand Source { get; }
 
-        public DecodedInstruction(InstructionType type, DataWidth width, byte length, byte opCode, InstructionOperand dest, InstructionOperand source)
+        public Instruction(InstructionType type, DataWidth width, byte length, byte opCode, InstructionOperand dest, InstructionOperand source)
         {
             Type = type;
             Width = width;
@@ -19,9 +19,9 @@
             Source = source;
         }
 
-        public DecodedInstruction(InstructionType type, DataWidth dataType, byte length, byte opCode, InstructionOperand dest) : this(type, dataType, length, opCode, dest, new InstructionOperand()) { }
+        public Instruction(InstructionType type, DataWidth dataType, byte length, byte opCode, InstructionOperand dest) : this(type, dataType, length, opCode, dest, new InstructionOperand()) { }
 
-        public DecodedInstruction(InstructionType type, DataWidth dataType, byte length, byte opCode) : this(type, dataType, length, opCode, new InstructionOperand(), new InstructionOperand()) { }
+        public Instruction(InstructionType type, DataWidth dataType, byte length, byte opCode) : this(type, dataType, length, opCode, new InstructionOperand(), new InstructionOperand()) { }
 
         public override string ToString()
         {

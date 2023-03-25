@@ -51,6 +51,55 @@ namespace Final.ITP
         LongLabel
     }
 
+    enum PlatformType
+    {
+        Unknown = 0,
+        X_32Bit,
+        X_186,
+        X_286,
+        X_386,
+        X_387,
+        X_486,
+        P5,
+    }
+
+    record Platform(PlatformType Type, string Original = null)
+    {
+        public static Platform Parse(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+            switch (value.ToLower())
+            {
+                case "186":
+                    return new Platform(PlatformType.X_186);
+                case "286":
+                    return new Platform(PlatformType.X_286);
+                case "386":
+                    return new Platform(PlatformType.X_386);
+                case "387":
+                    return new Platform(PlatformType.X_387);
+                case "486":
+                    return new Platform(PlatformType.X_486);
+                case "32bit":
+                    return new Platform(PlatformType.X_32Bit);
+                case "p5":
+                    return new Platform(PlatformType.P5);
+                default:
+                    throw new NotSupportedException($"The platform '{value}' is not supported!");
+                    //return new Platform(PlatformType.Unknown, value);
+            }
+        }
+
+        public override string ToString()
+        {
+            if (Type != PlatformType.Unknown)
+                return Type.ToString();
+            else
+                return Original;
+        }
+    }
+
     record Field(FieldType Type, string Value, byte Constant = 0)
     {
         public static Field Parse(string value)
@@ -107,7 +156,198 @@ namespace Final.ITP
         public bool Equals(Family other) => Name.Equals(other.Name);
     }
 
-    record Instruction(byte Op, string Mnemonic, string Destination, string Source, int MinLength, int MaxLength, Field[] Fields, string Platform)
+    // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
+    enum OperandType
+    {
+        Unknown = 0,
+
+        MemoryByte,
+        MemoryWord,
+        MemoryDoubleWord,
+        MemoryQuadWord,
+
+        MemoryWordReal,
+        MemoryDoubleWordReal,
+        MemoryQuadWordReal,
+        MemoryTenByteReal,
+
+        RegisterByte,
+        RegisterWord,
+        RegisterDoubleWord,
+
+        RegisterOrMemoryByte,
+        RegisterOrMemoryWord,
+        RegisterOrMemoryDoubleWord,
+        RegisterOrMemoryQuadWord,
+
+        ImmediateByte,
+        ImmediateWord,
+
+        Pointer,
+        NearPointer,
+        FarPointer,
+
+        TypeDoubleWord,
+        TypeShort,
+
+        PrefixFar,
+
+        ST,
+        ST_I,
+
+        RAX,
+        EAX,
+        AX,
+        AL,
+        AH,
+
+        RBX,
+        EBX,
+        BX,
+        BL,
+        BH,
+
+        RCX,
+        ECX,
+        CX,
+        CL,
+        CH,
+
+        RDX,
+        EDX,
+        DX,
+        DL,
+        DH,
+
+        RSP,
+        ESP,
+        SP,
+
+        RBP,
+        EBP,
+        BP,
+
+        RSI,
+        ESI,
+        SI,
+
+        RDI,
+        EDI,
+        DI,
+
+        CS,
+        DS,
+        SS,
+        ES,
+
+        CR,
+        DR,
+        TR,
+    }
+
+    record Operand(OperandType Type, string Original = null)
+    {
+        public override string ToString()
+        {
+            if (Type != OperandType.Unknown)
+                return Type.ToString();
+            else
+                return Original;
+        }
+
+        public static Operand Parse(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+            return value.ToLower() switch
+            {
+                "mb" => new Operand(OperandType.MemoryByte),
+                "mw" => new Operand(OperandType.MemoryWord),
+                "md" => new Operand(OperandType.MemoryDoubleWord),
+                "mq" => new Operand(OperandType.MemoryQuadWord),
+
+                "mwr" => new Operand(OperandType.MemoryWordReal),
+                "mdr" => new Operand(OperandType.MemoryDoubleWordReal),
+                "mqr" => new Operand(OperandType.MemoryQuadWordReal),
+                "mtr" => new Operand(OperandType.MemoryTenByteReal),
+
+                "rb" => new Operand(OperandType.RegisterByte),
+                "rw" => new Operand(OperandType.RegisterWord),
+                "rd" => new Operand(OperandType.RegisterDoubleWord),
+                "rmb" => new Operand(OperandType.RegisterOrMemoryByte),
+                "rmw" => new Operand(OperandType.RegisterOrMemoryWord),
+                "rmd" => new Operand(OperandType.RegisterOrMemoryDoubleWord),
+                "rmq" => new Operand(OperandType.RegisterOrMemoryQuadWord),
+
+                "ib" => new Operand(OperandType.ImmediateByte),
+                "iw" => new Operand(OperandType.ImmediateWord),
+
+                "ptr" => new Operand(OperandType.Pointer),
+                "np" => new Operand(OperandType.NearPointer),
+                "fp" => new Operand(OperandType.FarPointer),
+
+                "dword" => new Operand(OperandType.TypeDoubleWord),
+                "short" => new Operand(OperandType.TypeShort),
+
+                "far" => new Operand(OperandType.PrefixFar),
+
+                "st" => new Operand(OperandType.ST),
+                "st(i)" => new Operand(OperandType.ST_I),
+
+                "eax" => new Operand(OperandType.EAX),
+                "rax" => new Operand(OperandType.RAX),
+                "ax" => new Operand(OperandType.AX),
+                "al" => new Operand(OperandType.AL),
+                "ah" => new Operand(OperandType.AH),
+
+                "rbx" => new Operand(OperandType.RBX),
+                "ebx" => new Operand(OperandType.EBX),
+                "bx" => new Operand(OperandType.BX),
+                "bl" => new Operand(OperandType.BL),
+                "bh" => new Operand(OperandType.BH),
+
+                "rcx" => new Operand(OperandType.RCX),
+                "ecx" => new Operand(OperandType.ECX),
+                "cx" => new Operand(OperandType.CX),
+                "cl" => new Operand(OperandType.CL),
+                "ch" => new Operand(OperandType.CH),
+
+                "rdx" => new Operand(OperandType.RDX),
+                "edx" => new Operand(OperandType.EDX),
+                "dx" => new Operand(OperandType.DX),
+                "dl" => new Operand(OperandType.DL),
+                "dh" => new Operand(OperandType.DH),
+
+                "rsp" => new Operand(OperandType.RSP),
+                "esp" => new Operand(OperandType.ESP),
+                "sp" => new Operand(OperandType.SP),
+
+                "rbp" => new Operand(OperandType.RBP),
+                "ebp" => new Operand(OperandType.EBP),
+                "bp" => new Operand(OperandType.BP),
+
+                "rsi" => new Operand(OperandType.RSI),
+                "esi" => new Operand(OperandType.ESI),
+                "si" => new Operand(OperandType.SI),
+
+                "rdi" => new Operand(OperandType.RDI),
+                "edi" => new Operand(OperandType.EDI),
+                "di" => new Operand(OperandType.DI),
+
+                "cs" => new Operand(OperandType.CS),
+                "ds" => new Operand(OperandType.DS),
+                "ss" => new Operand(OperandType.SS),
+                "es" => new Operand(OperandType.ES),
+                "cr" => new Operand(OperandType.CR),
+                "dr" => new Operand(OperandType.DR),
+                "tr" => new Operand(OperandType.TR),
+
+                _ => new Operand(OperandType.Unknown, value),
+            };
+        }
+    }
+
+    record Instruction(byte Op, Family Family, int MinLength, int MaxLength, Platform Platform, Operand[] Operands, Field[] Fields)
     {
         public override string ToString()
         {
@@ -115,16 +355,11 @@ namespace Final.ITP
             s.Append("0x");
             s.Append(Op.ToString("X2"));
             s.Append('|');
-            s.Append(Mnemonic);
-            if (!string.IsNullOrWhiteSpace(Destination))
+            s.Append(Family.Name);
+            foreach (Operand operand in Operands)
             {
                 s.Append(' ');
-                s.Append(Destination);
-            }
-            if (!string.IsNullOrWhiteSpace(Source))
-            {
-                s.Append(", ");
-                s.Append(Source);
+                s.Append(operand);
             }
             s.Append('|');
             s.Append(MinLength);
@@ -140,11 +375,13 @@ namespace Final.ITP
                     s.Append(Fields[i].ToString());
                 }
             }
-            if (!string.IsNullOrWhiteSpace(Platform))
+            if (Platform != null)
             {
-                s.Append('|');
+                s.Append(' ');
+                s.Append('[');
                 s.Append(Platform);
-           }
+                s.Append(']');
+            }
             return s.ToString();
         }
     }
@@ -156,6 +393,7 @@ namespace Final.ITP
     {
         private static readonly Regex _rexTitle = new Regex("\\(([0-9]+[+]?.*)\\).*$", RegexOptions.Compiled);
         private static readonly Regex _rexLength = new Regex("(?<min>[0-6])(([~+])(?<max>[0-6]))?", RegexOptions.Compiled);
+        private static readonly Regex _rexPlatform = new Regex("\\s+\\[(?<platform>(?:[0-9]|[bit]|[P5]){2,5})\\]\\s*$", RegexOptions.Compiled);
 
         public static void Main(string[] args)
         {
@@ -269,22 +507,17 @@ namespace Final.ITP
                     string lenText = HttpUtility.HtmlDecode(cols[3].InnerText);
                     string flagsText = HttpUtility.HtmlDecode(cols[4].InnerText);
 
-                    string platform = string.Empty;
-                    if (mnemonics.EndsWith("]"))
-                    {
-                        int p = mnemonics.IndexOf("[");
-                        platform = mnemonics.Substring(p);
-                    }
-
-                    int minLen = 0;
-                    int maxLen = 0;
+                    string platformRaw = string.Empty;
+                    var platformMatch = _rexPlatform.Match(mnemonics);
+                    if (platformMatch.Success)
+                        platformRaw = platformMatch.Groups["platform"].Value;
 
                     Match lenMatch = _rexLength.Match(lenText);
                     if (!lenMatch.Success)
                         throw new FormatException($"Unsupported length string '{lenText}' in row '{rowIndex}' for '{fullTitle}'!");
 
-                    int.TryParse(lenMatch.Groups["min"].Value ?? string.Empty, out minLen);
-                    int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out maxLen);
+                    int.TryParse(lenMatch.Groups["min"].Value ?? string.Empty, out int minLen);
+                    int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out int maxLen);
 
                     if (maxLen == 0)
                         maxLen = minLen;
@@ -306,12 +539,10 @@ namespace Final.ITP
 
 #if GENERATE_CS
                     string opName;
-                    string opDest = string.Empty;
-                    string opSrc = string.Empty;
 
                     string originalMemonics = mnemonics;
-                    if (!string.IsNullOrEmpty(platform))
-                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - platform.Length);
+                    if (!string.IsNullOrEmpty(platformRaw))
+                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - platformRaw.Length);
 
                     string tabbedReplaced = Regex.Replace(mnemonics, "[\\s,]", "\t");
 
@@ -320,15 +551,6 @@ namespace Final.ITP
                         throw new NotSupportedException($"Mnemonic '{mnemonics}' is invalid!");
 
                     opName = splittedMnemonics[0];
-                    if (splittedMnemonics.Length == 2)
-                    {
-                        opDest = splittedMnemonics[1];
-                    }
-                    else if (splittedMnemonics.Length == 3)
-                    {
-                        opDest = splittedMnemonics[1];
-                        opSrc = splittedMnemonics[2];
-                    }
 
                     Field[] fields = new Field[fieldsRaw.Length];
                     for (int i = 0; i < fieldsRaw.Length; i++)
@@ -347,7 +569,7 @@ namespace Final.ITP
 
                     string firstFamilyRaw = splittedFamily[0];
 
-                    Family firstFamily = new Family(firstFamilyRaw, title, platform);
+                    Family firstFamily = new Family(firstFamilyRaw, title, platformRaw);
 
                     if (!familyOpTypeListMap.TryGetValue(firstFamily, out List<string> opNames))
                     {
@@ -358,7 +580,15 @@ namespace Final.ITP
 
                     opNames.Add(opName);
 
-                    Instruction instruction = new Instruction(op, opName, opDest, opSrc, minLen, maxLen, fields, platform.Trim('[', ']'));
+                    var operands = new Operand[splittedMnemonics.Length - 1];
+                    for (int i = 1; i < splittedMnemonics.Length; i++)
+                    {
+                        operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
+                    }
+
+                    Platform platform = Platform.Parse(platformRaw.Trim('[', ']'));
+
+                    Instruction instruction = new Instruction(op, firstFamily, minLen, maxLen, platform, operands, fields);
                     instructions.Add(instruction);
 #endif
 
@@ -399,8 +629,6 @@ namespace Final.ITP
             Instruction[] sortedInstructions = instructions.OrderBy(i => i.Op).ToArray();
             foreach (Instruction instruction in sortedInstructions)
             {
-                if (instruction.Platform.Length != 0)
-                    continue;
                 Debug.WriteLine($"{instruction}");
             }
 

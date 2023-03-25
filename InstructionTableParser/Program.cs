@@ -41,25 +41,27 @@ namespace Final.ITP
         Immediate1,
         Immediate2,
         Immediate3,
+        Immediate0to3,
         Offset0,
         Offset1,
         Segment0,
         Segment1,
         RelativeLabelDisplacement0,
         RelativeLabelDisplacement1,
-        ShortLabel,
-        LongLabel
+        ShortLabelOrShortLow,
+        LongLabel,
+        ShortHigh,
     }
 
     enum PlatformType
     {
         Unknown = 0,
-        X_32Bit,
-        X_186,
-        X_286,
-        X_386,
-        X_387,
-        X_486,
+        _32Bit,
+        _186,
+        _286,
+        _386,
+        _387,
+        _486,
         P5,
     }
 
@@ -72,22 +74,21 @@ namespace Final.ITP
             switch (value.ToLower())
             {
                 case "186":
-                    return new Platform(PlatformType.X_186);
+                    return new Platform(PlatformType._186);
                 case "286":
-                    return new Platform(PlatformType.X_286);
+                    return new Platform(PlatformType._286);
                 case "386":
-                    return new Platform(PlatformType.X_386);
+                    return new Platform(PlatformType._386);
                 case "387":
-                    return new Platform(PlatformType.X_387);
+                    return new Platform(PlatformType._387);
                 case "486":
-                    return new Platform(PlatformType.X_486);
+                    return new Platform(PlatformType._486);
                 case "32bit":
-                    return new Platform(PlatformType.X_32Bit);
+                    return new Platform(PlatformType._32Bit);
                 case "p5":
                     return new Platform(PlatformType.P5);
                 default:
                     throw new NotSupportedException($"The platform '{value}' is not supported!");
-                    //return new Platform(PlatformType.Unknown, value);
             }
         }
 
@@ -100,8 +101,29 @@ namespace Final.ITP
         }
     }
 
-    record Field(FieldType Type, string Value, byte Constant = 0)
+    enum Expression
     {
+        None = 0,
+        Plus_I
+    }
+
+    readonly struct Field
+    {
+        private static readonly Regex _rexConstantExpression = new Regex("(?<hex>[0-9a-fA-F]{2})(?<exp>\\+[a-z])?", RegexOptions.Compiled);
+
+        public FieldType Type { get; }
+        public string Raw { get; }
+        public byte Value { get; }
+        public Expression Expression { get; }
+
+        public Field(FieldType type, string raw, byte value, Expression expression = Expression.None)
+        {
+            Type = type;
+            Raw = raw;
+            Value = value;
+            Expression = expression;
+        }
+
         public static Field Parse(string value)
         {
             FieldType type = value switch
@@ -127,26 +149,44 @@ namespace Final.ITP
                 "/5" => FieldType.Mod101RM,
                 "/6" => FieldType.Mod110RM,
                 "/7" => FieldType.Mod111RM,
-                "sl" => FieldType.ShortLabel,
+                "sl" => FieldType.ShortLabelOrShortLow,
                 "ll" => FieldType.LongLabel,
+                "sh" => FieldType.ShortHigh,
+                "i0~i3" => FieldType.Immediate0to3,
                 _ => FieldType.None,
             };
             if (type == FieldType.None)
             {
-                if (byte.TryParse(value, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte constantValue))
-                    return new Field(FieldType.Constant, value, constantValue);
+                Match m = _rexConstantExpression.Match(value);
+                if (m.Success)
+                {
+                    byte constantValue = byte.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    string expressionRaw = m.Groups["exp"].Value?.ToLower();
+                    if (string.IsNullOrWhiteSpace(expressionRaw))
+                        return new Field(FieldType.Constant, value, constantValue);
+                    else
+                    {
+                        Expression expression = expressionRaw switch
+                        {
+                            "+i" => Expression.Plus_I,
+                            _ => throw new NotSupportedException($"The expression '{expressionRaw}' is not supported!")
+                        };
+                        return new Field(FieldType.Constant, value, constantValue, expression);
+                    }
+                } else
+                    throw new NotSupportedException($"The value '{value}' is not supported!");
             }
-            return new Field(type, value);
+            return new Field(type, value, 0);
         }
 
         public override string ToString()
         {
             if (Type == FieldType.Constant)
-                return Constant.ToString("X2");
+                return Value.ToString("X2");
             else if (Type != FieldType.None)
                 return Type.ToString();
             else
-                return Value;
+                return Raw;
         }
     }
 
@@ -182,6 +222,7 @@ namespace Final.ITP
 
         ImmediateByte,
         ImmediateWord,
+        ImmediateDoubleWord,
 
         Pointer,
         NearPointer,
@@ -189,11 +230,20 @@ namespace Final.ITP
 
         TypeDoubleWord,
         TypeShort,
+        TypeInt,
 
         PrefixFar,
 
+        SourceRegister,
+
+        ShortLabel,
+        LongLabel,
+
+        Value,
         ST,
         ST_I,
+        M,
+        M_Number,
 
         RAX,
         EAX,
@@ -243,10 +293,15 @@ namespace Final.ITP
         CR,
         DR,
         TR,
+
+        FS,
+        GS,
     }
 
-    record Operand(OperandType Type, string Original = null)
+    record Operand(OperandType Type, int Value = 0, string Original = null)
     {
+        private static readonly Regex _rexMNumber = new Regex("(?<prefix>[m])(?<num>[0-9]{1,2})", RegexOptions.Compiled);
+
         public override string ToString()
         {
             if (Type != OperandType.Unknown)
@@ -259,6 +314,17 @@ namespace Final.ITP
         {
             if (string.IsNullOrWhiteSpace(value))
                 return null;
+
+            Match m;
+            if ((m = _rexMNumber.Match(value)).Success)
+            {
+                int number = int.Parse(m.Groups["num"].Value);
+                return new Operand(OperandType.M_Number, number);
+            }
+
+            if (int.TryParse(value, out int intValue))
+                return new Operand(OperandType.Value, intValue);
+
             return value.ToLower() switch
             {
                 "mb" => new Operand(OperandType.MemoryByte),
@@ -281,6 +347,7 @@ namespace Final.ITP
 
                 "ib" => new Operand(OperandType.ImmediateByte),
                 "iw" => new Operand(OperandType.ImmediateWord),
+                "id" => new Operand(OperandType.ImmediateDoubleWord),
 
                 "ptr" => new Operand(OperandType.Pointer),
                 "np" => new Operand(OperandType.NearPointer),
@@ -288,11 +355,18 @@ namespace Final.ITP
 
                 "dword" => new Operand(OperandType.TypeDoubleWord),
                 "short" => new Operand(OperandType.TypeShort),
+                "int" => new Operand(OperandType.TypeInt),
 
                 "far" => new Operand(OperandType.PrefixFar),
+                "sr" => new Operand(OperandType.SourceRegister),
+
+                "sl" => new Operand(OperandType.ShortLabel),
+                "ll" => new Operand(OperandType.LongLabel),
 
                 "st" => new Operand(OperandType.ST),
                 "st(i)" => new Operand(OperandType.ST_I),
+
+                "m" => new Operand(OperandType.M),
 
                 "eax" => new Operand(OperandType.EAX),
                 "rax" => new Operand(OperandType.RAX),
@@ -338,11 +412,15 @@ namespace Final.ITP
                 "ds" => new Operand(OperandType.DS),
                 "ss" => new Operand(OperandType.SS),
                 "es" => new Operand(OperandType.ES),
+
                 "cr" => new Operand(OperandType.CR),
                 "dr" => new Operand(OperandType.DR),
                 "tr" => new Operand(OperandType.TR),
 
-                _ => new Operand(OperandType.Unknown, value),
+                "fs" => new Operand(OperandType.FS),
+                "gs" => new Operand(OperandType.GS),
+
+                _ => throw new NotImplementedException($"The operand '{value}' is not implemented!")
             };
         }
     }
@@ -531,7 +609,7 @@ namespace Final.ITP
 
                     opAndFields = opAndFields.Replace("|", "");
 
-                    string[] opSplit = opAndFields.Split(' ');
+                    string[] opSplit = opAndFields.Split(new[] { ' ' });
                     byte op = 0;
                     string[] fieldsRaw = opSplit[1..];
                     if (opSplit.Length > 0)
@@ -542,9 +620,9 @@ namespace Final.ITP
 
                     string originalMemonics = mnemonics;
                     if (!string.IsNullOrEmpty(platformRaw))
-                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - platformRaw.Length);
+                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - (platformRaw.Length + 2));
 
-                    string tabbedReplaced = Regex.Replace(mnemonics, "[\\s,]", "\t");
+                    string tabbedReplaced = Regex.Replace(mnemonics, "[\\s,\\[\\]]", "\t");
 
                     string[] splittedMnemonics = tabbedReplaced.Split('\t', StringSplitOptions.RemoveEmptyEntries);
                     if (splittedMnemonics.Length == 0)
@@ -586,7 +664,7 @@ namespace Final.ITP
                         operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
                     }
 
-                    Platform platform = Platform.Parse(platformRaw.Trim('[', ']'));
+                    Platform platform = Platform.Parse(platformRaw);
 
                     Instruction instruction = new Instruction(op, firstFamily, minLen, maxLen, platform, operands, fields);
                     instructions.Add(instruction);

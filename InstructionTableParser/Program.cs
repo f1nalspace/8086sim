@@ -173,7 +173,8 @@ namespace Final.ITP
                         };
                         return new Field(FieldType.Constant, value, constantValue, expression);
                     }
-                } else
+                }
+                else
                     throw new NotSupportedException($"The value '{value}' is not supported!");
             }
             return new Field(type, value, 0);
@@ -190,8 +191,26 @@ namespace Final.ITP
         }
     }
 
-    sealed record Family(string Name, string Description, string Platform)
+    class Family
     {
+        public string Name { get; }
+
+        public string Description { get; }
+
+        public Platform Platform { get; }
+
+        private readonly List<Instruction> _instructions = new List<Instruction>();
+        public IReadOnlyCollection<Instruction> Instructions => _instructions;
+
+        public Family(string name, string description, Platform platform)
+        {
+            Name = name;
+            Description = description;
+            Platform = platform;
+        }
+
+        public void Add(Instruction instruction) => _instructions.Add(instruction);
+
         public override int GetHashCode() => Name.GetHashCode();
         public bool Equals(Family other) => Name.Equals(other.Name);
     }
@@ -511,7 +530,7 @@ namespace Final.ITP
 #endif
 
 #if GENERATE_CS
-            List<Instruction> instructions = new List<Instruction>();
+            List<Instruction> allInstructions = new List<Instruction>();
 
             Dictionary<Family, List<string>> familyOpTypeListMap = new Dictionary<Family, List<string>>();
             List<Family> orderedFamilies = new List<Family>();
@@ -536,18 +555,23 @@ namespace Final.ITP
 
                 HtmlNode header = cur;
 
+                // Contains the group/family name with an additional description or just the description
+                // E.g.
+                // AAA - Ascii Adjust for Addition
+                // ARPL - Adjusted Requested Privilege Level of Selector (286+ protected mode)
+                // A description of the floating point instructions is not available at yet.
                 string fullTitle = header.InnerText;
 
                 string title;
-                string familyRaw;
+                string group;
                 if (fullTitle.IndexOf("-") > -1)
                 {
-                    familyRaw = fullTitle.Substring(0, fullTitle.IndexOf("-")).Trim();
+                    group = fullTitle.Substring(0, fullTitle.IndexOf("-")).Trim();
                     title = fullTitle.Substring(fullTitle.IndexOf("-") + 1).Trim();
                 }
                 else
                 {
-                    familyRaw = string.Empty;
+                    group = string.Empty;
                     title = fullTitle;
                 }
 
@@ -585,89 +609,110 @@ namespace Final.ITP
                     string lenText = HttpUtility.HtmlDecode(cols[3].InnerText);
                     string flagsText = HttpUtility.HtmlDecode(cols[4].InnerText);
 
-                    string platformRaw = string.Empty;
-                    var platformMatch = _rexPlatform.Match(mnemonics);
+                    // Parse platform from the mnemonic line using a captured regex
+                    // There are not that much platforms to cover, so we could simple check for:
+                    // [186] or [286] or [386] or [486] or [P5] or [32bit]
+                    string platformText = string.Empty;
+                    Match platformMatch = _rexPlatform.Match(mnemonics);
                     if (platformMatch.Success)
-                        platformRaw = platformMatch.Groups["platform"].Value;
+                        platformText = platformMatch.Groups["platform"].Value;
 
+                    Platform platform = Platform.Parse(platformText);
+
+                    // Parse min/max instruction length
+                    // We either have a fixed length or minimum and maximum length
+                    // 2
+                    // 3~4
+                    // 1+1
                     Match lenMatch = _rexLength.Match(lenText);
                     if (!lenMatch.Success)
                         throw new FormatException($"Unsupported length string '{lenText}' in row '{rowIndex}' for '{fullTitle}'!");
-
                     int.TryParse(lenMatch.Groups["min"].Value ?? string.Empty, out int minLen);
                     int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out int maxLen);
-
                     if (maxLen == 0)
                         maxLen = minLen;
 
+                    // Parse Signed or Word flag (SW)
                     swText = swText.PadLeft(2, ' ');
-
                     swText = Regex.Replace(swText, "\\s", "*");
                     Debug.Assert(swText.Length == 2);
 
+                    // Parse flags
                     flagsText = Regex.Replace(flagsText, "-", "*");
 
-                    opAndFields = opAndFields.Replace("|", "");
+                    // Parse fields, which defines each byte in the instruction stream
+                    // Each field is separated by a space, so if we split by space, we get all fields
+                    // The very first field contains always the full op-code byte
+                    //
+                    // Issues:
+                    // Sometimes there is a | character, so we need to remove that
 
-                    string[] opSplit = opAndFields.Split(new[] { ' ' });
+                    string[] opSplit = opAndFields
+                        .Replace("|", "")
+                        .Split(new[] { ' ' });
+
                     byte op = 0;
-                    string[] fieldsRaw = opSplit[1..];
+                    Span<string> fieldsSplitted = Span<string>.Empty;
                     if (opSplit.Length > 0)
+                    {
                         op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
+                        fieldsSplitted = opSplit.AsSpan(1);
+                    }
 
 #if GENERATE_CS
-                    string opName;
-
                     string originalMemonics = mnemonics;
-                    if (!string.IsNullOrEmpty(platformRaw))
-                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - (platformRaw.Length + 2));
 
-                    string tabbedReplaced = Regex.Replace(mnemonics, "[\\s,\\[\\]]", "\t");
+                    // If we have parsed a platform string, we remove it from the mnemonic line because it ends with that
+                    if (!string.IsNullOrEmpty(platformText))
+                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - (platformText.Length + 2));
 
+                    // Now we split the full mnemonic line by spaces, but fist we replace all whitespaces and [ ] characters with tab charcters, to make our life more easy
+                    // Also we ensure that empty entries removed, are fully removed so we end up with the just the mnemonic and the operands of it
+                    string tabbedReplaced = Regex.Replace(mnemonics, @"[\s,\[\]]", "\t");
                     string[] splittedMnemonics = tabbedReplaced.Split('\t', StringSplitOptions.RemoveEmptyEntries);
                     if (splittedMnemonics.Length == 0)
                         throw new NotSupportedException($"Mnemonic '{mnemonics}' is invalid!");
 
-                    opName = splittedMnemonics[0];
+                    string opName = splittedMnemonics[0];
 
-                    Field[] fields = new Field[fieldsRaw.Length];
-                    for (int i = 0; i < fieldsRaw.Length; i++)
-                        fields[i] = Field.Parse(fieldsRaw[i]);
+                    // Parse fields without "Op"
+                    Field[] fields = new Field[fieldsSplitted.Length];
+                    for (int i = 0; i < fieldsSplitted.Length; i++)
+                        fields[i] = Field.Parse(fieldsSplitted[i]);
 
-                    string family;
-                    if (!string.IsNullOrWhiteSpace(familyRaw))
-                        family = familyRaw;
+                    // Get family, so we can group the instructions into a family of instructions
+                    // For example: MOV is a family, but contains dozens of instructions with varieties
+                    string familyText;
+                    if (!string.IsNullOrWhiteSpace(group))
+                        familyText = group;
                     else
-                        family = opName;
-
-                    if (string.IsNullOrWhiteSpace(family))
+                        familyText = opName; // @NOTE(final): The family string could be just the description, so we assume the operand is the family itself
+                    if (string.IsNullOrWhiteSpace(familyText))
                         throw new NotSupportedException($"Empty family for name '{opName}'");
 
-                    string[] splittedFamily = family.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                    // The family can contain multiple names, but we are only interested in the very first one
+                    string[] splittedFamily = familyText.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-                    string firstFamilyRaw = splittedFamily[0];
+                    Family family = new Family(splittedFamily[0], title, platform);
 
-                    Family firstFamily = new Family(firstFamilyRaw, title, platformRaw);
-
-                    if (!familyOpTypeListMap.TryGetValue(firstFamily, out List<string> opNames))
+                    if (!familyOpTypeListMap.TryGetValue(family, out List<string> opNames))
                     {
                         opNames = new List<string>();
-                        familyOpTypeListMap.Add(firstFamily, opNames);
-                        orderedFamilies.Add(firstFamily);
+                        familyOpTypeListMap.Add(family, opNames);
+                        orderedFamilies.Add(family);
                     }
 
                     opNames.Add(opName);
 
-                    var operands = new Operand[splittedMnemonics.Length - 1];
+                    // Parse mnemonic operands
+                    Operand[] operands = new Operand[splittedMnemonics.Length - 1];
                     for (int i = 1; i < splittedMnemonics.Length; i++)
-                    {
                         operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
-                    }
 
-                    Platform platform = Platform.Parse(platformRaw);
-
-                    Instruction instruction = new Instruction(op, firstFamily, minLen, maxLen, platform, operands, fields);
-                    instructions.Add(instruction);
+                    // Create instruction and add it to the family
+                    Instruction instruction = new Instruction(op, family, minLen, maxLen, platform, operands, fields);
+                    allInstructions.Add(instruction);
+                    family.Add(instruction);
 #endif
 
 #if EXPORT_TO_CSV
@@ -703,8 +748,8 @@ namespace Final.ITP
 #endif
 
 #if GENERATE_CS
-
-            Instruction[] sortedInstructions = instructions.OrderBy(i => i.Op).ToArray();
+            // Print out parsed stuff in CSharp
+            Instruction[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
             foreach (Instruction instruction in sortedInstructions)
             {
                 Debug.WriteLine($"{instruction}");
@@ -718,8 +763,6 @@ namespace Final.ITP
             Debug.WriteLine("\tNone = 0,");
             foreach (Family family in orderedFamilies)
             {
-                if (family.Platform.Length != 0)
-                    continue;
                 Debug.WriteLine("\t/// <summary>");
                 Debug.WriteLine($"\t/// {family.Description}");
                 Debug.WriteLine("\t/// </summary>");

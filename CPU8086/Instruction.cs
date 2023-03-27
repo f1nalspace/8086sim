@@ -23,7 +23,7 @@ namespace Final.CPU8086
         public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest, InstructionOperand source)
             : this(opCode, length, type, width, new[] { dest, source }) { }
 
-        public Instruction(byte opCode, InstructionType type, DataWidth dataType, byte length, InstructionOperand dest)
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth dataType, InstructionOperand dest)
             : this(opCode, length, type, dataType, new[] { dest }) { }
 
         public Instruction(byte opCode, byte length, InstructionType type, DataWidth dataType) : this(opCode, length, type, dataType, Array.Empty<InstructionOperand>()) { }

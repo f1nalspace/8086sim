@@ -307,15 +307,15 @@ namespace Final.CPU8086
                     if (destinationIsToRegister)
                     {
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField)),
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField))
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField)),
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RMField))
                         );
                     }
                     else
                     {
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField)),
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField))
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RMField)),
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField))
                         );
                     }
                 }
@@ -325,15 +325,15 @@ namespace Final.CPU8086
                     if (destinationIsToRegister)
                     {
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField)),
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField))
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField)),
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RMField))
                         );
                     }
                     else
                     {
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField)),
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField))
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RMField)),
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField))
                         );
                     }
                 }
@@ -346,16 +346,16 @@ namespace Final.CPU8086
                     {
                         // 16-bit Memory to Register
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField)),
-                            InstructionOperand.AsAddress(modRegRM.EAC, displacement)
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField)),
+                            new InstructionOperand(modRegRM.EAC, displacement)
                         );
                     }
                     else
                     {
                         // 16-bit Register to Memory
                         return (
-                            InstructionOperand.AsAddress(modRegRM.EAC, displacement),
-                            InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RegField))
+                            new InstructionOperand(modRegRM.EAC, displacement),
+                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField))
                         );
                     }
                 }
@@ -365,16 +365,16 @@ namespace Final.CPU8086
                     {
                         // 8-bit Memory to Register
                         return (
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField)),
-                            InstructionOperand.AsAddress(modRegRM.EAC, displacement)
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField)),
+                            new InstructionOperand(modRegRM.EAC, displacement)
                         );
                     }
                     else
                     {
                         // 8-bit Register to Memory
                         return (
-                            InstructionOperand.AsAddress(modRegRM.EAC, displacement),
-                            InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RegField))
+                            new InstructionOperand(modRegRM.EAC, displacement),
+                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField))
                         );
                     }
                 }
@@ -497,14 +497,14 @@ namespace Final.CPU8086
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(opCode, type, DataWidth.Word, length, InstructionOperand.AsRegister(register));
+                        return new Instruction(opCode, length, type, DataWidth.Word, new InstructionOperand(register));
                     }
 
                 case OpFamily.Pop_FixedReg:
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(opCode, type, DataWidth.Word, length, InstructionOperand.AsRegister(register));
+                        return new Instruction(opCode, length, type, DataWidth.Word, new InstructionOperand(register));
                     }
 
                 case OpFamily.Move8_RegOrMem_RegOrMem:
@@ -523,8 +523,8 @@ namespace Final.CPU8086
                             return imm8.AsT1;
                         ++length;
                         byte reg = (byte)(opCode & 0b00000111);
-                        InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetByte(reg));
-                        InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
+                        InstructionOperand destination = new InstructionOperand(_regTable.GetByte(reg));
+                        InstructionOperand source = new InstructionOperand(imm8.AsT0);
                         return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
                     }
                 case OpFamily.Move8_Mem_Imm:
@@ -534,8 +534,8 @@ namespace Final.CPU8086
                         if (imm8.IsT1)
                             return imm8.AsT1;
                         ++length;
-                        InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
-                        InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
+                        InstructionOperand destination = new InstructionOperand(modRegRM.EAC, displacement);
+                        InstructionOperand source = new InstructionOperand(imm8.AsT0);
                         return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
                     }
 
@@ -547,8 +547,8 @@ namespace Final.CPU8086
                             return imm16.AsT1;
                         length += 2;
                         byte reg = (byte)(opCode & 0b00000111);
-                        InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetWord(reg));
-                        InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
+                        InstructionOperand destination = new InstructionOperand(_regTable.GetWord(reg));
+                        InstructionOperand source = new InstructionOperand(imm16.AsT0);
                         return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
                     }
                 case OpFamily.Move16_Mem_Imm:
@@ -558,8 +558,8 @@ namespace Final.CPU8086
                         if (imm16.IsT1)
                             return imm16.AsT1;
                         length += 2;
-                        InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
-                        InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
+                        InstructionOperand destination = new InstructionOperand(modRegRM.EAC, displacement);
+                        InstructionOperand source = new InstructionOperand(imm16.AsT0);
                         return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
                     }
 
@@ -584,15 +584,15 @@ namespace Final.CPU8086
                         if (destinationIsMemory)
                         {
                             ops = (
-                                InstructionOperand.AsAddress(EffectiveAddressCalculation.DirectAddress, mem16.AsT0),
-                                InstructionOperand.AsRegister(reg)
+                                new InstructionOperand(EffectiveAddressCalculation.DirectAddress, mem16.AsT0),
+                                new InstructionOperand(reg)
                             );
                         }
                         else
                         {
                             ops = (
-                                InstructionOperand.AsRegister(reg),
-                                InstructionOperand.AsAddress(EffectiveAddressCalculation.DirectAddress, mem16.AsT0)
+                                new InstructionOperand(reg),
+                                new InstructionOperand(EffectiveAddressCalculation.DirectAddress, mem16.AsT0)
                             );
                         }
                         return new Instruction(opCode, length, InstructionType.MOV, dataType, ops.Dest, ops.Source);
@@ -641,7 +641,7 @@ namespace Final.CPU8086
                         RegisterType reg = instruction.Register;
                         Debug.Assert(reg != RegisterType.Unknown);
 
-                        InstructionOperand destination = InstructionOperand.AsRegister(reg);
+                        InstructionOperand destination = new InstructionOperand(reg);
 
                         InstructionOperand source;
                         if (isWord)
@@ -650,7 +650,7 @@ namespace Final.CPU8086
                             if (imm16.IsT1)
                                 return imm16.AsT1;
                             length += 2;
-                            source = InstructionOperand.AsImmediate(imm16.AsT0);
+                            source = new InstructionOperand(imm16.AsT0);
                         }
                         else
                         {
@@ -658,7 +658,7 @@ namespace Final.CPU8086
                             if (imm8.IsT1)
                                 return imm8.AsT1;
                             length += 1;
-                            source = InstructionOperand.AsImmediate(imm8.AsT0);
+                            source = new InstructionOperand(imm8.AsT0);
                         }
                         return new Instruction(opCode, length, type, dataType, destination, source);
                     }
@@ -684,15 +684,15 @@ namespace Final.CPU8086
                             if (modRegRM.Mode == Mode.RegisterMode)
                             {
                                 if (isWord)
-                                    destination = InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField));
+                                    destination = new InstructionOperand(_regTable.GetWord(modRegRM.RMField));
                                 else
-                                    destination = InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField));
-                                source = InstructionOperand.AsImmediate(imm8.AsT0);
+                                    destination = new InstructionOperand(_regTable.GetByte(modRegRM.RMField));
+                                source = new InstructionOperand(imm8.AsT0);
                             }
                             else
                             {
-                                destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
-                                source = InstructionOperand.AsImmediate(imm8.AsT0);
+                                destination = new InstructionOperand(modRegRM.EAC, displacement);
+                                source = new InstructionOperand(imm8.AsT0);
                             }
                         }
                         else
@@ -708,15 +708,15 @@ namespace Final.CPU8086
                             if (modRegRM.Mode == Mode.RegisterMode)
                             {
                                 if (isWord)
-                                    destination = InstructionOperand.AsRegister(_regTable.GetWord(modRegRM.RMField));
+                                    destination = new InstructionOperand(_regTable.GetWord(modRegRM.RMField));
                                 else
-                                    destination = InstructionOperand.AsRegister(_regTable.GetByte(modRegRM.RMField));
-                                source = InstructionOperand.AsImmediate(imm16.AsT0);
+                                    destination = new InstructionOperand(_regTable.GetByte(modRegRM.RMField));
+                                source = new InstructionOperand(imm16.AsT0);
                             }
                             else
                             {
-                                destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
-                                source = InstructionOperand.AsImmediate(imm16.AsT0);
+                                destination = new InstructionOperand(modRegRM.EAC, displacement);
+                                source = new InstructionOperand(imm16.AsT0);
                             }
                         }
 

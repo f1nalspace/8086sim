@@ -14,7 +14,7 @@ namespace Final.CPU8086
         [FieldOffset(1)]
         public readonly Immediate Immediate;
 
-        private InstructionOperand(RegisterType register)
+        public InstructionOperand(RegisterType register)
         {
             Type = OperandType.Register;
             Memory = new MemoryAddress();
@@ -22,7 +22,10 @@ namespace Final.CPU8086
             Register = register;
         }
 
-        private InstructionOperand(Immediate immediate)
+        public InstructionOperand(Register register)
+            : this(register?.Type ?? RegisterType.Unknown) { }
+
+        public InstructionOperand(Immediate immediate)
         {
             Type = OperandType.Register;
             Memory = new MemoryAddress();
@@ -30,13 +33,22 @@ namespace Final.CPU8086
             Immediate = immediate;
         }
 
-        private InstructionOperand(MemoryAddress address)
+        public InstructionOperand(byte imm8, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(imm8, flags)) { }
+
+        public InstructionOperand(short imm16, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(imm16, flags)) { }
+
+        public InstructionOperand(MemoryAddress address)
         {
             Type = OperandType.Address;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Memory = address;
         }
+
+        public InstructionOperand(EffectiveAddressCalculation eac, short displacement)
+            : this(new MemoryAddress(eac, displacement)) { }
 
         public override string ToString()
         {
@@ -48,17 +60,5 @@ namespace Final.CPU8086
                 _ => "None"
             };
         }
-
-        public static InstructionOperand AsImmediate(short immediate, ImmediateFlag flags = ImmediateFlag.None)
-            => new InstructionOperand(new Immediate(immediate, flags));
-
-        public static InstructionOperand AsAddress(EffectiveAddressCalculation eac, short address)
-            => new InstructionOperand(new MemoryAddress(eac, address));
-
-        public static InstructionOperand AsRegister(RegisterType reg)
-            => new InstructionOperand(reg);
-
-        public static InstructionOperand AsRegister(Register reg)
-            => AsRegister(reg?.Type ?? RegisterType.Unknown);
     }
 }

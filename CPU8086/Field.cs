@@ -46,14 +46,12 @@ namespace Final.CPU8086
         private static readonly Regex _rexConstantExpression = new Regex("(?<hex>[0-9a-fA-F]{2})(?<exp>\\+[a-z])?", RegexOptions.Compiled);
 
         public FieldType Type { get; }
-        public string Raw { get; }
-        public byte Value { get; }
+        public short Value { get; }
         public FieldExpression Expression { get; }
 
-        public Field(FieldType type, string raw, byte value, FieldExpression expression = FieldExpression.None)
+        public Field(FieldType type, short value, FieldExpression expression = FieldExpression.None)
         {
             Type = type;
-            Raw = raw;
             Value = value;
             Expression = expression;
         }
@@ -94,10 +92,10 @@ namespace Final.CPU8086
                 Match m = _rexConstantExpression.Match(value);
                 if (m.Success)
                 {
-                    byte constantValue = byte.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    short constantValue = short.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                     string expressionRaw = m.Groups["exp"].Value?.ToLower();
                     if (string.IsNullOrWhiteSpace(expressionRaw))
-                        return new Field(FieldType.Constant, value, constantValue);
+                        return new Field(FieldType.Constant, constantValue);
                     else
                     {
                         FieldExpression expression = expressionRaw switch
@@ -105,23 +103,26 @@ namespace Final.CPU8086
                             "+i" => FieldExpression.Plus_I,
                             _ => throw new NotSupportedException($"The expression '{expressionRaw}' is not supported!")
                         };
-                        return new Field(FieldType.Constant, value, constantValue, expression);
+                        return new Field(FieldType.Constant, constantValue, expression);
                     }
                 }
                 else
                     throw new NotSupportedException($"The value '{value}' is not supported!");
             }
-            return new Field(type, value, 0);
+            return new Field(type, 0);
         }
 
         public override string ToString()
         {
             if (Type == FieldType.Constant)
-                return Value.ToString("X2");
-            else if (Type != FieldType.None)
-                return Type.ToString();
+            {
+                if (Expression != FieldExpression.None)
+                    return $"{Value:X4}{Expression}";
+                else
+                    return Value.ToString("X4");
+            }
             else
-                return Raw;
+                return Type.ToString();
         }
     }
 }

@@ -1,12 +1,12 @@
 ﻿//#define EXPORT_TO_CSV
 #define GENERATE_CS
-#define GENERATE_OPTYPES
 
 #if EXPORT_TO_CSV
 using CsvHelper;
 using CsvHelper.Configuration;
 #endif
 
+using Final.CPU8086;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -22,467 +22,6 @@ using System.Web;
 
 namespace Final.ITP
 {
-    enum FieldType : int
-    {
-        None = 0,
-        Constant,
-        ModRegRM,
-        Mod000RM,
-        Mod001RM,
-        Mod010RM,
-        Mod011RM,
-        Mod100RM,
-        Mod101RM,
-        Mod110RM,
-        Mod111RM,
-        Displacement0,
-        Displacement1,
-        Immediate0,
-        Immediate1,
-        Immediate2,
-        Immediate3,
-        Immediate0to3,
-        Offset0,
-        Offset1,
-        Segment0,
-        Segment1,
-        RelativeLabelDisplacement0,
-        RelativeLabelDisplacement1,
-        ShortLabelOrShortLow,
-        LongLabel,
-        ShortHigh,
-    }
-
-    enum PlatformType
-    {
-        Unknown = 0,
-        _32Bit,
-        _186,
-        _286,
-        _386,
-        _387,
-        _486,
-        P5,
-    }
-
-    record Platform(PlatformType Type, string Original = null)
-    {
-        public static Platform Parse(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-            switch (value.ToLower())
-            {
-                case "186":
-                    return new Platform(PlatformType._186);
-                case "286":
-                    return new Platform(PlatformType._286);
-                case "386":
-                    return new Platform(PlatformType._386);
-                case "387":
-                    return new Platform(PlatformType._387);
-                case "486":
-                    return new Platform(PlatformType._486);
-                case "32bit":
-                    return new Platform(PlatformType._32Bit);
-                case "p5":
-                    return new Platform(PlatformType.P5);
-                default:
-                    throw new NotSupportedException($"The platform '{value}' is not supported!");
-            }
-        }
-
-        public override string ToString()
-        {
-            if (Type != PlatformType.Unknown)
-                return Type.ToString();
-            else
-                return Original;
-        }
-    }
-
-    enum Expression
-    {
-        None = 0,
-        Plus_I
-    }
-
-    readonly struct Field
-    {
-        private static readonly Regex _rexConstantExpression = new Regex("(?<hex>[0-9a-fA-F]{2})(?<exp>\\+[a-z])?", RegexOptions.Compiled);
-
-        public FieldType Type { get; }
-        public string Raw { get; }
-        public byte Value { get; }
-        public Expression Expression { get; }
-
-        public Field(FieldType type, string raw, byte value, Expression expression = Expression.None)
-        {
-            Type = type;
-            Raw = raw;
-            Value = value;
-            Expression = expression;
-        }
-
-        public static Field Parse(string value)
-        {
-            FieldType type = value switch
-            {
-                "mr" => FieldType.ModRegRM,
-                "d0" => FieldType.Displacement0,
-                "d1" => FieldType.Displacement1,
-                "i0" => FieldType.Immediate0,
-                "i1" => FieldType.Immediate1,
-                "i2" => FieldType.Immediate2,
-                "i3" => FieldType.Immediate3,
-                "o0" => FieldType.Offset0,
-                "o1" => FieldType.Offset1,
-                "s0" => FieldType.Segment0,
-                "s1" => FieldType.Segment1,
-                "r0" => FieldType.RelativeLabelDisplacement0,
-                "r1" => FieldType.RelativeLabelDisplacement1,
-                "/0" => FieldType.Mod000RM,
-                "/1" => FieldType.Mod001RM,
-                "/2" => FieldType.Mod010RM,
-                "/3" => FieldType.Mod011RM,
-                "/4" => FieldType.Mod100RM,
-                "/5" => FieldType.Mod101RM,
-                "/6" => FieldType.Mod110RM,
-                "/7" => FieldType.Mod111RM,
-                "sl" => FieldType.ShortLabelOrShortLow,
-                "ll" => FieldType.LongLabel,
-                "sh" => FieldType.ShortHigh,
-                "i0~i3" => FieldType.Immediate0to3,
-                _ => FieldType.None,
-            };
-            if (type == FieldType.None)
-            {
-                Match m = _rexConstantExpression.Match(value);
-                if (m.Success)
-                {
-                    byte constantValue = byte.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
-                    string expressionRaw = m.Groups["exp"].Value?.ToLower();
-                    if (string.IsNullOrWhiteSpace(expressionRaw))
-                        return new Field(FieldType.Constant, value, constantValue);
-                    else
-                    {
-                        Expression expression = expressionRaw switch
-                        {
-                            "+i" => Expression.Plus_I,
-                            _ => throw new NotSupportedException($"The expression '{expressionRaw}' is not supported!")
-                        };
-                        return new Field(FieldType.Constant, value, constantValue, expression);
-                    }
-                }
-                else
-                    throw new NotSupportedException($"The value '{value}' is not supported!");
-            }
-            return new Field(type, value, 0);
-        }
-
-        public override string ToString()
-        {
-            if (Type == FieldType.Constant)
-                return Value.ToString("X2");
-            else if (Type != FieldType.None)
-                return Type.ToString();
-            else
-                return Raw;
-        }
-    }
-
-    class Family
-    {
-        public string Name { get; }
-
-        public string Description { get; }
-
-        public Platform Platform { get; }
-
-        private readonly List<Instruction> _instructions = new List<Instruction>();
-        public IReadOnlyCollection<Instruction> Instructions => _instructions;
-
-        public Family(string name, string description, Platform platform)
-        {
-            Name = name;
-            Description = description;
-            Platform = platform;
-        }
-
-        public void Add(Instruction instruction) => _instructions.Add(instruction);
-
-        public override int GetHashCode() => Name.GetHashCode();
-        public bool Equals(Family other) => Name.Equals(other.Name);
-    }
-
-    // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
-    enum OperandType
-    {
-        Unknown = 0,
-
-        MemoryByte,
-        MemoryWord,
-        MemoryDoubleWord,
-        MemoryQuadWord,
-
-        MemoryWordReal,
-        MemoryDoubleWordReal,
-        MemoryQuadWordReal,
-        MemoryTenByteReal,
-
-        RegisterByte,
-        RegisterWord,
-        RegisterDoubleWord,
-
-        RegisterOrMemoryByte,
-        RegisterOrMemoryWord,
-        RegisterOrMemoryDoubleWord,
-        RegisterOrMemoryQuadWord,
-
-        ImmediateByte,
-        ImmediateWord,
-        ImmediateDoubleWord,
-
-        Pointer,
-        NearPointer,
-        FarPointer,
-
-        TypeDoubleWord,
-        TypeShort,
-        TypeInt,
-
-        PrefixFar,
-
-        SourceRegister,
-
-        ShortLabel,
-        LongLabel,
-
-        Value,
-        ST,
-        ST_I,
-        M,
-        M_Number,
-
-        RAX,
-        EAX,
-        AX,
-        AL,
-        AH,
-
-        RBX,
-        EBX,
-        BX,
-        BL,
-        BH,
-
-        RCX,
-        ECX,
-        CX,
-        CL,
-        CH,
-
-        RDX,
-        EDX,
-        DX,
-        DL,
-        DH,
-
-        RSP,
-        ESP,
-        SP,
-
-        RBP,
-        EBP,
-        BP,
-
-        RSI,
-        ESI,
-        SI,
-
-        RDI,
-        EDI,
-        DI,
-
-        CS,
-        DS,
-        SS,
-        ES,
-
-        CR,
-        DR,
-        TR,
-
-        FS,
-        GS,
-    }
-
-    record Operand(OperandType Type, int Value = 0, string Original = null)
-    {
-        private static readonly Regex _rexMNumber = new Regex("(?<prefix>[m])(?<num>[0-9]{1,2})", RegexOptions.Compiled);
-
-        public override string ToString()
-        {
-            if (Type != OperandType.Unknown)
-                return Type.ToString();
-            else
-                return Original;
-        }
-
-        public static Operand Parse(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return null;
-
-            Match m;
-            if ((m = _rexMNumber.Match(value)).Success)
-            {
-                int number = int.Parse(m.Groups["num"].Value);
-                return new Operand(OperandType.M_Number, number);
-            }
-
-            if (int.TryParse(value, out int intValue))
-                return new Operand(OperandType.Value, intValue);
-
-            return value.ToLower() switch
-            {
-                "mb" => new Operand(OperandType.MemoryByte),
-                "mw" => new Operand(OperandType.MemoryWord),
-                "md" => new Operand(OperandType.MemoryDoubleWord),
-                "mq" => new Operand(OperandType.MemoryQuadWord),
-
-                "mwr" => new Operand(OperandType.MemoryWordReal),
-                "mdr" => new Operand(OperandType.MemoryDoubleWordReal),
-                "mqr" => new Operand(OperandType.MemoryQuadWordReal),
-                "mtr" => new Operand(OperandType.MemoryTenByteReal),
-
-                "rb" => new Operand(OperandType.RegisterByte),
-                "rw" => new Operand(OperandType.RegisterWord),
-                "rd" => new Operand(OperandType.RegisterDoubleWord),
-                "rmb" => new Operand(OperandType.RegisterOrMemoryByte),
-                "rmw" => new Operand(OperandType.RegisterOrMemoryWord),
-                "rmd" => new Operand(OperandType.RegisterOrMemoryDoubleWord),
-                "rmq" => new Operand(OperandType.RegisterOrMemoryQuadWord),
-
-                "ib" => new Operand(OperandType.ImmediateByte),
-                "iw" => new Operand(OperandType.ImmediateWord),
-                "id" => new Operand(OperandType.ImmediateDoubleWord),
-
-                "ptr" => new Operand(OperandType.Pointer),
-                "np" => new Operand(OperandType.NearPointer),
-                "fp" => new Operand(OperandType.FarPointer),
-
-                "dword" => new Operand(OperandType.TypeDoubleWord),
-                "short" => new Operand(OperandType.TypeShort),
-                "int" => new Operand(OperandType.TypeInt),
-
-                "far" => new Operand(OperandType.PrefixFar),
-                "sr" => new Operand(OperandType.SourceRegister),
-
-                "sl" => new Operand(OperandType.ShortLabel),
-                "ll" => new Operand(OperandType.LongLabel),
-
-                "st" => new Operand(OperandType.ST),
-                "st(i)" => new Operand(OperandType.ST_I),
-
-                "m" => new Operand(OperandType.M),
-
-                "eax" => new Operand(OperandType.EAX),
-                "rax" => new Operand(OperandType.RAX),
-                "ax" => new Operand(OperandType.AX),
-                "al" => new Operand(OperandType.AL),
-                "ah" => new Operand(OperandType.AH),
-
-                "rbx" => new Operand(OperandType.RBX),
-                "ebx" => new Operand(OperandType.EBX),
-                "bx" => new Operand(OperandType.BX),
-                "bl" => new Operand(OperandType.BL),
-                "bh" => new Operand(OperandType.BH),
-
-                "rcx" => new Operand(OperandType.RCX),
-                "ecx" => new Operand(OperandType.ECX),
-                "cx" => new Operand(OperandType.CX),
-                "cl" => new Operand(OperandType.CL),
-                "ch" => new Operand(OperandType.CH),
-
-                "rdx" => new Operand(OperandType.RDX),
-                "edx" => new Operand(OperandType.EDX),
-                "dx" => new Operand(OperandType.DX),
-                "dl" => new Operand(OperandType.DL),
-                "dh" => new Operand(OperandType.DH),
-
-                "rsp" => new Operand(OperandType.RSP),
-                "esp" => new Operand(OperandType.ESP),
-                "sp" => new Operand(OperandType.SP),
-
-                "rbp" => new Operand(OperandType.RBP),
-                "ebp" => new Operand(OperandType.EBP),
-                "bp" => new Operand(OperandType.BP),
-
-                "rsi" => new Operand(OperandType.RSI),
-                "esi" => new Operand(OperandType.ESI),
-                "si" => new Operand(OperandType.SI),
-
-                "rdi" => new Operand(OperandType.RDI),
-                "edi" => new Operand(OperandType.EDI),
-                "di" => new Operand(OperandType.DI),
-
-                "cs" => new Operand(OperandType.CS),
-                "ds" => new Operand(OperandType.DS),
-                "ss" => new Operand(OperandType.SS),
-                "es" => new Operand(OperandType.ES),
-
-                "cr" => new Operand(OperandType.CR),
-                "dr" => new Operand(OperandType.DR),
-                "tr" => new Operand(OperandType.TR),
-
-                "fs" => new Operand(OperandType.FS),
-                "gs" => new Operand(OperandType.GS),
-
-                _ => throw new NotImplementedException($"The operand '{value}' is not implemented!")
-            };
-        }
-    }
-
-    record Instruction(byte Op, Family Family, int MinLength, int MaxLength, Platform Platform, Operand[] Operands, Field[] Fields)
-    {
-        public override string ToString()
-        {
-            StringBuilder s = new StringBuilder();
-            s.Append("0x");
-            s.Append(Op.ToString("X2"));
-            s.Append('|');
-            s.Append(Family.Name);
-            foreach (Operand operand in Operands)
-            {
-                s.Append(' ');
-                s.Append(operand);
-            }
-            s.Append('|');
-            s.Append(MinLength);
-            s.Append('|');
-            s.Append(MaxLength);
-            if (Fields.Length > 0)
-            {
-                s.Append("|");
-                for (int i = 0; i < Fields.Length; i++)
-                {
-                    if (i > 0)
-                        s.Append(", ");
-                    s.Append(Fields[i].ToString());
-                }
-            }
-            if (Platform != null)
-            {
-                s.Append(' ');
-                s.Append('[');
-                s.Append(Platform);
-                s.Append(']');
-            }
-            return s.ToString();
-        }
-    }
-
     /// <summary>
     /// 
     /// </summary>
@@ -530,10 +69,10 @@ namespace Final.ITP
 #endif
 
 #if GENERATE_CS
-            List<Instruction> allInstructions = new List<Instruction>();
+            List<InstructionEntry> allInstructions = new List<InstructionEntry>();
 
-            Dictionary<Family, List<string>> familyOpTypeListMap = new Dictionary<Family, List<string>>();
-            List<Family> orderedFamilies = new List<Family>();
+            Dictionary<InstructionFamily, List<string>> familyOpTypeListMap = new Dictionary<InstructionFamily, List<string>>();
+            List<InstructionFamily> orderedFamilies = new List<InstructionFamily>();
 #endif
 
             Assembly asm = typeof(Program).Assembly;
@@ -693,7 +232,7 @@ namespace Final.ITP
                     // The family can contain multiple names, but we are only interested in the very first one
                     string[] splittedFamily = familyText.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-                    Family family = new Family(splittedFamily[0], title, platform);
+                    InstructionFamily family = new InstructionFamily(splittedFamily[0], title, platform);
 
                     if (!familyOpTypeListMap.TryGetValue(family, out List<string> opNames))
                     {
@@ -710,9 +249,8 @@ namespace Final.ITP
                         operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
 
                     // Create instruction and add it to the family
-                    Instruction instruction = new Instruction(op, family, minLen, maxLen, platform, operands, fields);
+                    InstructionEntry instruction = new InstructionEntry(op, family, platform, minLen, maxLen, operands, fields);
                     allInstructions.Add(instruction);
-                    family.Add(instruction);
 #endif
 
 #if EXPORT_TO_CSV
@@ -749,19 +287,18 @@ namespace Final.ITP
 
 #if GENERATE_CS
             // Print out parsed stuff in CSharp
-            Instruction[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
-            foreach (Instruction instruction in sortedInstructions)
+            InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
+            foreach (InstructionEntry instruction in sortedInstructions)
             {
                 Debug.WriteLine($"{instruction}");
             }
 
-#if GENERATE_OPTYPES
             Debug.WriteLine("enum InstructionType {");
             Debug.WriteLine("\t/// <summary>");
             Debug.WriteLine($"\t/// None");
             Debug.WriteLine("\t/// </summary>");
             Debug.WriteLine("\tNone = 0,");
-            foreach (Family family in orderedFamilies)
+            foreach (InstructionFamily family in orderedFamilies)
             {
                 Debug.WriteLine("\t/// <summary>");
                 Debug.WriteLine($"\t/// {family.Description}");
@@ -769,8 +306,6 @@ namespace Final.ITP
                 Debug.WriteLine($"\t{family.Name},");
             }
             Debug.WriteLine("}");
-#endif
-
 #endif
 
             Console.WriteLine();

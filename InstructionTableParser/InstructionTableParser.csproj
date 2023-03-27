@@ -19,4 +19,8 @@
     <PackageReference Include="TableSpans.HtmlAgilityPack" Version="1.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
+  </ItemGroup>
+
 </Project>

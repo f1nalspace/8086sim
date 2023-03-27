@@ -1,36 +1,51 @@
-﻿namespace Final.CPU8086
+﻿using System;
+using System.Text;
+
+namespace Final.CPU8086
 {
     public readonly struct Instruction
     {
+        public byte OpCode { get; }
+        public byte Length { get; }
         public InstructionType Type { get; }
         public DataWidth Width { get; }
-        public byte Length { get; }
-        public byte OpCode { get; } // Only for debug
-        public InstructionOperand Dest { get; }
-        public InstructionOperand Source { get; }
+        public InstructionOperand[] Operands { get; }
 
-        public Instruction(InstructionType type, DataWidth width, byte length, byte opCode, InstructionOperand dest, InstructionOperand source)
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand[] operands)
         {
+            OpCode = opCode;
             Type = type;
             Width = width;
             Length = length;
-            OpCode = opCode;
-            Dest = dest;
-            Source = source;
+            Operands = operands;
         }
 
-        public Instruction(InstructionType type, DataWidth dataType, byte length, byte opCode, InstructionOperand dest) : this(type, dataType, length, opCode, dest, new InstructionOperand()) { }
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest, InstructionOperand source)
+            : this(opCode, length, type, width, new[] { dest, source }) { }
 
-        public Instruction(InstructionType type, DataWidth dataType, byte length, byte opCode) : this(type, dataType, length, opCode, new InstructionOperand(), new InstructionOperand()) { }
+        public Instruction(byte opCode, InstructionType type, DataWidth dataType, byte length, InstructionOperand dest)
+            : this(opCode, length, type, dataType, new[] { dest }) { }
+
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth dataType) : this(opCode, length, type, dataType, Array.Empty<InstructionOperand>()) { }
 
         public override string ToString()
         {
-            if (Dest.Type != OperandType.None && Source.Type != OperandType.None)
-                return $"{Type} {Dest}, {Source} (op: {OpCode:X2}, {Length} bytes)";
-            else if (Dest.Type != OperandType.None && Source.Type == OperandType.None)
-                return $"{Type} {Dest} (op: {OpCode:X2}, {Length} bytes)";
-            else
-                return $"{Type} (op: {OpCode:X2}, {Length} bytes)";
+            StringBuilder s = new StringBuilder();
+            s.Append(Type);
+            for (int i = 0; i < Operands.Length; i++)
+            {
+                InstructionOperand operand = Operands[i];
+                s.Append(operand.ToString());
+            }
+            s.Append(' ');
+            s.Append('(');
+            s.Append("op: ");
+            s.Append(OpCode.ToString("X2"));
+            s.Append(", ");
+            s.Append(Length);
+            s.Append(" bytes");
+            s.Append(')');
+            return s.ToString();
         }
     }
 }

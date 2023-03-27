@@ -8,7 +8,7 @@ namespace Final.CPU8086
         [FieldOffset(0)]
         public readonly OperandType Type;
         [FieldOffset(1)]
-        public readonly AddressOperand Address;
+        public readonly MemoryAddress Memory;
         [FieldOffset(1)]
         public readonly RegisterType Register;
         [FieldOffset(1)]
@@ -17,7 +17,7 @@ namespace Final.CPU8086
         private InstructionOperand(RegisterType register)
         {
             Type = OperandType.Register;
-            Address = new AddressOperand();
+            Memory = new MemoryAddress();
             Immediate = new Immediate();
             Register = register;
         }
@@ -25,17 +25,17 @@ namespace Final.CPU8086
         private InstructionOperand(Immediate immediate)
         {
             Type = OperandType.Register;
-            Address = new AddressOperand();
+            Memory = new MemoryAddress();
             Register = RegisterType.Unknown;
             Immediate = immediate;
         }
 
-        private InstructionOperand(AddressOperand address)
+        private InstructionOperand(MemoryAddress address)
         {
             Type = OperandType.Address;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
-            Address = address;
+            Memory = address;
         }
 
         public override string ToString()
@@ -44,7 +44,7 @@ namespace Final.CPU8086
             {
                 OperandType.Register => CPU8086.Register.GetName(Register),
                 OperandType.Immediate => Immediate.ToString(),
-                OperandType.Address => Address.ToString(),
+                OperandType.Address => Memory.ToString(),
                 _ => "None"
             };
         }
@@ -53,7 +53,7 @@ namespace Final.CPU8086
             => new InstructionOperand(new Immediate(immediate, flags));
 
         public static InstructionOperand AsAddress(EffectiveAddressCalculation eac, short address)
-            => new InstructionOperand(new AddressOperand(eac, address));
+            => new InstructionOperand(new MemoryAddress(eac, address));
 
         public static InstructionOperand AsRegister(RegisterType reg)
             => new InstructionOperand(reg);

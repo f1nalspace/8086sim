@@ -497,14 +497,14 @@ namespace Final.CPU8086
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(type, DataWidth.Word, length, opCode, InstructionOperand.AsRegister(register));
+                        return new Instruction(opCode, type, DataWidth.Word, length, InstructionOperand.AsRegister(register));
                     }
 
                 case OpFamily.Pop_FixedReg:
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(type, DataWidth.Word, length, opCode, InstructionOperand.AsRegister(register));
+                        return new Instruction(opCode, type, DataWidth.Word, length, InstructionOperand.AsRegister(register));
                     }
 
                 case OpFamily.Move8_RegOrMem_RegOrMem:
@@ -512,7 +512,7 @@ namespace Final.CPU8086
                     {
                         // 8-bit/16-bit Move Register/Register to Register/Register
                         var ops = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement);
-                        return new Instruction(type, dataType, length, opCode, ops.Dest, ops.Source);
+                        return new Instruction(opCode, length, type, dataType, ops.Dest, ops.Source);
                     }
 
                 case OpFamily.Move8_Reg_Imm:
@@ -525,7 +525,7 @@ namespace Final.CPU8086
                         byte reg = (byte)(opCode & 0b00000111);
                         InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetByte(reg));
                         InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
-                        return new Instruction(type, DataWidth.Byte, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
                     }
                 case OpFamily.Move8_Mem_Imm:
                     {
@@ -536,7 +536,7 @@ namespace Final.CPU8086
                         ++length;
                         InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
                         InstructionOperand source = InstructionOperand.AsImmediate(imm8.AsT0);
-                        return new Instruction(type, DataWidth.Byte, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
                     }
 
                 case OpFamily.Move16_Reg_Imm:
@@ -549,7 +549,7 @@ namespace Final.CPU8086
                         byte reg = (byte)(opCode & 0b00000111);
                         InstructionOperand destination = InstructionOperand.AsRegister(_regTable.GetWord(reg));
                         InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
-                        return new Instruction(type, DataWidth.Word, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
                     }
                 case OpFamily.Move16_Mem_Imm:
                     {
@@ -560,7 +560,7 @@ namespace Final.CPU8086
                         length += 2;
                         InstructionOperand destination = InstructionOperand.AsAddress(modRegRM.EAC, displacement);
                         InstructionOperand source = InstructionOperand.AsImmediate(imm16.AsT0);
-                        return new Instruction(type, DataWidth.Word, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
                     }
 
                 case OpFamily.Move8_FixedReg_Mem:
@@ -595,7 +595,7 @@ namespace Final.CPU8086
                                 InstructionOperand.AsAddress(EffectiveAddressCalculation.DirectAddress, mem16.AsT0)
                             );
                         }
-                        return new Instruction(InstructionType.MOV, dataType, length, opCode, ops.Dest, ops.Source);
+                        return new Instruction(opCode, length, InstructionType.MOV, dataType, ops.Dest, ops.Source);
                     }
 
                 case OpFamily.Add8_RegOrMem_RegOrMem:
@@ -617,7 +617,7 @@ namespace Final.CPU8086
                     {
                         // 8-bit/16-bit math operation Register/Memory with Register/Memory
                         var ops = GetDestinationAndSource(modRegRM, destinationIsRegister, isWord, displacement);
-                        return new Instruction(type, dataType, length, opCode, ops.Dest, ops.Source);
+                        return new Instruction(opCode, length, type, dataType, ops.Dest, ops.Source);
                     }
 
                 case OpFamily.Add8_FixedReg_Imm:
@@ -660,7 +660,7 @@ namespace Final.CPU8086
                             length += 1;
                             source = InstructionOperand.AsImmediate(imm8.AsT0);
                         }
-                        return new Instruction(type, dataType, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, dataType, destination, source);
                     }
 
                 case OpFamily.Arithmetic8_RegOrMem_Imm:
@@ -730,7 +730,7 @@ namespace Final.CPU8086
                             _ => throw new NotSupportedException($"Arithmetic type '{arithmeticType}' is not supported for instruction '{instruction}'!")
                         };
 
-                        return new Instruction(type, dataType, length, opCode, destination, source);
+                        return new Instruction(opCode, length, type, dataType, destination, source);
                     }
 
                 default:

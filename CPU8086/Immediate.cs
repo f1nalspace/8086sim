@@ -1,16 +1,78 @@
-﻿namespace Final.CPU8086
+﻿using System;
+using System.Runtime.InteropServices;
+
+namespace Final.CPU8086
 {
+    public enum ImmediateType : byte
+    {
+        None = 0,
+        Byte,
+        SignedByte,
+        Word,
+        SignedWord,
+    }
+
+    [Flags]
+    public enum ImmediateFlag : byte
+    {
+        None = 0,
+        RelativeJumpDisplacement = 1 << 0,
+    }
+
+    [StructLayout(LayoutKind.Explicit, Pack = 1)]
     public readonly struct Immediate
     {
-        public short Value { get; }
-        public ImmediateFlag Flags { get; }
+        [FieldOffset(0)]
+        public readonly ImmediateType Type;
+        [FieldOffset(1)]
+        public readonly ImmediateFlag Flags;
+        [FieldOffset(2)]
+        public readonly byte U8;
+        [FieldOffset(2)]
+        public readonly sbyte S8;
+        [FieldOffset(2)]
+        public readonly ushort U16;
+        [FieldOffset(2)]
+        public readonly short S16;
 
-        public Immediate(short value, ImmediateFlag flags) : this()
+        public Immediate(byte u8, ImmediateFlag flags) : this()
         {
-            Value = value;
+            Type = ImmediateType.Byte;
             Flags = flags;
+            U8 = u8;
         }
 
-        public override string ToString() => Value.ToString("X4");
+        public Immediate(sbyte s8, ImmediateFlag flags) : this()
+        {
+            Type = ImmediateType.SignedByte;
+            Flags = flags;
+            S8 = s8;
+        }
+
+        public Immediate(ushort u16, ImmediateFlag flags) : this()
+        {
+            Type = ImmediateType.Word;
+            Flags = flags;
+            U16 = u16;
+        }
+
+        public Immediate(short s16, ImmediateFlag flags) : this()
+        {
+            Type = ImmediateType.SignedWord;
+            Flags = flags;
+            S16 = s16;
+        }
+
+        public override string ToString()
+        {
+            return Type switch
+            {
+                ImmediateType.Byte => U8.ToString("X2"),
+                ImmediateType.SignedByte => S8.ToString("G"),
+                ImmediateType.Word => U16.ToString("X4"),
+                ImmediateType.SignedWord => S16.ToString("G"),
+                _ => string.Empty,
+            };
+        }
     }
 }

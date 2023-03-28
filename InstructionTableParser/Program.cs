@@ -114,6 +114,13 @@ namespace Final.ITP
                     title = fullTitle;
                 }
 
+                // Table additions
+                Platform globalPlatform = new Platform();
+                if ("A description of the floating point instructions is not available at yet.".Equals(title, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    globalPlatform = new Platform(PlatformType._8087);
+                }
+
                 HtmlNode table = cur.SelectSingleNode("following-sibling::table");
                 if (table == null)
                     throw new FormatException($"Missing table node for '{fullTitle}'!");
@@ -157,6 +164,8 @@ namespace Final.ITP
                         platformText = platformMatch.Groups["platform"].Value;
 
                     Platform platform = Platform.Parse(platformText);
+                    if (platform < globalPlatform)
+                        platform = globalPlatform;
 
                     // Parse min/max instruction length
                     // We either have a fixed length or minimum and maximum length
@@ -290,6 +299,8 @@ namespace Final.ITP
             InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
             foreach (InstructionEntry instruction in sortedInstructions)
             {
+                if (instruction.Platform.Type != PlatformType.None)
+                    continue;
                 Debug.WriteLine($"{instruction}");
             }
 
@@ -300,6 +311,8 @@ namespace Final.ITP
             Debug.WriteLine("\tNone = 0,");
             foreach (InstructionFamily family in orderedFamilies)
             {
+                if (family.Platform.Type != PlatformType.None)
+                    continue;
                 Debug.WriteLine("\t/// <summary>");
                 Debug.WriteLine($"\t/// {family.Description}");
                 Debug.WriteLine("\t/// </summary>");

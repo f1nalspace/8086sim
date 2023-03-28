@@ -7,5 +7,6 @@
         Word = 2,
         DoubleWord = 4,
         QuadWord = 8,
+        TenBytes = 10,
     }
 }

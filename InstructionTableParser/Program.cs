@@ -21,6 +21,13 @@ using System.Web;
 
 namespace Final.ITP
 {
+    enum SignBit : int
+    {
+        None = 0,
+        SignExtendedImm8,
+        Non,
+    }
+
     class InstructionFamily : IEquatable<InstructionFamily>
     {
         public string Name { get; }
@@ -195,12 +202,38 @@ namespace Final.ITP
                         maxLen = minLen;
 
                     // Parse Signed or Word flag (SW)
-                    swText = swText.PadLeft(2, ' ');
+                    swText = swText.PadRight(2, '*');
                     swText = Regex.Replace(swText, "\\s", "*");
                     Debug.Assert(swText.Length == 2);
 
+                    DataWidth dataWidth = DataWidth.None;
+                    if (swText[1] == 'B')
+                        dataWidth |= DataWidth.Byte;
+                    else if (swText[1] == 'W')
+                        dataWidth |= DataWidth.Word;
+                    else if (swText[1] == 'D')
+                        dataWidth |= DataWidth.DoubleWord;
+                    else if (swText[1] == 'Q')
+                        dataWidth |= DataWidth.QuadWord;
+                    else if (swText[1] == 'T')
+                        dataWidth |= DataWidth.TenBytes;
+                    else if (swText[1] != '*')
+                        throw new NotImplementedException($"The w flag '{swText[1]}' is not implemented");
+
+                    SignBit signFlag = SignBit.None;
+                    if (swText[0] == 'E')
+                        signFlag = SignBit.SignExtendedImm8;
+                    else if (swText[0] == 'N')
+                        signFlag = SignBit.Non;
+                    else if (swText[0] != '*')
+                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");
+
                     // Parse flags
                     flagsText = Regex.Replace(flagsText, "-", "*");
+                    Debug.Assert(flagsText.Length == 8);
+                    InstructionFlags flags = new InstructionFlags(flagsText.AsSpan());
+
+                    //if (flagsText[0] == 0)
 
                     // Parse fields, which defines each byte in the instruction stream
                     // Each field is separated by a space, so if we split by space, we get all fields
@@ -274,7 +307,11 @@ namespace Final.ITP
                     // Convert family into instruction type and create the instruction entry to the table
                     if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
                     {
-                        InstructionEntry instruction = new InstructionEntry(op, type, platform, minLen, maxLen, operands, fields);
+                        DataFlags dataFlags = DataFlags.None;
+                        if (signFlag == SignBit.SignExtendedImm8)
+                            dataFlags |= DataFlags.SignExtendedImm8;
+
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, dataFlags, flags, platform, minLen, maxLen, operands, fields);
                         allInstructions.Add(instruction);
                     } else
                         Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");

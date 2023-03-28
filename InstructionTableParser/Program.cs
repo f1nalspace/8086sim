@@ -1,5 +1,6 @@
 ﻿//#define EXPORT_TO_CSV
 #define GENERATE_CS
+//#define GENERATE_INSTRUCTION_TYPES
 
 #if EXPORT_TO_CSV
 using CsvHelper;
@@ -10,21 +11,34 @@ using Final.CPU8086;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
 namespace Final.ITP
 {
-    /// <summary>
-    /// 
-    /// </summary>
+    class InstructionFamily : IEquatable<InstructionFamily>
+    {
+        public string Name { get; }
+        public string Description { get; }
+        public Platform Platform { get; }
+
+        public InstructionFamily(string name, string description, Platform platform)
+        {
+            Name = name;
+            Description = description;
+            Platform = platform;
+        }
+
+        public override int GetHashCode() => Name.GetHashCode();
+        public bool Equals(InstructionFamily other) => Name.Equals(other.Name);
+        public override bool Equals(object obj) => obj is InstructionFamily other && Equals(other);
+    }
+
     public class Program
     {
         private static readonly Regex _rexTitle = new Regex("\\(([0-9]+[+]?.*)\\).*$", RegexOptions.Compiled);
@@ -257,9 +271,13 @@ namespace Final.ITP
                     for (int i = 1; i < splittedMnemonics.Length; i++)
                         operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
 
-                    // Create instruction and add it to the family
-                    InstructionEntry instruction = new InstructionEntry(op, family, platform, minLen, maxLen, operands, fields);
-                    allInstructions.Add(instruction);
+                    // Convert family into instruction type and create the instruction entry to the table
+                    if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
+                    {
+                        InstructionEntry instruction = new InstructionEntry(op, type, platform, minLen, maxLen, operands, fields);
+                        allInstructions.Add(instruction);
+                    } else
+                        Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
 #endif
 
 #if EXPORT_TO_CSV
@@ -304,6 +322,7 @@ namespace Final.ITP
                 Debug.WriteLine($"{instruction}");
             }
 
+#if GENERATE_INSTRUCTION_TYPES
             Debug.WriteLine("enum InstructionType {");
             Debug.WriteLine("\t/// <summary>");
             Debug.WriteLine($"\t/// None");
@@ -319,6 +338,9 @@ namespace Final.ITP
                 Debug.WriteLine($"\t{family.Name},");
             }
             Debug.WriteLine("}");
+
+#endif
+
 #endif
 
             Console.WriteLine();

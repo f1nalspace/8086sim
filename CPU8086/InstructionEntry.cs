@@ -5,18 +5,17 @@ namespace Final.CPU8086
     public class InstructionEntry
     {
         public byte Op { get; }
-
-        public InstructionFamily Family { get; }
+        public InstructionType Type { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
         public int MaxLength { get; }
         public Operand[] Operands { get; }
         public Field[] Fields { get; }
 
-        public InstructionEntry(byte op, InstructionFamily family, Platform platform, int minLength, int maxLength, Operand[] operands, Field[] fields)
+        public InstructionEntry(byte op, InstructionType type, Platform platform, int minLength, int maxLength, Operand[] operands, Field[] fields)
         {
             Op = op;
-            Family = family;
+            Type = type;
             Platform = platform;
             MinLength = minLength;
             MaxLength = maxLength;
@@ -30,7 +29,7 @@ namespace Final.CPU8086
             s.Append("0x");
             s.Append(Op.ToString("X2"));
             s.Append('|');
-            s.Append(Family.Name);
+            s.Append(Type);
             foreach (Operand operand in Operands)
             {
                 s.Append(' ');

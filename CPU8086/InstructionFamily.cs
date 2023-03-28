@@ -1,6 +1,8 @@
-﻿namespace Final.CPU8086
+﻿using System;
+
+namespace Final.CPU8086
 {
-    public class InstructionFamily
+    public class InstructionFamily : IEquatable<InstructionFamily>
     {
         public string Name { get; }
         public string Description { get; }
@@ -15,5 +17,6 @@
 
         public override int GetHashCode() => Name.GetHashCode();
         public bool Equals(InstructionFamily other) => Name.Equals(other.Name);
+        public override bool Equals(object obj) => obj is InstructionFamily other && Equals(other);
     }
 }

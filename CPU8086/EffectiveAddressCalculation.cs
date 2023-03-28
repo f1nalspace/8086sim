@@ -1,6 +1,6 @@
 ﻿namespace Final.CPU8086
 {
-    public enum EffectiveAddressCalculation : int
+    public enum EffectiveAddressCalculation : long
     {
         None = 0,
 

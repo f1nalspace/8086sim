@@ -6,14 +6,14 @@ namespace Final.CPU8086
     public readonly struct MemoryAddress
     {
         public EffectiveAddressCalculation EAC { get; }
-        public int Displacement { get; }
+        public long Displacement { get; }
 
-        public MemoryAddress(EffectiveAddressCalculation eac, short displacement)
+        public MemoryAddress(EffectiveAddressCalculation eac, long displacement)
         {
             EAC = eac;
             Displacement = displacement;
         }
 
-        public override string ToString() => $"{EAC}: {Displacement:X4}";
+        public override string ToString() => $"{EAC}: {Displacement:X}";
     }
 }

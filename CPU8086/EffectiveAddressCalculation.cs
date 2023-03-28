@@ -1,6 +1,6 @@
 ﻿namespace Final.CPU8086
 {
-    public enum EffectiveAddressCalculation : byte
+    public enum EffectiveAddressCalculation : int
     {
         None = 0,
 

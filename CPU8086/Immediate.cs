@@ -34,6 +34,10 @@ namespace Final.CPU8086
         public readonly ushort U16;
         [FieldOffset(2)]
         public readonly short S16;
+        [FieldOffset(2)]
+        public readonly uint U32;
+        [FieldOffset(2)]
+        public readonly int S32;
 
         public Immediate(byte u8, ImmediateFlag flags) : this()
         {

@@ -8,6 +8,14 @@
         Unknown = 0,
 
         /// <summary>
+        /// 64-bit accumulator register (RAX)
+        /// </summary>
+        RAX,
+        /// <summary>
+        /// 32-bit accumulator register (EAX)
+        /// </summary>
+        EAX,
+        /// <summary>
         /// 16-bit accumulator register (AX)
         /// </summary>
         AX,
@@ -20,6 +28,14 @@
         /// </summary>
         AH,
 
+        /// <summary>
+        /// 64-bit base register (RBX)
+        /// </summary>
+        RBX,
+        /// <summary>
+        /// 32-bit base register (EBX)
+        /// </summary>
+        EBX,
         /// <summary>
         /// 16-bit base register (BX)
         /// </summary>
@@ -34,6 +50,14 @@
         BH,
 
         /// <summary>
+        /// 64-bit counting register (RCX)
+        /// </summary>
+        RCX,
+        /// <summary>
+        /// 32-bit counting register (ECX)
+        /// </summary>
+        ECX,
+        /// <summary>
         /// 16-bit counting register (CX)
         /// </summary>
         CX,
@@ -46,6 +70,14 @@
         /// </summary>
         CH,
 
+        /// <summary>
+        /// 64-bit data register (RDX)
+        /// </summary>
+        RDX,
+        /// <summary>
+        /// 32-bit data register (EDX)
+        /// </summary>
+        EDX,
         /// <summary>
         /// 16-bit data register (DX)
         /// </summary>
@@ -60,17 +92,52 @@
         DH,
 
         /// <summary>
+        /// 64-bit stack pointer (RSP)
+        /// </summary>
+        RSP,
+        /// <summary>
+        /// 32-bit stack pointer (ESP)
+        /// </summary>
+        ESP,
+        /// <summary>
         /// 16-bit stack pointer (SP)
         /// </summary>
         SP,
+
+        /// <summary>
+        /// 64-bit base pointer (RBP)
+        /// </summary>
+        RBP,
+        /// <summary>
+        /// 32-bit base pointer (EBP)
+        /// </summary>
+        EBP,
         /// <summary>
         /// 16-bit base pointer (BP)
         /// </summary>
         BP,
+
+        /// <summary>
+        /// 64-bit source index (RSI)
+        /// </summary>
+        RSI,
+        /// <summary>
+        /// 32-bit source index (ESI)
+        /// </summary>
+        ESI,
         /// <summary>
         /// 16-bit source index (SI)
         /// </summary>
         SI,
+
+        /// <summary>
+        /// 64-bit destination index (RDI)
+        /// </summary>
+        RDI,
+        /// <summary>
+        /// 32-bit destination index (EDI)
+        /// </summary>
+        EDI,
         /// <summary>
         /// 16-bit destination index (DI)
         /// </summary>

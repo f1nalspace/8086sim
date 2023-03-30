@@ -48,6 +48,9 @@ namespace Final.CPU8086
             Overflow = Parse(data[0], 'o');
         }
 
+        public static implicit operator InstructionFlags(ReadOnlySpan<char> data) => new InstructionFlags(data);
+        public static explicit operator string(InstructionFlags flags) => flags.ToString();
+
         private static InstructionFlag Parse(char c, char t)
         {
             if (c == t)
@@ -76,7 +79,7 @@ namespace Final.CPU8086
 
         public override string ToString()
         {
-            Span<char> s = stackalloc char[9];
+            Span<char> s = stackalloc char[8];
             s[7] = ToChar(Parity, 'p');
             s[6] = ToChar(Auxiliary, 'a');
             s[5] = ToChar(Zero, 'z');

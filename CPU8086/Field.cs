@@ -112,17 +112,73 @@ namespace Final.CPU8086
             return new Field(type, 0);
         }
 
+        public static implicit operator Field(string value) => Parse(value);
+        public static explicit operator string(Field field) => field.ToString();
+
         public override string ToString()
         {
-            if (Type == FieldType.Constant)
+            switch (Type)
             {
-                if (Expression != FieldExpression.None)
-                    return $"{Value:X4}{Expression}";
-                else
-                    return Value.ToString("X4");
+                case FieldType.Constant:
+                    {
+                        if (Expression != FieldExpression.None)
+                            return $"{Value:X2}{Expression}";
+                        else
+                            return $"{Value:X2}";
+                    }
+                case FieldType.ModRegRM:
+                    return "mr";
+                case FieldType.Mod000RM:
+                    return "/0";
+                case FieldType.Mod001RM:
+                    return "/1";
+                case FieldType.Mod010RM:
+                    return "/2";
+                case FieldType.Mod011RM:
+                    return "/3";
+                case FieldType.Mod100RM:
+                    return "/4";
+                case FieldType.Mod101RM:
+                    return "/5";
+                case FieldType.Mod110RM:
+                    return "/6";
+                case FieldType.Mod111RM:
+                    return "/7";
+                case FieldType.Displacement0:
+                    return "d0";
+                case FieldType.Displacement1:
+                    return "d1";
+                case FieldType.Immediate0:
+                    return "i0";
+                case FieldType.Immediate1:
+                    return "i1";
+                case FieldType.Immediate2:
+                    return "i2";
+                case FieldType.Immediate3:
+                    return "i3";
+                case FieldType.Immediate0to3:
+                    return "i0~i3";
+                case FieldType.Offset0:
+                    return "o0";
+                case FieldType.Offset1:
+                    return "o1";
+                case FieldType.Segment0:
+                    return "s0";
+                case FieldType.Segment1:
+                    return "s1";
+                case FieldType.RelativeLabelDisplacement0:
+                    return "r0";
+                case FieldType.RelativeLabelDisplacement1:
+                    return "r1";
+                case FieldType.ShortLabelOrShortLow:
+                    return "sl";
+                case FieldType.LongLabel:
+                    return "ll";
+                case FieldType.ShortHigh:
+                    return "sh";
+                default:
+                    return string.Empty;
             }
-            else
-                return Type.ToString();
         }
     }
 }

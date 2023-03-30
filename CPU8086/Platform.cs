@@ -4,7 +4,7 @@ namespace Final.CPU8086
 {
     public enum PlatformType
     {
-        None = 0,
+        _8086 = 0,
         _8087,
         _186,
         _286,
@@ -33,35 +33,44 @@ namespace Final.CPU8086
         public static bool operator <(Platform left, Platform right) => left.Type < right.Type;
         public static bool operator >(Platform left, Platform right) => left.Type > right.Type;
 
+        public static implicit operator Platform(string value) => Parse(value);
+        public static explicit operator string(Platform platform) => platform.ToString();
+
         public static Platform Parse(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
-                return new Platform();
-            switch (value.ToLower())
+                return Platform8086;
+            return value.ToLower() switch
             {
-                case "8087":
-                    return new Platform(PlatformType._8087);
-                case "186":
-                    return new Platform(PlatformType._186);
-                case "286":
-                    return new Platform(PlatformType._286);
-                case "386":
-                    return new Platform(PlatformType._386);
-                case "387":
-                    return new Platform(PlatformType._387);
-                case "486":
-                    return new Platform(PlatformType._486);
-                case "32bit":
-                    return new Platform(PlatformType._32Bit);
-                case "p5":
-                    return new Platform(PlatformType._586);
-                default:
-                    throw new NotSupportedException($"The platform '{value}' is not supported!");
-            }
+                "8087" => new Platform(PlatformType._8087),
+                "186" => new Platform(PlatformType._186),
+                "286" => new Platform(PlatformType._286),
+                "386" => new Platform(PlatformType._386),
+                "387" => new Platform(PlatformType._387),
+                "486" => new Platform(PlatformType._486),
+                "32bit" => new Platform(PlatformType._32Bit),
+                "p5" => new Platform(PlatformType._586),
+                _ => Platform8086,
+            };
         }
 
-        public override string ToString() => Type.ToString();
+        public override string ToString()
+        {
+            return Type switch
+            {
+                PlatformType._8086 => "8086",
+                PlatformType._8087 => "8087",
+                PlatformType._186 => "186",
+                PlatformType._286 => "286",
+                PlatformType._386 => "386",
+                PlatformType._387 => "387",
+                PlatformType._486 => "486",
+                PlatformType._32Bit => "32bit",
+                PlatformType._586 => "p5",
+                _ => string.Empty,
+            };
+        }
 
-        
+        public static readonly Platform Platform8086 = new Platform(PlatformType._8086);
     }
 }

@@ -1,5 +1,33 @@
-﻿namespace Final.CPU8086
+﻿using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+
+namespace Final.CPU8086
 {
+    public class InstructionEntryTable : IReadOnlyCollection<InstructionList>
+    {
+        private readonly InstructionList[] _opToList;
+
+        public InstructionEntryTable()
+        {
+            _opToList = new InstructionList[256];
+        }
+
+        public int Count => _opToList.Length;
+
+        public InstructionList GetOrCreate(byte op)
+        {
+            Debug.Assert(op < _opToList.Length);
+            if (_opToList[op] == null)
+                _opToList[op] = new InstructionList(op);
+            return _opToList[op];
+        }
+
+        public IEnumerator<InstructionList> GetEnumerator() => _opToList.Cast<InstructionList>().GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
     public class InstructionTable
     {
         private readonly InstructionDefinition[] _table;

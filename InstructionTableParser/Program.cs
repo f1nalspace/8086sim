@@ -1,6 +1,7 @@
 ﻿//#define EXPORT_TO_CSV
 #define GENERATE_CS
-//#define GENERATE_INSTRUCTION_TYPES
+
+//#define GENERATE_INSTRUCTION_CLASSES
 
 #if EXPORT_TO_CSV
 using CsvHelper;
@@ -16,6 +17,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 
@@ -44,6 +46,24 @@ namespace Final.ITP
         public override int GetHashCode() => Name.GetHashCode();
         public bool Equals(InstructionFamily other) => Name.Equals(other.Name);
         public override bool Equals(object obj) => obj is InstructionFamily other && Equals(other);
+
+        public override string ToString()
+        {
+            StringBuilder s = new StringBuilder();
+            s.Append(Name);
+            if (!string.IsNullOrWhiteSpace(Description))
+            {
+                s.Append(' ');
+                s.Append('-');
+                s.Append(' ');
+                s.Append(Description);
+            }
+            s.Append(' ');
+            s.Append('[');
+            s.Append(Platform);
+            s.Append(']');
+            return s.ToString();
+        }
     }
 
     public class Program
@@ -216,15 +236,15 @@ namespace Final.ITP
                     else if (swText[1] == 'Q')
                         dataWidth |= DataWidth.QuadWord;
                     else if (swText[1] == 'T')
-                        dataWidth |= DataWidth.TenBytes;
+                        dataWidth |= DataWidth.TenBytes; // @TODO(final): Is TenBytes correct?
                     else if (swText[1] != '*')
                         throw new NotImplementedException($"The w flag '{swText[1]}' is not implemented");
 
-                    SignBit signFlag = SignBit.None;
+                    SignBit signBit = SignBit.None;
                     if (swText[0] == 'E')
-                        signFlag = SignBit.SignExtendedImm8;
+                        signBit = SignBit.SignExtendedImm8;
                     else if (swText[0] == 'N')
-                        signFlag = SignBit.Non;
+                        signBit = SignBit.Non;
                     else if (swText[0] != '*')
                         throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");
 
@@ -233,11 +253,9 @@ namespace Final.ITP
                     Debug.Assert(flagsText.Length == 8);
                     InstructionFlags flags = new InstructionFlags(flagsText.AsSpan());
 
-                    //if (flagsText[0] == 0)
-
-                    // Parse fields, which defines each byte in the instruction stream
-                    // Each field is separated by a space, so if we split by space, we get all fields
-                    // The very first field contains always the full op-code byte
+                    // Parse fields that defines each byte in the instruction stream.
+                    // Each field is separated by a space, so if we split by space, we get all the fields.
+                    // The very first field contains the full op-code byte always.
                     //
                     // Issues:
                     // Sometimes there is a | character, so we need to remove that
@@ -253,7 +271,6 @@ namespace Final.ITP
                         op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
                         fieldsSplitted = opSplit.AsSpan(1);
                     }
-
 #if GENERATE_CS
                     string originalMemonics = mnemonics;
 
@@ -299,6 +316,7 @@ namespace Final.ITP
 
                     opNames.Add(opName);
 
+#if !GENERATE_INSTRUCTION_CLASSES
                     // Parse mnemonic operands
                     Operand[] operands = new Operand[splittedMnemonics.Length - 1];
                     for (int i = 1; i < splittedMnemonics.Length; i++)
@@ -308,35 +326,38 @@ namespace Final.ITP
                     if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
                     {
                         DataFlags dataFlags = DataFlags.None;
-                        if (signFlag == SignBit.SignExtendedImm8)
+                        if (signBit == SignBit.SignExtendedImm8)
                             dataFlags |= DataFlags.SignExtendedImm8;
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, dataFlags, flags, platform, minLen, maxLen, operands, fields);
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, dataFlags, flags, platform, minLen, maxLen, fields, operands);
                         allInstructions.Add(instruction);
-                    } else
+                    }
+                    else
                         Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
-#endif
+#endif // !GENERATE_INSTRUCTION_TYPES
+
+#endif // GENERATE_CS
 
 #if EXPORT_TO_CSV
                     csv.WriteField(mnemonics, true);
                     csv.WriteField(op);
                     csv.WriteField(op.ToString("X2"));
                     csv.WriteField(op.ToBinary());
-                    csv.WriteField(string.Join(' ', fieldsRaw), true);
+                    csv.WriteField(string.Join(' ', fieldsSplitted.ToArray()), true);
                     csv.WriteField(swText, true);
                     csv.WriteField(minLen);
                     csv.WriteField(maxLen);
                     csv.WriteField(flagsText, true);
-                    csv.WriteField(family, true);
+                    csv.WriteField(family.Name, true);
                     csv.WriteField(title, true);
-                    csv.WriteField(platform, true);
+                    csv.WriteField(platform.Type);
                     csv.WriteField(string.Empty);
                     csv.WriteField(string.Empty);
                     csv.WriteField(string.Empty);
                     csv.WriteField(lenText);
                     csv.WriteField(opAndFields);
                     csv.NextRecord();
-#endif
+#endif // EXPORT_TO_CSV
                 }
 
                 HtmlNode next = div.SelectSingleNode("following-sibling::h4");
@@ -347,38 +368,208 @@ namespace Final.ITP
 #if EXPORT_TO_CSV
             writer.Flush();
             csvStream.Flush();
-#endif
+#endif // EXPORT_TO_CSV
 
 #if GENERATE_CS
-            // Print out parsed stuff in CSharp
+
+#if GENERATE_INSTRUCTION_CLASSES
+            // Generate instruction types enum
+            // Generate instruction names ToString() and TryParse() method
+            StringBuilder instructionTypesText = new StringBuilder();
+            instructionTypesText.AppendLine("enum InstructionType {");
+            instructionTypesText.AppendLine("\t/// <summary>");
+            instructionTypesText.AppendLine($"\t/// None");
+            instructionTypesText.AppendLine("\t/// </summary>");
+            instructionTypesText.AppendLine("\tNone = 0,");
+
+            StringBuilder parseNamesMethodText = new StringBuilder();
+            parseNamesMethodText.AppendLine($"public static bool TryParse(string name, out {nameof(InstructionName)} result) {{");
+            parseNamesMethodText.AppendLine($"\t{nameof(InstructionType)} type = (name ?? string.Empty) switch {{");
+
+            StringBuilder nameToStringMethodText = new StringBuilder();
+            nameToStringMethodText.AppendLine($"public override string {nameof(object.ToString)}()");
+            nameToStringMethodText.AppendLine("{");
+            nameToStringMethodText.AppendLine($"\treturn {nameof(InstructionName.Type)} switch {{");
+
+            foreach (InstructionFamily family in orderedFamilies)
+            {
+                if (family.Platform.Type != PlatformType._8086)
+                    continue;
+                string iname = family.Name;
+
+                instructionTypesText.AppendLine("\t/// <summary>");
+                instructionTypesText.AppendLine($"\t/// {family.Description}");
+                instructionTypesText.AppendLine("\t/// </summary>");
+                instructionTypesText.AppendLine($"\t{iname},");
+
+                parseNamesMethodText.AppendLine($"\t\t\"{iname}\" => {nameof(InstructionType)}.{iname},");
+
+                nameToStringMethodText.AppendLine($"\t\t{nameof(InstructionType)}.{iname} => \"{iname}\",");
+            }
+            instructionTypesText.AppendLine("}");
+
+            parseNamesMethodText.AppendLine($"\t\t_ => {nameof(InstructionType)}.{nameof(InstructionType.None)},");
+            parseNamesMethodText.AppendLine($"\t}};");
+            parseNamesMethodText.AppendLine($"\tresult = new {nameof(InstructionName)}(type);");
+            parseNamesMethodText.AppendLine($"\treturn result.{nameof(InstructionName.Type)} != {nameof(InstructionType)}.{nameof(InstructionType.None)};");
+            parseNamesMethodText.AppendLine("}");
+
+            nameToStringMethodText.AppendLine("\t\t_ => string.Empty,");
+            nameToStringMethodText.AppendLine("\t};");
+            nameToStringMethodText.AppendLine("}");
+
+            Debug.WriteLine(instructionTypesText.ToString());
+            Debug.WriteLine(string.Empty);
+            Debug.WriteLine(parseNamesMethodText.ToString());
+            Debug.WriteLine(string.Empty);
+            Debug.WriteLine(nameToStringMethodText.ToString());
+            Debug.WriteLine(string.Empty);
+#endif
+
+            // Fill instruction table, but skip all non 8086 platforms
+            InstructionEntryTable newTable = new InstructionEntryTable();
             InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
             foreach (InstructionEntry instruction in sortedInstructions)
             {
-                if (instruction.Platform.Type != PlatformType.None)
+                if (instruction.Platform.Type != PlatformType._8086)
                     continue;
-                Debug.WriteLine($"{instruction}");
+                byte op = instruction.Op;
+                InstructionList list = newTable.GetOrCreate(op);
+                list.Add(instruction);
             }
 
-#if GENERATE_INSTRUCTION_TYPES
-            Debug.WriteLine("enum InstructionType {");
-            Debug.WriteLine("\t/// <summary>");
-            Debug.WriteLine($"\t/// None");
-            Debug.WriteLine("\t/// </summary>");
-            Debug.WriteLine("\tNone = 0,");
-            foreach (InstructionFamily family in orderedFamilies)
+            // Generate instructions table class
+            string entryName = "IE";
+            string listName = "IL";
+            string dataWidthName = "DW";
+            string dataFlagsName = "DF";
+            string tableName = nameof(InstructionEntryTable);
+            string varName = "_opToList";
+
+            StringBuilder instructionsTableText = new StringBuilder();
+            instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName}");
+            instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName}");
+            instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName}");
+            instructionsTableText.AppendLine($"using {dataFlagsName} = {typeof(DataFlags).FullName}");
+            instructionsTableText.AppendLine();
+            instructionsTableText.AppendLine($"public class {tableName}");
+            instructionsTableText.AppendLine("{");
+            instructionsTableText.AppendLine($"\tprivate readonly IL[] {varName} = new IL[256];");
+            instructionsTableText.AppendLine();
+            instructionsTableText.AppendLine($"\tpublic {tableName}()");
+            instructionsTableText.AppendLine("\t{");
+
+            foreach (InstructionList list in newTable)
             {
-                if (family.Platform.Type != PlatformType.None)
-                    continue;
-                Debug.WriteLine("\t/// <summary>");
-                Debug.WriteLine($"\t/// {family.Description}");
-                Debug.WriteLine("\t/// </summary>");
-                Debug.WriteLine($"\t{family.Name},");
+                if (list != null)
+                {
+                    string opBinary = list.Op.ToBinary();
+
+                    string listOpHex = list.Op.ToString("X2");
+
+                    StringBuilder entriesText = new StringBuilder();
+                    foreach (InstructionEntry entry in list)
+                    {
+                        string entryOpHex = entry.Op.ToString("X2");
+
+                        if (entriesText.Length > 0)
+                            entriesText.AppendLine(",");
+
+                        StringBuilder entryText = new StringBuilder();
+                        entryText.Append("\t\t\t");
+
+                        entryText.Append("new ");
+                        entryText.Append(entryName);
+                        entryText.Append('(');
+
+                        entryText.Append("0x");
+                        entryText.Append(entryOpHex);
+
+                        entryText.Append(", ");
+                        entryText.Append('"');
+                        entryText.Append(entry.Name.ToString());
+                        entryText.Append('"');
+
+                        entryText.Append(", ");
+                        entryText.Append(dataWidthName);
+                        entryText.Append('.');
+                        entryText.Append(entry.DataWidth.ToString());
+
+                        entryText.Append(", ");
+                        if (entry.DataFlags != DataFlags.None)
+                        {
+                            if (entry.DataFlags.HasFlag(DataFlags.SignExtendedImm8))
+                            {
+                                entryText.Append(dataFlagsName);
+                                entryText.Append('.');
+                                entryText.Append(nameof(DataFlags.SignExtendedImm8));
+                            }
+                        }
+                        else
+                        {
+                            entryText.Append(dataFlagsName);
+                            entryText.Append('.');
+                            entryText.Append(nameof(DataFlags.None));
+                        }
+
+                        entryText.Append(", ");
+                        entryText.Append('"');
+                        entryText.Append(entry.Flags.ToString());
+                        entryText.Append('"');
+
+                        entryText.Append(", ");
+                        entryText.Append('"');
+                        entryText.Append(entry.Platform.ToString());
+                        entryText.Append('"');
+
+                        entryText.Append(", ");
+                        entryText.Append(entry.MinLength.ToString());
+                        entryText.Append(", ");
+                        entryText.Append(entry.MaxLength.ToString());
+
+                        entryText.Append(", ");
+                        if (entry.Fields.Length > 0)
+                        {
+                            entryText.Append($"new {nameof(Field)}[] {{");
+                            int fieldIndex = 0;
+                            foreach (Field field in entry.Fields)
+                            {
+                                if (fieldIndex > 0)
+                                    entryText.Append(", ");
+                                entryText.Append('"');
+                                entryText.Append(field.ToString());
+                                entryText.Append('"');
+                                ++fieldIndex;
+                            }
+                            entryText.Append("}");
+                        }
+                        else
+                        {
+                            entryText.Append(nameof(Array));
+                            entryText.Append('.');
+                            entryText.Append(nameof(Array.Empty));
+                            entryText.Append('<');
+                            entryText.Append($"{nameof(Field)}");
+                            entryText.Append(">()");
+                        }
+
+                        entryText.Append(')');
+
+                        entriesText.Append(entryText);
+                    }
+
+                    instructionsTableText.AppendLine($"\t\t{varName}[{list.Op:D}] = new {listName}(0b{opBinary},");
+                    instructionsTableText.AppendLine(entriesText.ToString());
+                    instructionsTableText.AppendLine($"\t\t);");
+                }
             }
-            Debug.WriteLine("}");
 
-#endif
+            instructionsTableText.AppendLine("\t}");
+            instructionsTableText.AppendLine("}");
 
-#endif
+            Debug.WriteLine(instructionsTableText.ToString());
+
+#endif // GENERATE_CS
 
             Console.WriteLine();
             Console.WriteLine("Done, press any key to exit");

@@ -1,32 +1,36 @@
-﻿using System.Text;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 
 namespace Final.CPU8086
 {
     public class InstructionEntry
     {
         public byte Op { get; }
-        public InstructionType Type { get; }
+        public InstructionName Name { get; }
         public DataWidth DataWidth { get; }
         public DataFlags DataFlags { get; }
         public InstructionFlags Flags { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
         public int MaxLength { get; }
-        public Operand[] Operands { get; }
         public Field[] Fields { get; }
+        public Operand[] Operands { get; }
 
-        public InstructionEntry(byte op, InstructionType type, DataWidth dataWidth, DataFlags dataFlags, InstructionFlags flags, Platform platform, int minLength, int maxLength, Operand[] operands, Field[] fields)
+        public InstructionType Type => Name.Type;
+
+        public InstructionEntry(byte op, InstructionName name, DataWidth dataWidth, DataFlags dataFlags, InstructionFlags flags, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
         {
             Op = op;
             DataWidth = dataWidth;
             DataFlags = dataFlags;
             Flags = flags;
-            Type = type;
+            Name = name;
             Platform = platform;
             MinLength = minLength;
             MaxLength = maxLength;
-            Operands = operands;
             Fields = fields;
+            Operands = operands;
         }
 
         public override string ToString()
@@ -35,7 +39,7 @@ namespace Final.CPU8086
             s.Append("0x");
             s.Append(Op.ToString("X2"));
             s.Append('|');
-            s.Append(Type);
+            s.Append(Name);
             s.Append('|');
             s.Append(DataWidth);
             if (DataFlags != DataFlags.None)
@@ -63,7 +67,7 @@ namespace Final.CPU8086
             s.Append(MaxLength);
             if (Fields.Length > 0)
             {
-                s.Append("|");
+                s.Append('|');
                 for (int i = 0; i < Fields.Length; i++)
                 {
                     if (i > 0)
@@ -73,13 +77,8 @@ namespace Final.CPU8086
             }
             s.Append('|');
             s.Append(Flags.ToString());
-            if (Platform.Type != PlatformType.None)
-            {
-                s.Append(' ');
-                s.Append('[');
-                s.Append(Platform);
-                s.Append(']');
-            }
+            s.Append('|');
+            s.Append(Platform);
             return s.ToString();
         }
     }

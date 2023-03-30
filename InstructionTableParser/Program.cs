@@ -489,7 +489,7 @@ namespace Final.ITP
                         // Name
                         entryText.Append(", ");
                         entryText.Append('"');
-                        entryText.Append(entry.Name.ToString());
+                        entryText.Append(entry.Mnemonic.ToString());
                         entryText.Append('"');
 
                         // DataWidth

@@ -795,7 +795,7 @@ namespace Final.CPU8086
                 bool isWord = (opCode & 0b00000001) == 0b00000001;
                 bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
 
-                AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic.Lower);
+                AssemblyLine assemblyLine = new AssemblyLine(instruction.Mnemonic);
 
                 switch (instruction.Family)
                 {
@@ -1032,7 +1032,7 @@ namespace Final.CPU8086
                                 _ => throw new NotSupportedException($"Arithmetic type '{atype}' is not supported for instruction '{instruction}'!")
                             };
 
-                            assemblyLine = new AssemblyLine(mnemonic.Lower, destination, source);
+                            assemblyLine = new AssemblyLine(mnemonic, destination, source);
                         }
                         break;
 

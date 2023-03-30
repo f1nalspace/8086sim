@@ -2,11 +2,11 @@
 {
     public readonly struct AssemblyLine
     {
-        public string Mnemonic { get; }
+        public Mnemonic Mnemonic { get; }
         public string Destination { get; }
         public string Source { get; }
 
-        public AssemblyLine(string mnemonic, string destination = null, string source = null)
+        public AssemblyLine(Mnemonic mnemonic, string destination = null, string source = null)
         {
             Mnemonic = mnemonic;
             Destination = destination;
@@ -26,7 +26,7 @@
             else if (!string.IsNullOrEmpty(Destination))
                 return $"{Mnemonic} {Destination}";
             else
-                return Mnemonic;
+                return Mnemonic.ToString();
         }
     }
 }

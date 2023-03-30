@@ -7,7 +7,7 @@ namespace Final.CPU8086
     public class InstructionEntry
     {
         public byte Op { get; }
-        public InstructionName Name { get; }
+        public Mnemonic Mnemonic { get; }
         public DataWidth DataWidth { get; }
         public DataFlags DataFlags { get; }
         public InstructionFlags Flags { get; }
@@ -17,15 +17,15 @@ namespace Final.CPU8086
         public Field[] Fields { get; }
         public Operand[] Operands { get; }
 
-        public InstructionType Type => Name.Type;
+        public InstructionType Type => Mnemonic.Type;
 
-        public InstructionEntry(byte op, InstructionName name, DataWidth dataWidth, DataFlags dataFlags, InstructionFlags flags, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
+        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, DataFlags dataFlags, InstructionFlags flags, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
         {
             Op = op;
             DataWidth = dataWidth;
             DataFlags = dataFlags;
             Flags = flags;
-            Name = name;
+            Mnemonic = mnemonic;
             Platform = platform;
             MinLength = minLength;
             MaxLength = maxLength;
@@ -39,7 +39,7 @@ namespace Final.CPU8086
             s.Append("0x");
             s.Append(Op.ToString("X2"));
             s.Append('|');
-            s.Append(Name);
+            s.Append(Mnemonic);
             s.Append('|');
             s.Append(DataWidth);
             if (DataFlags != DataFlags.None)

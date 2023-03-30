@@ -145,25 +145,7 @@ namespace Final.CPU8086
                 return true;
             }
 
-            OperandKind type = StringToType(value);
-            operand = new Operand(type);
-            return type != OperandKind.Unknown;
-        }
-
-        public static Operand Parse(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentNullException(nameof(value));
-            if (!TryParse(value, out Operand operand))
-                throw new NotImplementedException($"The operand '{value}' is not implemented!");
-            return operand;
-        }
-
-        public static OperandKind StringToType(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                return OperandKind.Unknown;
-            return value.ToLower() switch
+            OperandKind type = value.ToLower() switch
             {
                 "mb" => OperandKind.MemoryByte,
                 "mw" => OperandKind.MemoryWord,
@@ -205,8 +187,8 @@ namespace Final.CPU8086
                 "st(i)" => OperandKind.ST_I,
                 "m" => OperandKind.M,
 
-                "eax" => OperandKind.EAX,
                 "rax" => OperandKind.RAX,
+                "eax" => OperandKind.EAX,
                 "ax" => OperandKind.AX,
                 "al" => OperandKind.AL,
                 "ah" => OperandKind.AH,
@@ -259,115 +241,129 @@ namespace Final.CPU8086
 
                 _ => OperandKind.Unknown
             };
+            operand = new Operand(type);
+            return type != OperandKind.Unknown;
+        }
+
+        public static Operand Parse(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+            if (!TryParse(value, out Operand operand))
+                throw new NotImplementedException($"The operand '{value}' is not implemented!");
+            return operand;
         }
 
         public static string TypeToString(OperandKind type)
         {
             return type switch
             {
-                OperandKind.Value => nameof(OperandKind.Value),
+                OperandKind.MemoryByte => "mb",
+                OperandKind.MemoryWord => "mw",
+                OperandKind.MemoryDoubleWord => "md",
+                OperandKind.MemoryQuadWord => "mq",
 
-                OperandKind.MemoryByte => nameof(OperandKind.MemoryByte),
-                OperandKind.MemoryWord => nameof(OperandKind.MemoryWord),
-                OperandKind.MemoryDoubleWord => nameof(OperandKind.MemoryDoubleWord),
-                OperandKind.MemoryQuadWord => nameof(OperandKind.MemoryQuadWord),
-                OperandKind.MemoryWordReal => nameof(OperandKind.MemoryWordReal),
-                OperandKind.MemoryDoubleWordReal => nameof(OperandKind.MemoryDoubleWordReal),
-                OperandKind.MemoryQuadWordReal => nameof(OperandKind.MemoryQuadWordReal),
-                OperandKind.MemoryTenByteReal => nameof(OperandKind.MemoryTenByteReal),
+                OperandKind.MemoryWordReal => "mwr",
+                OperandKind.MemoryDoubleWordReal => "mdr",
+                OperandKind.MemoryQuadWordReal => "mqr",
+                OperandKind.MemoryTenByteReal => "mtr",
 
-                OperandKind.RegisterByte => nameof(OperandKind.RegisterByte),
-                OperandKind.RegisterWord => nameof(OperandKind.RegisterWord),
-                OperandKind.RegisterDoubleWord => nameof(OperandKind.RegisterDoubleWord),
+                OperandKind.RegisterByte => "rb",
+                OperandKind.RegisterWord => "rw",
+                OperandKind.RegisterDoubleWord => "rd",
 
-                OperandKind.RegisterOrMemoryByte => nameof(OperandKind.RegisterOrMemoryByte),
-                OperandKind.RegisterOrMemoryWord => nameof(OperandKind.RegisterOrMemoryWord),
-                OperandKind.RegisterOrMemoryDoubleWord => nameof(OperandKind.RegisterOrMemoryDoubleWord),
-                OperandKind.RegisterOrMemoryQuadWord => nameof(OperandKind.RegisterOrMemoryQuadWord),
+                OperandKind.RegisterOrMemoryByte => "rmb",
+                OperandKind.RegisterOrMemoryWord => "rmw",
+                OperandKind.RegisterOrMemoryDoubleWord => "rmd",
+                OperandKind.RegisterOrMemoryQuadWord => "rmq",
 
-                OperandKind.ImmediateByte => nameof(OperandKind.ImmediateByte),
-                OperandKind.ImmediateWord => nameof(OperandKind.ImmediateWord),
-                OperandKind.ImmediateDoubleWord => nameof(OperandKind.ImmediateDoubleWord),
+                OperandKind.ImmediateByte => "ib",
+                OperandKind.ImmediateWord => "iw",
+                OperandKind.ImmediateDoubleWord => "id",
 
-                OperandKind.KeywordFar => nameof(OperandKind.KeywordFar),
-                OperandKind.KeywordPointer => nameof(OperandKind.KeywordPointer),
-                OperandKind.KeywordNearPointer => nameof(OperandKind.KeywordNearPointer),
-                OperandKind.KeywordFarPointer => nameof(OperandKind.KeywordFarPointer),
+                OperandKind.KeywordFar => "far",
+                OperandKind.KeywordPointer => "ptr",
+                OperandKind.KeywordNearPointer => "np",
+                OperandKind.KeywordFarPointer => "fp",
 
-                OperandKind.TypeDoubleWord => nameof(OperandKind.TypeDoubleWord),
-                OperandKind.TypeShort => nameof(OperandKind.TypeShort),
-                OperandKind.TypeInt => nameof(OperandKind.TypeInt),
+                OperandKind.TypeDoubleWord => "dword",
+                OperandKind.TypeShort => "short",
+                OperandKind.TypeInt => "int",
 
-                OperandKind.SourceRegister => nameof(OperandKind.SourceRegister),
+                OperandKind.SourceRegister => "sr",
                 
-                OperandKind.ShortLabel => nameof(OperandKind.ShortLabel),
-                OperandKind.LongLabel => nameof(OperandKind.LongLabel),
+                OperandKind.ShortLabel => "sl",
+                OperandKind.LongLabel => "ll",
 
-                OperandKind.ST => nameof(OperandKind.ST),
-                OperandKind.ST_I => nameof(OperandKind.ST_I),
-                OperandKind.M => nameof(OperandKind.M),
-                OperandKind.M_Number => nameof(OperandKind.M_Number),
+                OperandKind.ST => "st",
+                OperandKind.ST_I => "st(i)",
+                OperandKind.M => "m",
 
-                OperandKind.RAX => nameof(OperandKind.RAX),
-                OperandKind.EAX => nameof(OperandKind.EAX),
-                OperandKind.AX => nameof(OperandKind.AX),
-                OperandKind.AL => nameof(OperandKind.AL),
-                OperandKind.AH => nameof(OperandKind.AH),
+                OperandKind.RAX => "rax",
+                OperandKind.EAX => "eax",
+                OperandKind.AX => "ax",
+                OperandKind.AL => "al",
+                OperandKind.AH => "ah",
 
-                OperandKind.RBX => nameof(OperandKind.RBX),
-                OperandKind.EBX => nameof(OperandKind.EBX),
-                OperandKind.BX => nameof(OperandKind.BX),
-                OperandKind.BL => nameof(OperandKind.BL),
-                OperandKind.BH => nameof(OperandKind.BH),
+                OperandKind.RBX => "rbx",
+                OperandKind.EBX => "ebx",
+                OperandKind.BX => "bx",
+                OperandKind.BL => "bl",
+                OperandKind.BH => "bh",
 
-                OperandKind.RCX => nameof(OperandKind.RCX),
-                OperandKind.ECX => nameof(OperandKind.ECX),
-                OperandKind.CX =>  nameof(OperandKind.CX),
-                OperandKind.CL =>  nameof(OperandKind.CL),
-                OperandKind.CH =>  nameof(OperandKind.CH),
+                OperandKind.RCX => "rcx",
+                OperandKind.ECX => "ecx",
+                OperandKind.CX =>  "cx",
+                OperandKind.CL =>  "cl",
+                OperandKind.CH =>  "ch",
 
-                OperandKind.RDX => nameof(OperandKind.RDX),
-                OperandKind.EDX => nameof(OperandKind.EDX),
-                OperandKind.DX =>  nameof(OperandKind.DX),
-                OperandKind.DL =>  nameof(OperandKind.DL),
-                OperandKind.DH =>  nameof(OperandKind.DH),
+                OperandKind.RDX => "rdx",
+                OperandKind.EDX => "edx",
+                OperandKind.DX =>  "dx",
+                OperandKind.DL =>  "dl",
+                OperandKind.DH =>  "dh",
 
-                OperandKind.RSP => nameof(OperandKind.RSP),
-                OperandKind.ESP => nameof(OperandKind.ESP),
-                OperandKind.SP =>  nameof(OperandKind.SP),
+                OperandKind.RSP => "rsp",
+                OperandKind.ESP => "esp",
+                OperandKind.SP =>  "sp",
 
-                OperandKind.RBP => nameof(OperandKind.RBP),
-                OperandKind.EBP => nameof(OperandKind.EBP),
-                OperandKind.BP =>  nameof(OperandKind.BP),
+                OperandKind.RBP => "rbp",
+                OperandKind.EBP => "ebp",
+                OperandKind.BP =>  "bp",
 
-                OperandKind.RSI => nameof(OperandKind.RSI),
-                OperandKind.ESI => nameof(OperandKind.ESI),
-                OperandKind.SI =>  nameof(OperandKind.SI),
+                OperandKind.RSI => "rsi",
+                OperandKind.ESI => "esi",
+                OperandKind.SI =>  "si",
 
-                OperandKind.RDI => nameof(OperandKind.RDI),
-                OperandKind.EDI => nameof(OperandKind.EDI),
-                OperandKind.DI =>  nameof(OperandKind.DI),
+                OperandKind.RDI => "rdi",
+                OperandKind.EDI => "edi",
+                OperandKind.DI =>  "di",
 
-                OperandKind.CS =>  nameof(OperandKind.CS),
-                OperandKind.DS =>  nameof(OperandKind.DS),
-                OperandKind.SS =>  nameof(OperandKind.SS),
-                OperandKind.ES =>  nameof(OperandKind.ES),
+                OperandKind.CS =>  "cs",
+                OperandKind.DS =>  "ds",
+                OperandKind.SS =>  "ss",
+                OperandKind.ES =>  "es",
 
-                OperandKind.CR =>  nameof(OperandKind.CR),
-                OperandKind.DR =>  nameof(OperandKind.DR),
-                OperandKind.TR =>  nameof(OperandKind.TR),
+                OperandKind.CR =>  "cr",
+                OperandKind.DR =>  "dr",
+                OperandKind.TR =>  "tr",
 
-                OperandKind.FS =>  nameof(OperandKind.FS),
-                OperandKind.GS => nameof(OperandKind.GS),
+                OperandKind.FS =>  "fs",
+                OperandKind.GS => "gs",
 
-                _ => nameof(OperandKind.Unknown),
+                _ => string.Empty,
             };
         }
+
+        public static implicit operator Operand(string value) => Parse(value);
+        public static explicit operator string(Operand op) => op.ToString();
 
         public override string ToString()
         {
             if (Type == OperandKind.Value)
                 return Value.ToString("D");
+            else if (Type == OperandKind.M_Number)
+                return $"M{Value:D}";
             else
                 return TypeToString(Type);
         }

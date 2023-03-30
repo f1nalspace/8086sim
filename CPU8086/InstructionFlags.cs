@@ -48,7 +48,7 @@ namespace Final.CPU8086
             Overflow = Parse(data[0], 'o');
         }
 
-        public static implicit operator InstructionFlags(ReadOnlySpan<char> data) => new InstructionFlags(data);
+        public static implicit operator InstructionFlags(string value) => new InstructionFlags(value);
         public static explicit operator string(InstructionFlags flags) => flags.ToString();
 
         private static InstructionFlag Parse(char c, char t)

@@ -226,17 +226,17 @@ namespace Final.ITP
                     swText = Regex.Replace(swText, "\\s", "*");
                     Debug.Assert(swText.Length == 2);
 
-                    DataWidth dataWidth = DataWidth.None;
+                    DataWidthType dataWidthType = DataWidthType.None;
                     if (swText[1] == 'B')
-                        dataWidth |= DataWidth.Byte;
+                        dataWidthType |= DataWidthType.Byte;
                     else if (swText[1] == 'W')
-                        dataWidth |= DataWidth.Word;
+                        dataWidthType |= DataWidthType.Word;
                     else if (swText[1] == 'D')
-                        dataWidth |= DataWidth.DoubleWord;
+                        dataWidthType |= DataWidthType.DoubleWord;
                     else if (swText[1] == 'Q')
-                        dataWidth |= DataWidth.QuadWord;
+                        dataWidthType |= DataWidthType.QuadWord;
                     else if (swText[1] == 'T')
-                        dataWidth |= DataWidth.TenBytes; // @TODO(final): Is TenBytes correct?
+                        dataWidthType |= DataWidthType.TenBytes; // @TODO(final): Is TenBytes correct?
                     else if (swText[1] != '*')
                         throw new NotImplementedException($"The w flag '{swText[1]}' is not implemented");
 
@@ -329,7 +329,7 @@ namespace Final.ITP
                         if (signBit == SignBit.SignExtendedImm8)
                             dataFlags |= DataFlags.SignExtendedImm8;
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, dataFlags, flags, platform, minLen, maxLen, fields, operands);
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, dataFlags, flags, platform, minLen, maxLen, fields, operands);
                         allInstructions.Add(instruction);
                     }
                     else
@@ -447,10 +447,10 @@ namespace Final.ITP
             string varName = "_opToList";
 
             StringBuilder instructionsTableText = new StringBuilder();
-            instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName}");
-            instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName}");
-            instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName}");
-            instructionsTableText.AppendLine($"using {dataFlagsName} = {typeof(DataFlags).FullName}");
+            instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName};");
+            instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName};");
+            instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
+            instructionsTableText.AppendLine($"using {dataFlagsName} = {typeof(DataFlags).FullName};");
             instructionsTableText.AppendLine();
             instructionsTableText.AppendLine($"public class {tableName}");
             instructionsTableText.AppendLine("{");
@@ -482,19 +482,23 @@ namespace Final.ITP
                         entryText.Append(entryName);
                         entryText.Append('(');
 
+                        // Op-Code
                         entryText.Append("0x");
                         entryText.Append(entryOpHex);
 
+                        // Name
                         entryText.Append(", ");
                         entryText.Append('"');
                         entryText.Append(entry.Name.ToString());
                         entryText.Append('"');
 
+                        // DataWidth
                         entryText.Append(", ");
-                        entryText.Append(dataWidthName);
-                        entryText.Append('.');
+                        entryText.Append('"');
                         entryText.Append(entry.DataWidth.ToString());
+                        entryText.Append('"');
 
+                        // DataFlags
                         entryText.Append(", ");
                         if (entry.DataFlags != DataFlags.None)
                         {
@@ -512,21 +516,25 @@ namespace Final.ITP
                             entryText.Append(nameof(DataFlags.None));
                         }
 
+                        // Flags
                         entryText.Append(", ");
                         entryText.Append('"');
                         entryText.Append(entry.Flags.ToString());
                         entryText.Append('"');
 
+                        // Platform
                         entryText.Append(", ");
                         entryText.Append('"');
                         entryText.Append(entry.Platform.ToString());
                         entryText.Append('"');
 
+                        // Min/Max Length
                         entryText.Append(", ");
                         entryText.Append(entry.MinLength.ToString());
                         entryText.Append(", ");
                         entryText.Append(entry.MaxLength.ToString());
 
+                        // Fields
                         entryText.Append(", ");
                         if (entry.Fields.Length > 0)
                         {
@@ -550,6 +558,33 @@ namespace Final.ITP
                             entryText.Append(nameof(Array.Empty));
                             entryText.Append('<');
                             entryText.Append($"{nameof(Field)}");
+                            entryText.Append(">()");
+                        }
+
+                        // Operands
+                        entryText.Append(", ");
+                        if (entry.Operands.Length > 0)
+                        {
+                            entryText.Append($"new {nameof(Operand)}[] {{");
+                            int operandIndex = 0;
+                            foreach (Operand operand in entry.Operands)
+                            {
+                                if (operandIndex > 0)
+                                    entryText.Append(", ");
+                                entryText.Append('"');
+                                entryText.Append(operand.ToString());
+                                entryText.Append('"');
+                                ++operandIndex;
+                            }
+                            entryText.Append("}");
+                        }
+                        else
+                        {
+                            entryText.Append(nameof(Array));
+                            entryText.Append('.');
+                            entryText.Append(nameof(Array.Empty));
+                            entryText.Append('<');
+                            entryText.Append($"{nameof(Operand)}");
                             entryText.Append(">()");
                         }
 

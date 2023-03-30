@@ -488,7 +488,7 @@ namespace Final.CPU8086
             bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
 
             // @TODO(final): Move this into Register directly
-            DataWidth dataType = isWord ? DataWidth.Word : DataWidth.Byte;
+            DataWidth dataType = isWord ? DataWidthType.Word : DataWidthType.Byte;
             InstructionType type = GetInstructionType(instruction.Family);
             
             switch (instruction.Family)
@@ -497,14 +497,14 @@ namespace Final.CPU8086
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(opCode, length, type, DataWidth.Word, new InstructionOperand(register));
+                        return new Instruction(opCode, length, type, DataWidthType.Word, new InstructionOperand(register));
                     }
 
                 case OpFamily.Pop_FixedReg:
                     {
                         RegisterType register = instruction.Register;
                         Debug.Assert(register != RegisterType.Unknown);
-                        return new Instruction(opCode, length, type, DataWidth.Word, new InstructionOperand(register));
+                        return new Instruction(opCode, length, type, DataWidthType.Word, new InstructionOperand(register));
                     }
 
                 case OpFamily.Move8_RegOrMem_RegOrMem:
@@ -525,7 +525,7 @@ namespace Final.CPU8086
                         byte reg = (byte)(opCode & 0b00000111);
                         InstructionOperand destination = new InstructionOperand(_regTable.GetByte(reg));
                         InstructionOperand source = new InstructionOperand(imm8.AsT0);
-                        return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
+                        return new Instruction(opCode, length, type, DataWidthType.Byte, destination, source);
                     }
                 case OpFamily.Move8_Mem_Imm:
                     {
@@ -536,7 +536,7 @@ namespace Final.CPU8086
                         ++length;
                         InstructionOperand destination = new InstructionOperand(modRegRM.EAC, displacement);
                         InstructionOperand source = new InstructionOperand(imm8.AsT0);
-                        return new Instruction(opCode, length, type, DataWidth.Byte, destination, source);
+                        return new Instruction(opCode, length, type, DataWidthType.Byte, destination, source);
                     }
 
                 case OpFamily.Move16_Reg_Imm:
@@ -549,7 +549,7 @@ namespace Final.CPU8086
                         byte reg = (byte)(opCode & 0b00000111);
                         InstructionOperand destination = new InstructionOperand(_regTable.GetWord(reg));
                         InstructionOperand source = new InstructionOperand(imm16.AsT0);
-                        return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
+                        return new Instruction(opCode, length, type, DataWidthType.Word, destination, source);
                     }
                 case OpFamily.Move16_Mem_Imm:
                     {
@@ -560,7 +560,7 @@ namespace Final.CPU8086
                         length += 2;
                         InstructionOperand destination = new InstructionOperand(modRegRM.EAC, displacement);
                         InstructionOperand source = new InstructionOperand(imm16.AsT0);
-                        return new Instruction(opCode, length, type, DataWidth.Word, destination, source);
+                        return new Instruction(opCode, length, type, DataWidthType.Word, destination, source);
                     }
 
                 case OpFamily.Move8_FixedReg_Mem:

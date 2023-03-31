@@ -20,7 +20,7 @@ namespace Final.CPU8086
     }
 
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    public readonly struct Immediate
+    public readonly struct Immediate : IEquatable<Immediate>
     {
         [FieldOffset(0)]
         public readonly ImmediateType Type;
@@ -66,6 +66,19 @@ namespace Final.CPU8086
             Flags = flags;
             S16 = s16;
         }
+
+        public bool Equals(Immediate other)
+        {
+            if (Type != other.Type)
+                return false;
+            if (Flags != other.Flags)
+                return false;
+            if (S32 != other.S32) 
+                return false;
+            return true;
+        }
+        public override bool Equals(object obj) => obj is Immediate imm && Equals(imm);
+        public override int GetHashCode() => HashCode.Combine(Type, Flags, S32);
 
         public override string ToString()
         {

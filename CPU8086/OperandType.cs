@@ -6,5 +6,6 @@
         Register,
         Address,
         Immediate,
+        Value,
     }
 }

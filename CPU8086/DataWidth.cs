@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Final.CPU8086
 {
@@ -12,7 +13,7 @@ namespace Final.CPU8086
         TenBytes = 10,
     }
 
-    public readonly struct DataWidth
+    public readonly struct DataWidth : IEquatable<DataWidth>
     {
         public DataWidthType Type { get; }
 
@@ -47,6 +48,10 @@ namespace Final.CPU8086
         public static implicit operator DataWidth(DataWidthType type) => new DataWidth(type);
         public static explicit operator string(DataWidth dw) => dw.ToString();
 
+        public bool Equals(DataWidth other) => Type == other.Type;
+        public override bool Equals([NotNullWhen(true)] object obj) => obj is DataWidth dw && Equals(dw);
+        public override int GetHashCode() => Type.GetHashCode();
+
         public override string ToString()
         {
             return Type switch
@@ -59,5 +64,7 @@ namespace Final.CPU8086
                 _ => string.Empty,
             };
         }
+
+        
     }
 }

@@ -10,5 +10,6 @@
         Sub = 0b101,
         Xor = 0b110,
         Compare = 0b111,
+        Unknown = 0xFF,
     }
 }

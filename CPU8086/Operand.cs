@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Final.CPU8086
@@ -37,12 +37,13 @@ namespace Final.CPU8086
 
         KeywordFar,
         KeywordPointer,
-        KeywordNearPointer,
-        KeywordFarPointer,
 
         TypeDoubleWord,
         TypeShort,
         TypeInt,
+
+        NearPointer,
+        FarPointer,
 
         SourceRegister,
 
@@ -111,17 +112,20 @@ namespace Final.CPU8086
     public readonly struct Operand
     {
         private static readonly Regex _rexMNumber = new Regex("(?<prefix>[m])(?<num>[0-9]{1,2})", RegexOptions.Compiled);
+        private static readonly Regex _regFull = new Regex("(?<type>\\(.*\\))?\\s*(?<remaining>.*)", RegexOptions.Compiled);
 
-        public OperandKind Type { get; }
+        public OperandKind Kind { get; }
+        public DataType DataType { get; }
         public int Value { get; }
 
-        public Operand(OperandKind type, int value = 0)
+        public Operand(OperandKind kind, DataType dataType, int value = 0)
         {
-            Type = type;
+            Kind = kind;
+            DataType = dataType;
             Value = value;
         }
 
-        public Operand(int value) : this(OperandKind.Value, value) { }
+        public Operand(int value, DataType dataType) : this(OperandKind.Value, dataType, value) { }
 
         public static bool TryParse(string value, out Operand operand)
         {
@@ -131,17 +135,25 @@ namespace Final.CPU8086
                 return false;
             }
 
+            DataType dataType = DataType.None;
+            Match fullMatch = _regFull.Match(value);
+            if (fullMatch.Success)
+            {
+                dataType = ParseDataType(fullMatch.Groups["type"].Value);
+                value = fullMatch.Groups["remaining"].Value;
+            }
+
             Match m;
             if ((m = _rexMNumber.Match(value)).Success)
             {
                 int number = int.Parse(m.Groups["num"].Value);
-                operand = new Operand(OperandKind.M_Number, number);
+                operand = new Operand(OperandKind.M_Number, dataType, number);
                 return true;
             }
 
             if (int.TryParse(value, out int intValue))
             {
-                operand = new Operand(OperandKind.Value, intValue);
+                operand = new Operand(OperandKind.Value, dataType, intValue);
                 return true;
             }
 
@@ -171,13 +183,13 @@ namespace Final.CPU8086
 
                 "far" => OperandKind.KeywordFar,
                 "ptr" => OperandKind.KeywordPointer,
-                "np" => OperandKind.KeywordNearPointer,
-                "fp" => OperandKind.KeywordFarPointer,
 
                 "dword" => OperandKind.TypeDoubleWord,
                 "short" => OperandKind.TypeShort,
                 "int" => OperandKind.TypeInt,
 
+                "np" => OperandKind.NearPointer,
+                "fp" => OperandKind.FarPointer,
                 "sr" => OperandKind.SourceRegister,
 
                 "sl" => OperandKind.ShortLabel,
@@ -241,7 +253,7 @@ namespace Final.CPU8086
 
                 _ => OperandKind.Unknown
             };
-            operand = new Operand(type);
+            operand = new Operand(type, dataType);
             return type != OperandKind.Unknown;
         }
 
@@ -283,15 +295,14 @@ namespace Final.CPU8086
 
                 OperandKind.KeywordFar => "far",
                 OperandKind.KeywordPointer => "ptr",
-                OperandKind.KeywordNearPointer => "np",
-                OperandKind.KeywordFarPointer => "fp",
-
                 OperandKind.TypeDoubleWord => "dword",
                 OperandKind.TypeShort => "short",
                 OperandKind.TypeInt => "int",
 
                 OperandKind.SourceRegister => "sr",
-                
+                OperandKind.NearPointer => "np",
+                OperandKind.FarPointer => "fp",
+
                 OperandKind.ShortLabel => "sl",
                 OperandKind.LongLabel => "ll",
 
@@ -313,46 +324,95 @@ namespace Final.CPU8086
 
                 OperandKind.RCX => "rcx",
                 OperandKind.ECX => "ecx",
-                OperandKind.CX =>  "cx",
-                OperandKind.CL =>  "cl",
-                OperandKind.CH =>  "ch",
+                OperandKind.CX => "cx",
+                OperandKind.CL => "cl",
+                OperandKind.CH => "ch",
 
                 OperandKind.RDX => "rdx",
                 OperandKind.EDX => "edx",
-                OperandKind.DX =>  "dx",
-                OperandKind.DL =>  "dl",
-                OperandKind.DH =>  "dh",
+                OperandKind.DX => "dx",
+                OperandKind.DL => "dl",
+                OperandKind.DH => "dh",
 
                 OperandKind.RSP => "rsp",
                 OperandKind.ESP => "esp",
-                OperandKind.SP =>  "sp",
+                OperandKind.SP => "sp",
 
                 OperandKind.RBP => "rbp",
                 OperandKind.EBP => "ebp",
-                OperandKind.BP =>  "bp",
+                OperandKind.BP => "bp",
 
                 OperandKind.RSI => "rsi",
                 OperandKind.ESI => "esi",
-                OperandKind.SI =>  "si",
+                OperandKind.SI => "si",
 
                 OperandKind.RDI => "rdi",
                 OperandKind.EDI => "edi",
-                OperandKind.DI =>  "di",
+                OperandKind.DI => "di",
 
-                OperandKind.CS =>  "cs",
-                OperandKind.DS =>  "ds",
-                OperandKind.SS =>  "ss",
-                OperandKind.ES =>  "es",
+                OperandKind.CS => "cs",
+                OperandKind.DS => "ds",
+                OperandKind.SS => "ss",
+                OperandKind.ES => "es",
 
-                OperandKind.CR =>  "cr",
-                OperandKind.DR =>  "dr",
-                OperandKind.TR =>  "tr",
+                OperandKind.CR => "cr",
+                OperandKind.DR => "dr",
+                OperandKind.TR => "tr",
 
-                OperandKind.FS =>  "fs",
+                OperandKind.FS => "fs",
                 OperandKind.GS => "gs",
 
                 _ => string.Empty,
             };
+        }
+
+        static DataType ParseDataType(string value)
+        {
+            return value switch
+            {
+                "(byte)" => DataType.Byte,
+                "(short)" => DataType.Short,
+                "(int)" => DataType.Int,
+                "(dword)" => DataType.DoubleWord,
+                "(ptr)" => DataType.Pointer,
+                "(far)" => DataType.Far,
+                "(far ptr)" => DataType.Far | DataType.Pointer,
+                "(byte ptr)" => DataType.Byte | DataType.Pointer,
+                "(short ptr)" => DataType.Short | DataType.Pointer,
+                "(int ptr)" => DataType.Int | DataType.Pointer,
+                "(dword ptr)" => DataType.DoubleWord | DataType.Pointer,
+                _ => DataType.None,
+            };
+        }
+
+        static string DataTypeToString(DataType dataType)
+        {
+            if (dataType != DataType.None)
+            {
+                if (dataType == DataType.Byte)
+                    return "(byte)";
+                else if (dataType == DataType.Short)
+                    return "(short)";
+                else if (dataType == DataType.Int)
+                    return "(int)";
+                else if (dataType == DataType.DoubleWord)
+                    return "(dword)";
+                else if (dataType == DataType.Pointer)
+                    return "(ptr)";
+                else if (dataType == DataType.Far)
+                    return "(far)";
+                else if (dataType.HasFlag(DataType.Far) && dataType.HasFlag(DataType.Pointer))
+                    return "(far ptr)";
+                else if (dataType.HasFlag(DataType.Byte) && dataType.HasFlag(DataType.Pointer))
+                    return "(byte ptr)";
+                else if (dataType.HasFlag(DataType.Short) && dataType.HasFlag(DataType.Pointer))
+                    return "(short ptr)";
+                else if (dataType.HasFlag(DataType.Int) && dataType.HasFlag(DataType.Pointer))
+                    return "(int ptr)";
+                else if (dataType.HasFlag(DataType.DoubleWord) && dataType.HasFlag(DataType.Pointer))
+                    return "(dword ptr)";
+            }
+            return string.Empty;
         }
 
         public static implicit operator Operand(string value) => Parse(value);
@@ -360,12 +420,17 @@ namespace Final.CPU8086
 
         public override string ToString()
         {
-            if (Type == OperandKind.Value)
-                return Value.ToString("D");
-            else if (Type == OperandKind.M_Number)
-                return $"M{Value:D}";
+            StringBuilder s = new StringBuilder();
+            s.Append(DataTypeToString(DataType));
+            if (Kind == OperandKind.Value)
+                s.Append(Value.ToString("D"));
+            else if (Kind == OperandKind.M_Number)
+                s.Append($"M{Value:D}");
             else
-                return TypeToString(Type);
+                s.Append(TypeToString(Kind));
+            return s.ToString();
         }
+
+        public Operand WithDataType(DataType dataType) => new Operand(Kind, dataType, Value);
     }
 }

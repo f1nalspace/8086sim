@@ -318,9 +318,9 @@ namespace Final.ITP
 
 #if !GENERATE_INSTRUCTION_CLASSES
                     // Parse mnemonic operands
-                    Operand[] operands = new Operand[splittedMnemonics.Length - 1];
+                    List<Operand> operands = new List<Operand>(8);
                     for (int i = 1; i < splittedMnemonics.Length; i++)
-                        operands[i - 1] = Operand.Parse(splittedMnemonics[i]);
+                        operands.Add(Operand.Parse(splittedMnemonics[i]));
 
                     // Convert family into instruction type and create the instruction entry to the table
                     if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
@@ -329,11 +329,40 @@ namespace Final.ITP
                         if (signBit == SignBit.SignExtendedImm8)
                             dataFlags |= DataFlags.SignExtendedImm8;
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, dataFlags, flags, platform, minLen, maxLen, fields, operands);
+                        // We dont want to create any Operand´s for Keywords or Type-Casts, so we convert them into data-types
+                        DataType opDataType = DataType.None;
+                        List<Operand> leftOperands = new List<Operand>(2);
+                        foreach (Operand operand in operands)
+                        {
+                            switch (operand.Kind)
+                            {
+                                case OperandKind.KeywordFar:
+                                    opDataType |= DataType.Far;
+                                    break;
+                                case OperandKind.KeywordPointer:
+                                    opDataType |= DataType.Pointer;
+                                    break;
+                                case OperandKind.TypeDoubleWord:
+                                    opDataType |= DataType.DoubleWord;
+                                    break;
+                                case OperandKind.TypeShort:
+                                    opDataType |= DataType.Short;
+                                    break;
+                                case OperandKind.TypeInt:
+                                    opDataType |= DataType.Int;
+                                    break;
+                                default:
+                                    leftOperands.Add(operand.WithDataType(opDataType));
+                                    opDataType = DataType.None;
+                                    break;
+                            }
+                        }
+
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, dataFlags, flags, platform, minLen, maxLen, fields, leftOperands.ToArray());
                         allInstructions.Add(instruction);
                     }
-                    else
-                        Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
+                    //else
+                    //    Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
 #endif // !GENERATE_INSTRUCTION_TYPES
 
 #endif // GENERATE_CS

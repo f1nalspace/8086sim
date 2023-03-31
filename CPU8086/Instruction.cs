@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Final.CPU8086
 {
-    public readonly struct Instruction
+    public readonly struct Instruction : IEquatable<Instruction>
     {
         public byte OpCode { get; }
         public byte Length { get; }
@@ -20,13 +20,40 @@ namespace Final.CPU8086
             Operands = operands;
         }
 
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
+        {
+            OpCode = opCode;
+            Type = type;
+            Width = width;
+            Length = length;
+            Operands = operands.ToArray();
+        }
+
         public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest, InstructionOperand source)
             : this(opCode, length, type, width, new[] { dest, source }) { }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth dataType, InstructionOperand dest)
-            : this(opCode, length, type, dataType, new[] { dest }) { }
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest)
+            : this(opCode, length, type, width, new[] { dest }) { }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth dataType) : this(opCode, length, type, dataType, Array.Empty<InstructionOperand>()) { }
+        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width) : this(opCode, length, type, width, Array.Empty<InstructionOperand>()) { }
+
+        public bool Equals(Instruction other)
+        {
+            if (OpCode!= other.OpCode) return false;
+            if (Length != other.Length) return false;
+            if (Type != other.Type) return false;
+            if (!Width.Equals(other.Width)) return false;
+            if (Operands.Length != other.Operands.Length) return false;
+            for (int i = 0; i < Operands.Length; ++i)
+            {
+                if (!Operands[i].Equals(other.Operands[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
+        public override int GetHashCode() => Type.GetHashCode();
 
         public override string ToString()
         {

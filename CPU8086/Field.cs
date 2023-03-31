@@ -46,10 +46,10 @@ namespace Final.CPU8086
         private static readonly Regex _rexConstantExpression = new Regex("(?<hex>[0-9a-fA-F]{2})(?<exp>\\+[a-z])?", RegexOptions.Compiled);
 
         public FieldType Type { get; }
-        public short Value { get; }
+        public byte Value { get; }
         public FieldExpression Expression { get; }
 
-        public Field(FieldType type, short value, FieldExpression expression = FieldExpression.None)
+        public Field(FieldType type, byte value, FieldExpression expression = FieldExpression.None)
         {
             Type = type;
             Value = value;
@@ -92,7 +92,7 @@ namespace Final.CPU8086
                 Match m = _rexConstantExpression.Match(value);
                 if (m.Success)
                 {
-                    short constantValue = short.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    byte constantValue = byte.Parse(m.Groups["hex"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                     string expressionRaw = m.Groups["exp"].Value?.ToLower();
                     if (string.IsNullOrWhiteSpace(expressionRaw))
                         return new Field(FieldType.Constant, constantValue);

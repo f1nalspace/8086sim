@@ -2,18 +2,22 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Final.CPU8086
 {
     public class CPU
     {
+        private readonly InstructionEntryTable _entryTable = new InstructionEntryTable();
+
         private static readonly InstructionTable _opTable = new InstructionTable();
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
         public CPU()
         {
+            _entryTable.Load();
         }
 
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
@@ -381,8 +385,361 @@ namespace Final.CPU8086
             }
         }
 
-        public OneOf<Instruction, Error> DecodeNext(ReadOnlySpan<byte> stream, string streamName)
+        public Instruction DecodeNext(ReadOnlySpan<byte> stream, string streamName)
         {
+            var r = TryDecodeNext(stream, streamName);
+            if (r.IsT0)
+                return r.AsT0;
+            return new Instruction();
+        }
+
+        public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName)
+        {
+            byte length = 0;
+
+            OneOf<byte, Error> opCodeRes = ReadU8(ref stream, streamName);
+            if (opCodeRes.IsT1)
+                return opCodeRes.AsT1;
+            ++length;
+
+            byte opCode = opCodeRes.AsT0;
+            InstructionList instructionList = _entryTable[opCode];
+            if (instructionList == null)
+                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
+            else if ((byte)instructionList.Op != opCode)
+                return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instructionList.Op}'");
+
+            bool LoadInstruction(ref ReadOnlySpan<byte> cur, InstructionEntry entry, out Instruction result)
+            {
+                ReadOnlySpan<byte> initial = cur;
+
+                result = new Instruction();
+
+                byte modField = byte.MaxValue;
+                byte regField = byte.MaxValue;
+                byte rmField = byte.MaxValue;
+
+                int displacement = 0;
+                int immediate = 0;
+                Mode mode = Mode.Unknown;
+                EffectiveAddressCalculation eac = EffectiveAddressCalculation.None;
+
+                foreach (Field field in entry.Fields)
+                {
+                    switch (field.Type)
+                    {
+                        case FieldType.Constant:
+                            {
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                if (value.IsT1)
+                                    return false;
+                                if (field.Value != value.AsT0)
+                                    return false;
+                            }
+                            break;
+                        case FieldType.ModRegRM:
+                        case FieldType.Mod000RM:
+                        case FieldType.Mod001RM:
+                        case FieldType.Mod010RM:
+                        case FieldType.Mod011RM:
+                        case FieldType.Mod100RM:
+                        case FieldType.Mod101RM:
+                        case FieldType.Mod110RM:
+                        case FieldType.Mod111RM:
+                            {
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                if (value.IsT1)
+                                    return false;
+                                byte mrm = value.AsT0;
+                                modField = (byte)(mrm >> 6 & 0b111);
+                                regField = (byte)(mrm >> 3 & 0b111);
+                                rmField = (byte)(mrm >> 0 & 0b111);
+                                if (field.Type != FieldType.ModRegRM)
+                                {
+                                    byte expectReg = field.Type - FieldType.Mod000RM;
+                                    if (expectReg != regField)
+                                        return false;
+                                }
+                                mode = (Mode)modField;
+                                eac = mode switch
+                                {
+                                    Mode.RegisterMode => EffectiveAddressCalculation.None,
+                                    _ => _effectiveAddressCalculationTable.Get(rmField, modField)
+                                };
+                            }
+                            break;
+                        case FieldType.Displacement0:
+                        case FieldType.Displacement1:
+                            {
+                                if (eac != EffectiveAddressCalculation.None && mode != Mode.RegisterMode)
+                                {
+                                    OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                    if (value.IsT1)
+                                        return false;
+                                    byte d8 = value.AsT0;
+                                    int shift = 1 >> ((field.Type - FieldType.Displacement0) * 2);
+                                    displacement |= (d8 << shift);
+                                }
+                            }
+                            break;
+                        case FieldType.Immediate0:
+                        case FieldType.Immediate1:
+                        case FieldType.Immediate2:
+                        case FieldType.Immediate3:
+                            {
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                if (value.IsT1)
+                                    return false;
+                                byte imm8 = value.AsT0;
+
+                                int t = (int)field.Type - (int)FieldType.Immediate0;
+                                int shift = t * 8;
+                                immediate |= ((int)imm8 << shift);
+                            }
+                            break;
+                        case FieldType.Immediate0to3:
+                            break;
+                        case FieldType.Offset0:
+                        case FieldType.Offset1:
+                            break;
+                        case FieldType.Segment0:
+                        case FieldType.Segment1:
+                            break;
+                        case FieldType.RelativeLabelDisplacement0:
+                        case FieldType.RelativeLabelDisplacement1:
+                            break;
+                        case FieldType.ShortLabelOrShortLow:
+                        case FieldType.LongLabel:
+                        case FieldType.ShortHigh:
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                Span<InstructionOperand> targetOps = stackalloc InstructionOperand[4];
+                int opCount = 0;
+
+                static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate)
+                {
+                    switch (sourceOp.Kind)
+                    {
+                        case OperandKind.Value:
+                            return new InstructionOperand(sourceOp.Value);
+
+                        case OperandKind.MemoryByte:
+                        case OperandKind.MemoryWord:
+                        case OperandKind.MemoryDoubleWord:
+                        case OperandKind.MemoryQuadWord:
+                            return new InstructionOperand(new MemoryAddress(eac, displacement));
+
+                        case OperandKind.MemoryWordReal:
+                        case OperandKind.MemoryDoubleWordReal:
+                        case OperandKind.MemoryQuadWordReal:
+                        case OperandKind.MemoryTenByteReal:
+                            break;
+
+                        case OperandKind.RegisterByte:
+                            return new InstructionOperand(_regTable.GetByte(registerBits));
+                        case OperandKind.RegisterWord:
+                            return new InstructionOperand(_regTable.GetWord(registerBits));
+                        case OperandKind.RegisterDoubleWord:
+                            break;
+
+                        case OperandKind.RegisterOrMemoryByte:
+                            if (mode == Mode.RegisterMode)
+                                return new InstructionOperand(_regTable.GetByte(registerBits));
+                            else
+                                return new InstructionOperand(eac, displacement);
+                        case OperandKind.RegisterOrMemoryWord:
+                            if (mode == Mode.RegisterMode)
+                                return new InstructionOperand(_regTable.GetWord(registerBits));
+                            else
+                                return new InstructionOperand(eac, displacement);
+                        case OperandKind.RegisterOrMemoryDoubleWord:
+                        case OperandKind.RegisterOrMemoryQuadWord:
+                            break;
+                        case OperandKind.ImmediateByte:
+                            return new InstructionOperand((byte)immediate, ImmediateFlag.None);
+                        case OperandKind.ImmediateWord:
+                            return new InstructionOperand((short)immediate, ImmediateFlag.None);
+                        case OperandKind.ImmediateDoubleWord:
+                            break;
+
+                        case OperandKind.KeywordFar:
+                            break;
+                        case OperandKind.KeywordPointer:
+                            break;
+
+                        case OperandKind.TypeDoubleWord:
+                            break;
+                        case OperandKind.TypeShort:
+                            break;
+                        case OperandKind.TypeInt:
+                            break;
+
+                        case OperandKind.NearPointer:
+                            break;
+                        case OperandKind.FarPointer:
+                            break;
+                        case OperandKind.SourceRegister:
+                            break;
+
+                        case OperandKind.ShortLabel:
+                            break;
+                        case OperandKind.LongLabel:
+                            break;
+                        case OperandKind.ST:
+                            break;
+                        case OperandKind.ST_I:
+                            break;
+                        case OperandKind.M:
+                            break;
+                        case OperandKind.M_Number:
+                            break;
+
+                        case OperandKind.RAX:
+                            return new InstructionOperand(RegisterType.RAX);
+                        case OperandKind.EAX:
+                            return new InstructionOperand(RegisterType.EAX);
+                        case OperandKind.AX:
+                            return new InstructionOperand(RegisterType.AX);
+                        case OperandKind.AL:
+                            return new InstructionOperand(RegisterType.AL);
+                        case OperandKind.AH:
+                            return new InstructionOperand(RegisterType.AH);
+
+                        case OperandKind.RBX:
+                            return new InstructionOperand(RegisterType.RBX);
+                        case OperandKind.EBX:
+                            return new InstructionOperand(RegisterType.EBX);
+                        case OperandKind.BX:
+                            return new InstructionOperand(RegisterType.BX);
+                        case OperandKind.BL:
+                            return new InstructionOperand(RegisterType.BL);
+                        case OperandKind.BH:
+                            return new InstructionOperand(RegisterType.BH);
+
+                        case OperandKind.RCX:
+                            return new InstructionOperand(RegisterType.RCX);
+                        case OperandKind.ECX:
+                            return new InstructionOperand(RegisterType.ECX);
+                        case OperandKind.CX:
+                            return new InstructionOperand(RegisterType.CX);
+                        case OperandKind.CL:
+                            return new InstructionOperand(RegisterType.CL);
+                        case OperandKind.CH:
+                            return new InstructionOperand(RegisterType.CH);
+
+                        case OperandKind.RDX:
+                            return new InstructionOperand(RegisterType.RDX);
+                        case OperandKind.EDX:
+                            return new InstructionOperand(RegisterType.EDX);
+                        case OperandKind.DX:
+                            return new InstructionOperand(RegisterType.DX);
+                        case OperandKind.DL:
+                            return new InstructionOperand(RegisterType.DL);
+                        case OperandKind.DH:
+                            return new InstructionOperand(RegisterType.DH);
+
+                        case OperandKind.RSP:
+                            return new InstructionOperand(RegisterType.RSP);
+                        case OperandKind.ESP:
+                            return new InstructionOperand(RegisterType.ESP);
+                        case OperandKind.SP:
+                            return new InstructionOperand(RegisterType.SP);
+
+                        case OperandKind.RBP:
+                            return new InstructionOperand(RegisterType.RBP);
+                        case OperandKind.EBP:
+                            return new InstructionOperand(RegisterType.EBP);
+                        case OperandKind.BP:
+                            return new InstructionOperand(RegisterType.BP);
+
+                        case OperandKind.RSI:
+                            return new InstructionOperand(RegisterType.RSI);
+                        case OperandKind.ESI:
+                            return new InstructionOperand(RegisterType.ESI);
+                        case OperandKind.SI:
+                            return new InstructionOperand(RegisterType.SI);
+
+                        case OperandKind.RDI:
+                            return new InstructionOperand(RegisterType.RDI);
+                        case OperandKind.EDI:
+                            return new InstructionOperand(RegisterType.EDI);
+                        case OperandKind.DI:
+                            return new InstructionOperand(RegisterType.DI);
+
+                        case OperandKind.CS:
+                            return new InstructionOperand(RegisterType.CS);
+                        case OperandKind.DS:
+                            return new InstructionOperand(RegisterType.DS);
+                        case OperandKind.SS:
+                            return new InstructionOperand(RegisterType.SS);
+                        case OperandKind.ES:
+                            return new InstructionOperand(RegisterType.ES);
+
+                        case OperandKind.CR:
+                        case OperandKind.DR:
+                        case OperandKind.TR:
+                        case OperandKind.FS:
+                        case OperandKind.GS:
+                            break;
+                        default:
+                            return new InstructionOperand();
+                    }
+
+                    throw new NotSupportedException($"The operand type '{sourceOp}' is not supported");
+                }
+
+                bool isDest = true;
+                foreach (Operand sourceOp in entry.Operands)
+                {
+                    Debug.Assert(opCount < targetOps.Length);
+
+                    byte registerBits = isDest ? rmField : regField;
+                    if (isDest)
+                        isDest = false;
+
+                    InstructionOperand targetOp = CreateOperand(sourceOp, mode, registerBits, eac, displacement, immediate);
+
+                    targetOps[opCount++] = targetOp;
+                }
+
+                int length = 1 + (initial.Length - cur.Length); // + 1 for including the opcode, because fields are without the opcode
+                if (length < entry.MinLength || length > entry.MaxLength || length > 6)
+                    return false;
+
+                result = new Instruction(entry.Op, (byte)length, entry.Type, entry.DataWidth, targetOps.Slice(0, opCount));
+
+                return true;
+            }
+
+            if (instructionList.Count == 1)
+            {
+                InstructionEntry entry = instructionList.First();
+                if (LoadInstruction(ref stream, entry, out Instruction instruction))
+                    return instruction;
+            }
+            else
+            {
+                // Expect that there is at least one more byte
+                Span<byte> preloadedFields = stackalloc byte[5];
+                foreach (InstructionEntry instructionEntry in instructionList)
+                {
+                    ReadOnlySpan<byte> tmp = stream;
+                    if (LoadInstruction(ref tmp, instructionEntry, out Instruction instruction))
+                    {
+                        stream = tmp;
+                        return instruction;
+                    }
+                }
+            }
+
+            return new Error(ErrorCode.OpCodeNotImplemented, $"No instruction entry found, that matches the opcode '{opCode}'");
+
+            //return new Instruction(opCode, length)
+#if false
             static InstructionType GetInstructionType(OpFamily family)
             {
                 return family switch
@@ -737,6 +1094,7 @@ namespace Final.CPU8086
                     return new Error(ErrorCode.InstructionNotImplemented, $"Not implemented instruction '{instruction}'!");
 
             }
+#endif
         }
 
         public static OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode)

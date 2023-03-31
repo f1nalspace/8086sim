@@ -55,6 +55,36 @@ namespace Final.CPU8086
         }
 
         [TestMethod]
+        public void TestLength2To4Decode()
+        {
+            CPU cpu = new CPU();
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x00, 0b11011000 }, "ADD AL, BL"), new Instruction(0x00, 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.AL), new InstructionOperand(RegisterType.BL)));
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x02, 0b11000011 }, "ADD BL, AL"), new Instruction(0x02, 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.BL), new InstructionOperand(RegisterType.AL)));
+        }
+
+        [TestMethod]
+        public void TestLength1Decode()
+        {
+            CPU cpu = new CPU();
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x27 }, "DAA"), new Instruction(0x27, 1, InstructionType.DAA, DataWidthType.None));
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x06 }, "PUSH es"), new Instruction(0x06, 1, InstructionType.PUSH, DataWidthType.None, new InstructionOperand(RegisterType.ES)));
+        }
+
+        [TestMethod]
+        public void TestLength2Decode()
+        {
+            CPU cpu = new CPU();
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x04, 42 }, "ADD"), new Instruction(0x04, 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.AL), new InstructionOperand(42, ImmediateFlag.None)));
+        }
+
+        [TestMethod]
+        public void TestLength3Decode()
+        {
+            CPU cpu = new CPU();
+            Assert.AreEqual<Instruction>(cpu.DecodeNext(new byte[] { 0x05, 0x03, 0xF0 }, "ADD"), new Instruction(0x05, 3, InstructionType.ADD, DataWidthType.Word, new InstructionOperand(RegisterType.AX), new InstructionOperand((short)-4093, ImmediateFlag.None)));
+        }
+
+        [TestMethod]
         public void Test_listing_0037_single_register_mov()
             => TestAssembly("listing_0037_single_register_mov");
 

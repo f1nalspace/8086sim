@@ -103,15 +103,8 @@ namespace Final.CPU8086
             };
         }
 
-        public override string ToString()
+        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
         {
-            string value = Op switch
-            {
-                OperandType.Register => CPU8086.Register.GetName(Register),
-                OperandType.Immediate => Immediate.ToString(),
-                OperandType.Address => Memory.ToString(),
-                _ => string.Empty
-            };
             string prefix = DataType switch
             {
                 DataType.Byte => "byte ",
@@ -123,6 +116,38 @@ namespace Final.CPU8086
                 DataType.DoubleWord => "dword ",
                 DataType.DoubleWord | DataType.Pointer => "dword ptr ",
                 DataType.Far | DataType.Pointer => "far ptr ",
+                _ => string.Empty
+            };
+            string value = Op switch
+            {
+                OperandType.Register => CPU8086.Register.GetName(Register),
+                OperandType.Immediate => Immediate.GetAssembly(outputMode),
+                OperandType.Address => Memory.GetAssembly(outputMode),
+                _ => string.Empty
+            };
+            return $"{prefix}{value}";
+        }
+
+        public override string ToString()
+        {
+            string prefix = DataType switch
+            {
+                DataType.Byte => "byte ",
+                DataType.Byte | DataType.Pointer => "byte ptr ",
+                DataType.Short => "short ",
+                DataType.Short | DataType.Pointer => "short ptr ",
+                DataType.Int => "int ",
+                DataType.Int | DataType.Pointer => "int ptr ",
+                DataType.DoubleWord => "dword ",
+                DataType.DoubleWord | DataType.Pointer => "dword ptr ",
+                DataType.Far | DataType.Pointer => "far ptr ",
+                _ => string.Empty
+            };
+            string value = Op switch
+            {
+                OperandType.Register => CPU8086.Register.GetName(Register),
+                OperandType.Immediate => Immediate.ToString(),
+                OperandType.Address => Memory.ToString(),
                 _ => string.Empty
             };
             return $"{prefix}{value}";

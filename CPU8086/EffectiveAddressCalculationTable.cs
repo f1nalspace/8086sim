@@ -6,6 +6,17 @@
         public readonly EffectiveAddressCalculation[] _table;
         private readonly byte[] _displacementLengths;
 
+        public static EffectiveAddressCalculationTable Instance
+        {
+            get
+            {
+                if (_instance == null)
+                    _instance = new EffectiveAddressCalculationTable();
+                return _instance;
+            }
+        }
+        private static EffectiveAddressCalculationTable _instance = null;
+
         public EffectiveAddressCalculationTable()
         {
             _table = new EffectiveAddressCalculation[8 * 3];

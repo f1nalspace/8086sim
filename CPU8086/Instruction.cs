@@ -7,41 +7,41 @@ namespace Final.CPU8086
     {
         public byte OpCode { get; }
         public byte Length { get; }
-        public InstructionType Type { get; }
+        public Mnemonic Mnemonic { get; }
         public DataWidth Width { get; }
         public InstructionOperand[] Operands { get; }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand[] operands)
+        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
         {
             OpCode = opCode;
-            Type = type;
+            Mnemonic = mnemonic;
             Width = width;
             Length = length;
             Operands = operands;
         }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
+        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
         {
             OpCode = opCode;
-            Type = type;
+            Mnemonic = mnemonic;
             Width = width;
             Length = length;
             Operands = operands.ToArray();
         }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest, InstructionOperand source)
-            : this(opCode, length, type, width, new[] { dest, source }) { }
+        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
+            : this(opCode, length, mnemonic, width, new[] { dest, source }) { }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width, InstructionOperand dest)
-            : this(opCode, length, type, width, new[] { dest }) { }
+        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
+            : this(opCode, length, mnemonic, width, new[] { dest }) { }
 
-        public Instruction(byte opCode, byte length, InstructionType type, DataWidth width) : this(opCode, length, type, width, Array.Empty<InstructionOperand>()) { }
+        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
 
         public bool Equals(Instruction other)
         {
-            if (OpCode!= other.OpCode) return false;
+            if (OpCode != other.OpCode) return false;
             if (Length != other.Length) return false;
-            if (Type != other.Type) return false;
+            if (!Mnemonic.Equals(other.Mnemonic)) return false;
             if (!Width.Equals(other.Width)) return false;
             if (Operands.Length != other.Operands.Length) return false;
             for (int i = 0; i < Operands.Length; ++i)
@@ -53,16 +53,38 @@ namespace Final.CPU8086
         }
 
         public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
-        public override int GetHashCode() => Type.GetHashCode();
+        public override int GetHashCode() => Mnemonic.GetHashCode();
+
+        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
+        {
+            StringBuilder s = new StringBuilder();
+            s.Append(Mnemonic.ToString());
+            int count = 0;
+            foreach (InstructionOperand op in Operands)
+            {
+                if (count == 1)
+                    s.Append(',');
+                s.Append(' ');
+                s.Append(op.GetAssembly(outputMode));
+                ++count;
+            }
+            return s.ToString();
+        }
 
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
-            s.Append(Type);
-            for (int i = 0; i < Operands.Length; i++)
+            s.Append(Mnemonic);
+            if (Operands.Length > 0)
             {
-                InstructionOperand operand = Operands[i];
-                s.Append(operand.ToString());
+                s.Append(' ');
+                for (int i = 0; i < Operands.Length; i++)
+                {
+                    if (i > 0)
+                        s.Append(", ");
+                    InstructionOperand operand = Operands[i];
+                    s.Append(operand.ToString());
+                }
             }
             s.Append(' ');
             s.Append('(');

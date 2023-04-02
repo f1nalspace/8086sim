@@ -1,11 +1,13 @@
 ﻿namespace Final.CPU8086
 {
-    public enum OutputValueMode
+    public enum OutputValueMode : byte
     {
-        AsInteger = 0,
+        Auto = 0,
+        AsInteger,
+        AsHex,
         AsHex8,
         AsHex16,
         AsHex32,
-        AsHexAuto,
+        AsHex64,
     }
 }

@@ -103,7 +103,7 @@ namespace Final.CPU8086
             };
         }
 
-        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
+        public string GetAssembly(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
         {
             string prefix = DataType switch
             {
@@ -121,8 +121,8 @@ namespace Final.CPU8086
             string value = Op switch
             {
                 OperandType.Register => CPU8086.Register.GetName(Register),
-                OperandType.Immediate => Immediate.GetAssembly(outputMode),
-                OperandType.Address => Memory.GetAssembly(outputMode),
+                OperandType.Immediate => Immediate.GetAssembly(dataWidth, outputMode, hexPrefix),
+                OperandType.Address => Memory.GetAssembly(dataWidth, outputMode, hexPrefix),
                 _ => string.Empty
             };
             return $"{prefix}{value}";

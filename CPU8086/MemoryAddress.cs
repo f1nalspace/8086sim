@@ -26,7 +26,7 @@ namespace Final.CPU8086
         public override bool Equals(object obj) => obj is MemoryAddress mem && Equals(mem);
         public override int GetHashCode() => HashCode.Combine(EAC, Displacement);
 
-        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
+        public string GetAssembly(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.AsHex, string hexPrefix = "0x")
         {
             int d = Displacement;
             string append;
@@ -53,7 +53,7 @@ namespace Final.CPU8086
                         d = Math.Abs(d);
                     }
                 }
-                string address = Immediate.GetValueAssembly(ImmediateType.Word, d, outputMode);
+                string address = Immediate.GetValueAssembly(dataWidth, ImmediateType.Word, d, outputMode, hexPrefix);
                 append = $" {op} {address}";
             }
             return EAC switch
@@ -64,7 +64,7 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation.BP_DI => "[bp + di]",
                 EffectiveAddressCalculation.SI => "[si]",
                 EffectiveAddressCalculation.DI => "[di]",
-                EffectiveAddressCalculation.DirectAddress => $"[{Immediate.GetValueAssembly(ImmediateType.Word, d, outputMode)}]",
+                EffectiveAddressCalculation.DirectAddress => $"[{Immediate.GetValueAssembly(dataWidth, ImmediateType.Word, d, outputMode, hexPrefix)}]",
                 EffectiveAddressCalculation.BX => "[bx]",
                 EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si{append}]",
                 EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di{append}]",

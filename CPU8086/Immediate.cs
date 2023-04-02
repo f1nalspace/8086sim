@@ -80,28 +80,99 @@ namespace Final.CPU8086
         public override bool Equals(object obj) => obj is Immediate imm && Equals(imm);
         public override int GetHashCode() => HashCode.Combine(Type, Flags, S32);
 
-        public static string GetValueAssembly(ImmediateType type, int value, OutputValueMode outputMode = OutputValueMode.AsHexAuto)
+        public static string IntToHex(int value, DataWidthType dataWidth, int digits)
         {
-            int v = type switch
+            string result = value.ToString($"X{digits}");
+            switch (dataWidth)
             {
-                ImmediateType.Byte => (byte)value,
-                ImmediateType.SignedByte => (sbyte)value,
-                ImmediateType.Word => (ushort)value,
-                ImmediateType.SignedWord => (short)value,
-                _ => value,
-            };
+                case DataWidthType.Byte:
+                    if (result.Length > 2)
+                        return result.Substring(result.Length - 2);
+                    break;
+                case DataWidthType.Word:
+                    if (result.Length > 4)
+                        return result.Substring(result.Length - 4);
+                    break;
+                case DataWidthType.DoubleWord:
+                    if (result.Length > 8)
+                        return result.Substring(result.Length - 8);
+                    break;
+                case DataWidthType.QuadWord:
+                    if (result.Length > 16)
+                        return result.Substring(result.Length - 16);
+                    break;
+                case DataWidthType.TenBytes:
+                default:
+                    return null;
+            }
+            return result;
+        }
+
+        public static string GetValueAssembly(DataWidthType dataWidth, ImmediateType type, int value, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
+        {
+            int v = value;
+            switch (type)
+            {
+                case ImmediateType.Byte:
+                    if (outputMode == OutputValueMode.Auto)
+                        return $"{hexPrefix}{IntToHex((byte)value, dataWidth, 2)}";
+                    else
+                        v = (byte)(value & 0xFF);
+                    break;
+                case ImmediateType.SignedByte:
+                    if (outputMode == OutputValueMode.Auto)
+                        return $"{(sbyte)value:D}";
+                    else
+                        v = (sbyte)(value & 0xFF);
+                    break;
+                case ImmediateType.Word:
+                    if (outputMode == OutputValueMode.Auto)
+                        return $"{hexPrefix}{IntToHex((ushort)value, dataWidth, 4)}";
+                    else
+                        v = (ushort)(value & 0xFFFF);
+                    break;
+                case ImmediateType.SignedWord:
+                    if (outputMode == OutputValueMode.Auto)
+                        return $"{(short)value:D}";
+                    else
+                        v = (short)(value & 0xFFFF);
+                    break;
+                default:
+                    break;
+            }
+            if (outputMode == OutputValueMode.AsHex || outputMode == OutputValueMode.Auto)
+            {
+                switch (dataWidth)
+                {
+                    case DataWidthType.Byte:
+                        outputMode = OutputValueMode.AsHex8;
+                        break;
+                    case DataWidthType.Word:
+                        outputMode = OutputValueMode.AsHex16;
+                        break;
+                    case DataWidthType.DoubleWord:
+                        outputMode = OutputValueMode.AsHex32;
+                        break;
+                    case DataWidthType.QuadWord:
+                        outputMode = OutputValueMode.AsHex64;
+                        break;
+                    default:
+                        break;
+                }
+            }
             return outputMode switch
             {
-                OutputValueMode.AsHexAuto => $"0x{v:X}",
-                OutputValueMode.AsHex8 => $"0x{v:X2}",
-                OutputValueMode.AsHex16 => $"0x{v:X4}",
-                OutputValueMode.AsHex32 => $"0x{v:X8}",
+                OutputValueMode.AsHex => $"{hexPrefix}{IntToHex(v, dataWidth, 1)}",
+                OutputValueMode.AsHex8 => $"{hexPrefix}{IntToHex(v, dataWidth, 2)}",
+                OutputValueMode.AsHex16 => $"{hexPrefix}{IntToHex(v, dataWidth, 4)}",
+                OutputValueMode.AsHex32 => $"{hexPrefix}{IntToHex(v, dataWidth, 8)}",
+                OutputValueMode.AsHex64 => $"{hexPrefix}{IntToHex(v, dataWidth, 16)}",
                 _ => v.ToString(),
             };
         }
 
-        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
-            => GetValueAssembly(Type, S32, outputMode);
+        public string GetAssembly(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
+            => GetValueAssembly(dataWidth, Type, S32, outputMode, hexPrefix);
 
         public override string ToString()
         {

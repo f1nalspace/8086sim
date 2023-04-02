@@ -124,18 +124,22 @@ namespace Final.CPU8086
             short v = (value & 0b10000000) == 0b10000000 ? (sbyte)value : value;
             return outputMode switch
             {
-                OutputValueMode.AsHexAuto => $"0x{v:x}",
-                OutputValueMode.AsHex8 => $"0x{v:x2}",
-                OutputValueMode.AsHex16 => $"0x{v:x4}",
+                OutputValueMode.AsHex => $"0x{v:X}",
+                OutputValueMode.AsHex8 => $"0x{v:X2}",
+                OutputValueMode.AsHex16 => $"0x{v:X4}",
+                OutputValueMode.AsHex32 => $"0x{v:X8}",
+                OutputValueMode.AsHex64 => $"0x{v:X16}",
                 _ => v.ToString(),
             };
         }
 
         public static string GetValueAssembly(short value, OutputValueMode outputMode) => outputMode switch
         {
-            OutputValueMode.AsHexAuto => $"0x{value:x}",
-            OutputValueMode.AsHex8 => $"0x{value:x2}",
-            OutputValueMode.AsHex16 => $"0x{value:x4}",
+            OutputValueMode.AsHex => $"0x{value:X}",
+            OutputValueMode.AsHex8 => $"0x{value:X2}",
+            OutputValueMode.AsHex16 => $"0x{value:X4}",
+            OutputValueMode.AsHex32 => $"0x{value:X8}",
+            OutputValueMode.AsHex64 => $"0x{value:X16}",
             _ => value.ToString(),
         };
 

@@ -55,7 +55,7 @@ namespace Final.CPU8086
         public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
         public override int GetHashCode() => Mnemonic.GetHashCode();
 
-        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.AsHexAuto)
+        public string GetAssembly(OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
         {
             StringBuilder s = new StringBuilder();
             s.Append(Mnemonic.ToString());
@@ -65,7 +65,7 @@ namespace Final.CPU8086
                 if (count == 1)
                     s.Append(',');
                 s.Append(' ');
-                s.Append(op.GetAssembly(outputMode));
+                s.Append(op.GetAssembly(Width.Type, outputMode, hexPrefix));
                 ++count;
             }
             return s.ToString();

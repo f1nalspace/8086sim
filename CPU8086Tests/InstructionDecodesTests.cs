@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using IS = Final.CPU8086.Instruction;
+using IT = Final.CPU8086.InstructionType;
+using IO = Final.CPU8086.InstructionOperand;
+using RT = Final.CPU8086.RegisterType;
+using DWT = Final.CPU8086.DataWidthType;
 
 namespace Final.CPU8086
 {
@@ -56,186 +61,209 @@ namespace Final.CPU8086
         }
 
         [TestMethod]
-        public void TestLength2To4Decode()
+        public void WithLength2To4()
         {
             CPU cpu = new CPU();
-            Assert.AreEqual<Instruction>(new Instruction(0x00, 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.AL), new InstructionOperand(RegisterType.BL)), cpu.DecodeNext(new byte[] { 0x00, 0b11011000 }, "ADD AL, BL"));
-            Assert.AreEqual<Instruction>(new Instruction(0x02, 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.BL), new InstructionOperand(RegisterType.AL)), cpu.DecodeNext(new byte[] { 0x02, 0b11000011 }, "ADD BL, AL"));
 
-            Assert.AreEqual("DAA", cpu.DecodeNext(new byte[] { 0x27 }, "DAA").GetAssembly());
-            Assert.AreEqual("PUSH ES", cpu.DecodeNext(new byte[] { 0x06 }, "PUSH es").GetAssembly());
+            {
+                IS actual;
+                Span<byte> add_AL_BL = new byte[] { 0x00, 0b11011000 };
+                Assert.AreEqual(
+                    new IS(add_AL_BL[0], 2, IT.ADD, DWT.Byte, new IO(RT.AL), new IO(RT.BL)),
+                    actual = cpu.DecodeNext(add_AL_BL, nameof(add_AL_BL)));
+                Assert.AreEqual("ADD AL, BL", actual.Asm());
+            }
+
+            {
+                IS actual;
+                Span<byte> add_BL_AL = new byte[] { 0x02, 0b11000011 };
+                Assert.AreEqual(
+                    new IS(add_BL_AL[0], 2, IT.ADD, DWT.Byte, new IO(RT.BL), new IO(RT.AL)),
+                    actual = cpu.DecodeNext(add_BL_AL, nameof(add_BL_AL)));
+                Assert.AreEqual("ADD BL, AL", actual.Asm());
+            }
         }
 
         [TestMethod]
-        public void TestLength1Decode()
+        public void WithLength1()
         {
             CPU cpu = new CPU();
 
             {
                 Span<byte> mov_DAA = new byte[] { 0x27 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_DAA[0], 1, InstructionType.DAA, DataWidthType.None),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_DAA[0], 1, IT.DAA, DWT.None),
                     actual = cpu.DecodeNext(mov_DAA, nameof(mov_DAA)));
-                Assert.AreEqual("DAA", actual.GetAssembly());
+                Assert.AreEqual("DAA", actual.Asm());
             }
+
             {
-                Span<byte> mov_PUSH_ES = new byte[] { 0x06 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_PUSH_ES[0], 1, InstructionType.PUSH, DataWidthType.None, new InstructionOperand(RegisterType.ES)),
-                    actual = cpu.DecodeNext(mov_PUSH_ES, nameof(mov_PUSH_ES)));
-                Assert.AreEqual("PUSH ES", actual.GetAssembly());
+                Span<byte> push_ES = new byte[] { 0x06 };
+                IS actual;
+                Assert.AreEqual(
+                    new IS(push_ES[0], 1, IT.PUSH, DWT.None, new IO(RT.ES)),
+                    actual = cpu.DecodeNext(push_ES, nameof(push_ES)));
+                Assert.AreEqual("PUSH ES", actual.Asm());
             }
 
         }
 
         [TestMethod]
-        public void TestLength2Decode()
+        public void WithLength2()
         {
             CPU cpu = new CPU();
 
-            // MOV
+            // MOV, 2 bytes
             {
                 Span<byte> mov_CX_BX = new byte[] { 0x89, 0xD9 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_CX_BX[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.CX), new InstructionOperand(RegisterType.BX)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_CX_BX[0], 2, IT.MOV, DWT.Word, new IO(RT.CX), new IO(RT.BX)),
                     actual = cpu.DecodeNext(mov_CX_BX, nameof(mov_CX_BX)));
-                Assert.AreEqual("MOV CX, BX", actual.GetAssembly());
+                Assert.AreEqual("MOV CX, BX", actual.Asm());
             }
             {
                 Span<byte> mov_CH_AH = new byte[] { 0x88, 0xE5 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_CH_AH[0], 2, InstructionType.MOV, DataWidthType.Byte, new InstructionOperand(RegisterType.CH), new InstructionOperand(RegisterType.AH)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_CH_AH[0], 2, IT.MOV, DWT.Byte, new IO(RT.CH), new IO(RT.AH)),
                     actual = cpu.DecodeNext(mov_CH_AH, nameof(mov_CH_AH)));
-                Assert.AreEqual("MOV CH, AH", actual.GetAssembly());
+                Assert.AreEqual("MOV CH, AH", actual.Asm());
             }
             {
                 Span<byte> mov_DX_BX = new byte[] { 0x89, 0xDA };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_DX_BX[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.DX), new InstructionOperand(RegisterType.BX)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_DX_BX[0], 2, IT.MOV, DWT.Word, new IO(RT.DX), new IO(RT.BX)),
                     actual = cpu.DecodeNext(mov_DX_BX, nameof(mov_DX_BX)));
-                Assert.AreEqual("MOV DX, BX", actual.GetAssembly());
+                Assert.AreEqual("MOV DX, BX", actual.Asm());
             }
             {
                 Span<byte> mov_SI_BX = new byte[] { 0x89, 0xDE };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_SI_BX[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.SI), new InstructionOperand(RegisterType.BX)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_SI_BX[0], 2, IT.MOV, DWT.Word, new IO(RT.SI), new IO(RT.BX)),
                     actual = cpu.DecodeNext(mov_SI_BX, nameof(mov_SI_BX)));
-                Assert.AreEqual("MOV SI, BX", actual.GetAssembly());
+                Assert.AreEqual("MOV SI, BX", actual.Asm());
             }
             {
                 Span<byte> mov_BX_DI = new byte[] { 0x89, 0xFB };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_BX_DI[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.BX), new InstructionOperand(RegisterType.DI)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_BX_DI[0], 2, IT.MOV, DWT.Word, new IO(RT.BX), new IO(RT.DI)),
                     actual = cpu.DecodeNext(mov_BX_DI, nameof(mov_BX_DI)));
-                Assert.AreEqual("MOV BX, DI", actual.GetAssembly());
+                Assert.AreEqual("MOV BX, DI", actual.Asm());
             }
             {
                 Span<byte> mov_AL_CL = new byte[] { 0x88, 0xC8 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_AL_CL[0], 2, InstructionType.MOV, DataWidthType.Byte, new InstructionOperand(RegisterType.AL), new InstructionOperand(RegisterType.CL)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_AL_CL[0], 2, IT.MOV, DWT.Byte, new IO(RT.AL), new IO(RT.CL)),
                     actual = cpu.DecodeNext(mov_AL_CL, nameof(mov_AL_CL)));
-                Assert.AreEqual("MOV AL, CL", actual.GetAssembly());
+                Assert.AreEqual("MOV AL, CL", actual.Asm());
             }
             {
                 Span<byte> mov_CH_CH = new byte[] { 0x88, 0xED };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_CH_CH[0], 2, InstructionType.MOV, DataWidthType.Byte, new InstructionOperand(RegisterType.CH), new InstructionOperand(RegisterType.CH)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_CH_CH[0], 2, IT.MOV, DWT.Byte, new IO(RT.CH), new IO(RT.CH)),
                     actual = cpu.DecodeNext(mov_CH_CH, nameof(mov_CH_CH)));
-                Assert.AreEqual("MOV CH, CH", actual.GetAssembly());
+                Assert.AreEqual("MOV CH, CH", actual.Asm());
             }
             {
                 Span<byte> mov_BX_AX = new byte[] { 0x89, 0xC3 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_BX_AX[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.BX), new InstructionOperand(RegisterType.AX)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_BX_AX[0], 2, IT.MOV, DWT.Word, new IO(RT.BX), new IO(RT.AX)),
                     actual = cpu.DecodeNext(mov_BX_AX, nameof(mov_BX_AX)));
-                Assert.AreEqual("MOV BX, AX", actual.GetAssembly());
+                Assert.AreEqual("MOV BX, AX", actual.Asm());
             }
             {
                 Span<byte> mov_BX_SI = new byte[] { 0x89, 0xF3 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_BX_SI[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.BX), new InstructionOperand(RegisterType.SI)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_BX_SI[0], 2, IT.MOV, DWT.Word, new IO(RT.BX), new IO(RT.SI)),
                     actual = cpu.DecodeNext(mov_BX_SI, nameof(mov_BX_SI)));
-                Assert.AreEqual("MOV BX, SI", actual.GetAssembly());
+                Assert.AreEqual("MOV BX, SI", actual.Asm());
             }
             {
                 Span<byte> mov_SP_DI = new byte[] { 0x89, 0xFC };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_SP_DI[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.SP), new InstructionOperand(RegisterType.DI)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_SP_DI[0], 2, IT.MOV, DWT.Word, new IO(RT.SP), new IO(RT.DI)),
                     actual = cpu.DecodeNext(mov_SP_DI, nameof(mov_SP_DI)));
-                Assert.AreEqual("MOV SP, DI", actual.GetAssembly());
+                Assert.AreEqual("MOV SP, DI", actual.Asm());
             }
             {
                 Span<byte> mov_BP_AX = new byte[] { 0x89, 0xC5 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_BP_AX[0], 2, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.BP), new InstructionOperand(RegisterType.AX)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_BP_AX[0], 2, IT.MOV, DWT.Word, new IO(RT.BP), new IO(RT.AX)),
                     actual = cpu.DecodeNext(mov_BP_AX, nameof(mov_BP_AX)));
-                Assert.AreEqual("MOV BP, AX", actual.GetAssembly());
+                Assert.AreEqual("MOV BP, AX", actual.Asm());
             }
 
-            // ADD
+            // ADD, 2 bytes
             {
                 Span<byte> add_AL_0x2A = new byte[] { 0x04, 0x2A };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(add_AL_0x2A[0], 2, InstructionType.ADD, DataWidthType.Byte, new InstructionOperand(RegisterType.AL), new InstructionOperand(42, ImmediateFlag.None)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(add_AL_0x2A[0], 2, IT.ADD, DWT.Byte, new IO(RT.AL), new IO(42, ImmediateFlag.None)),
                     actual = cpu.DecodeNext(add_AL_0x2A, nameof(add_AL_0x2A)));
-                Assert.AreEqual("ADD AL, 0x2A", actual.GetAssembly());
+                Assert.AreEqual("ADD AL, 42", actual.Asm());
+                Assert.AreEqual("ADD AL, 42", actual.Asm(OutputValueMode.AsInteger));
+                Assert.AreEqual("ADD AL, 0x2A", actual.Asm(OutputValueMode.AsHex));
             }
         }
 
         [TestMethod]
-        public void TestLength3Decode()
+        public void WithLength3()
         {
             CPU cpu = new CPU();
 
+            // MOV, 3 bytes
             {
                 Span<byte> mov_CX_0x0C = new byte[] { 0xB9, 0x0C, 0x00 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_CX_0x0C[0], 3, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.CX), new InstructionOperand((short)12, ImmediateFlag.None)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_CX_0x0C[0], 3, IT.MOV, DWT.Word, new IO(RT.CX), new IO((short)12, ImmediateFlag.None)),
                     actual = cpu.DecodeNext(mov_CX_0x0C, nameof(mov_CX_0x0C)));
-                Assert.AreEqual("MOV CX, 12", actual.GetAssembly());
-                Assert.AreEqual("MOV CX, 12", actual.GetAssembly(OutputValueMode.AsInteger));
-                Assert.AreEqual("MOV CX, 0x000C", actual.GetAssembly(OutputValueMode.AsHex));
+                Assert.AreEqual("MOV CX, 12", actual.Asm());
+                Assert.AreEqual("MOV CX, 12", actual.Asm(OutputValueMode.AsInteger));
+                Assert.AreEqual("MOV CX, 0x000C", actual.Asm(OutputValueMode.AsHex));
             }
             {
                 Span<byte> mov_CX_0xFFF4 = new byte[] { 0xB9, 0xF4, 0xFF };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_CX_0xFFF4[0], 3, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.CX), new InstructionOperand((short)-12, ImmediateFlag.None)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_CX_0xFFF4[0], 3, IT.MOV, DWT.Word, new IO(RT.CX), new IO((short)-12, ImmediateFlag.None)),
                     actual = cpu.DecodeNext(mov_CX_0xFFF4, nameof(mov_CX_0xFFF4)));
-                Assert.AreEqual("MOV CX, -12", actual.GetAssembly());
-                Assert.AreEqual("MOV CX, -12", actual.GetAssembly(OutputValueMode.AsInteger));
-                Assert.AreEqual("MOV CX, 0xFFF4", actual.GetAssembly(OutputValueMode.AsHex));
+                Assert.AreEqual("MOV CX, -12", actual.Asm());
+                Assert.AreEqual("MOV CX, -12", actual.Asm(OutputValueMode.AsInteger));
+                Assert.AreEqual("MOV CX, 0xFFF4", actual.Asm(OutputValueMode.AsHex));
             }
             {
                 Span<byte> mov_DX_0xF6C = new byte[] { 0xBA, 0x6C, 0x0F };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(mov_DX_0xF6C[0], 3, InstructionType.MOV, DataWidthType.Word, new InstructionOperand(RegisterType.DX), new InstructionOperand((short)3948, ImmediateFlag.None)),
-                    actual = cpu.DecodeNext(mov_DX_0xF6C, "MOV DX, 0xF6C"));
-                Assert.AreEqual("MOV DX, 3948", actual.GetAssembly());
+                IS actual;
+                Assert.AreEqual(
+                    new IS(mov_DX_0xF6C[0], 3, IT.MOV, DWT.Word, new IO(RT.DX), new IO((short)3948, ImmediateFlag.None)),
+                    actual = cpu.DecodeNext(mov_DX_0xF6C, nameof(mov_DX_0xF6C)));
+                Assert.AreEqual("MOV DX, 3948", actual.Asm());
+                Assert.AreEqual("MOV DX, 3948", actual.Asm(OutputValueMode.AsInteger));
+                Assert.AreEqual("MOV DX, 0x0F6C", actual.Asm(OutputValueMode.AsHex));
             }
+
+            // ADD, 3 bytes
             {
                 Span<byte> add_AX_neg4093 = new byte[] { 0x05, 0x03, 0xF0 };
-                Instruction actual;
-                Assert.AreEqual<Instruction>(
-                    new Instruction(add_AX_neg4093[0], 3, InstructionType.ADD, DataWidthType.Word, new InstructionOperand(RegisterType.AX), new InstructionOperand((short)-4093, ImmediateFlag.None)),
+                IS actual;
+                Assert.AreEqual(
+                    new IS(add_AX_neg4093[0], 3, IT.ADD, DWT.Word, new IO(RT.AX), new IO((short)-4093, ImmediateFlag.None)),
                     actual = cpu.DecodeNext(add_AX_neg4093, nameof(add_AX_neg4093)));
-                Assert.AreEqual("ADD AX, -4093", actual.GetAssembly());
+                Assert.AreEqual("ADD AX, -4093", actual.Asm());
+                Assert.AreEqual("ADD AX, -4093", actual.Asm(OutputValueMode.AsInteger));
+                Assert.AreEqual("ADD AX, 0xF003", actual.Asm(OutputValueMode.AsHex));
             }
         }
 

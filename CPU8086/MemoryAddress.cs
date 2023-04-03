@@ -26,7 +26,7 @@ namespace Final.CPU8086
         public override bool Equals(object obj) => obj is MemoryAddress mem && Equals(mem);
         public override int GetHashCode() => HashCode.Combine(EAC, Displacement);
 
-        public string GetAssembly(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.AsHex, string hexPrefix = "0x")
+        public string Asm(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.AsHex, string hexPrefix = "0x")
         {
             int d = Displacement;
             string append;

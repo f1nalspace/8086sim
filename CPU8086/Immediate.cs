@@ -22,6 +22,9 @@ namespace Final.CPU8086
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
     public readonly struct Immediate : IEquatable<Immediate>
     {
+        const ushort ByteIntThreshold = byte.MaxValue / 2;
+        const ushort WordIntThreshold = ushort.MaxValue / 2;
+
         [FieldOffset(0)]
         public readonly ImmediateType Type;
         [FieldOffset(1)]
@@ -73,7 +76,7 @@ namespace Final.CPU8086
                 return false;
             if (Flags != other.Flags)
                 return false;
-            if (S32 != other.S32) 
+            if (S32 != other.S32)
                 return false;
             return true;
         }
@@ -115,7 +118,12 @@ namespace Final.CPU8086
             {
                 case ImmediateType.Byte:
                     if (outputMode == OutputValueMode.Auto)
-                        return $"{hexPrefix}{IntToHex((byte)value, dataWidth, 2)}";
+                    {
+                        if (value <= ByteIntThreshold)
+                            return value.ToString("D");
+                        else
+                            return $"{hexPrefix}{IntToHex((byte)value, dataWidth, 2)}";
+                    }
                     else
                         v = (byte)(value & 0xFF);
                     break;
@@ -127,7 +135,12 @@ namespace Final.CPU8086
                     break;
                 case ImmediateType.Word:
                     if (outputMode == OutputValueMode.Auto)
-                        return $"{hexPrefix}{IntToHex((ushort)value, dataWidth, 4)}";
+                    {
+                        if (value <= WordIntThreshold)
+                            return $"{(ushort)value:D}";
+                        else
+                            return $"{hexPrefix}{IntToHex((ushort)value, dataWidth, 4)}";
+                    }
                     else
                         v = (ushort)(value & 0xFFFF);
                     break;
@@ -171,7 +184,7 @@ namespace Final.CPU8086
             };
         }
 
-        public string GetAssembly(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
+        public string Asm(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
             => GetValueAssembly(dataWidth, Type, S32, outputMode, hexPrefix);
 
         public override string ToString()

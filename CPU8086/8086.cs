@@ -10,7 +10,6 @@ namespace Final.CPU8086
     public class CPU
     {
         private readonly InstructionEntryTable _entryTable = new InstructionEntryTable();
-
         private static readonly InstructionTable _opTable = new InstructionTable();
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
@@ -303,95 +302,9 @@ namespace Final.CPU8086
             return (destination, source);
         }
 
-
-
-        private static (InstructionOperand Dest, InstructionOperand Source) GetDestinationAndSource(ModRegRM modRegRM, bool destinationIsToRegister, bool isWord, short displacement)
-        {
-            if (modRegRM.Mode == Mode.RegisterMode)
-            {
-                if (isWord)
-                {
-                    // 16-bit Register to Register
-                    if (destinationIsToRegister)
-                    {
-                        return (
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField)),
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RMField))
-                        );
-                    }
-                    else
-                    {
-                        return (
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RMField)),
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField))
-                        );
-                    }
-                }
-                else
-                {
-                    // 8-bit Register to Register
-                    if (destinationIsToRegister)
-                    {
-                        return (
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField)),
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RMField))
-                        );
-                    }
-                    else
-                    {
-                        return (
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RMField)),
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField))
-                        );
-                    }
-                }
-            }
-            else
-            {
-                if (isWord)
-                {
-                    if (destinationIsToRegister)
-                    {
-                        // 16-bit Memory to Register
-                        return (
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField)),
-                            new InstructionOperand(modRegRM.EAC, displacement)
-                        );
-                    }
-                    else
-                    {
-                        // 16-bit Register to Memory
-                        return (
-                            new InstructionOperand(modRegRM.EAC, displacement),
-                            new InstructionOperand(_regTable.GetWord(modRegRM.RegField))
-                        );
-                    }
-                }
-                else
-                {
-                    if (destinationIsToRegister)
-                    {
-                        // 8-bit Memory to Register
-                        return (
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField)),
-                            new InstructionOperand(modRegRM.EAC, displacement)
-                        );
-                    }
-                    else
-                    {
-                        // 8-bit Register to Memory
-                        return (
-                            new InstructionOperand(modRegRM.EAC, displacement),
-                            new InstructionOperand(_regTable.GetByte(modRegRM.RegField))
-                        );
-                    }
-                }
-            }
-        }
-
         public Instruction DecodeNext(ReadOnlySpan<byte> stream, string streamName)
         {
-            var r = TryDecodeNext(stream, streamName);
+            OneOf<Instruction, Error> r = TryDecodeNext(stream, streamName);
             if (r.IsT0)
                 return r.AsT0;
             return new Instruction();

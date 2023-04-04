@@ -11,14 +11,12 @@ namespace Final.CPU8086
         {
             Code = code;
             Message = message;
-            Debug.Fail(message);
         }
 
         public Error(Error error, string message)
         {
             Code = error.Code;
             Message = $"{message}: {error.Message}";
-            Debug.Fail(message);
         }
 
         public override string ToString() => $"[{Code}] {Message}";

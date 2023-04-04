@@ -208,6 +208,20 @@ namespace Final.ITP
                     if (platform < globalPlatform)
                         platform = globalPlatform;
 
+                    // Split fields, so we get one array that contains the op and all fields
+                    string[] opSplit = opAndFields
+                        .Replace("|", "")
+                        .Split(new[] { ' ' });
+
+                    // Parse op and get a span for the fields separately
+                    byte op = 0;
+                    Span<string> fieldsSplitted = Span<string>.Empty;
+                    if (opSplit.Length > 0)
+                    {
+                        op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
+                        fieldsSplitted = opSplit.AsSpan(1);
+                    }
+
                     // Parse min/max instruction length
                     // We either have a fixed length or minimum and maximum length
                     // 2
@@ -220,6 +234,21 @@ namespace Final.ITP
                     int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out int maxLen);
                     if (maxLen == 0)
                         maxLen = minLen;
+
+                    // Table bugfix for incorrect length
+                    int fieldsLen = 0;
+                    foreach (string single in opSplit)
+                    {
+                        if ("i0~i3".Equals(single))
+                            fieldsLen += 4;
+                        else
+                            ++fieldsLen;
+                    }
+                    if (minLen == maxLen)
+                    {
+                        if (minLen > fieldsLen)
+                            minLen = maxLen = fieldsLen;
+                    }
 
                     // Parse Signed or Word flag (SW)
                     swText = swText.PadRight(2, '*');
@@ -246,7 +275,7 @@ namespace Final.ITP
                     else if (swText[0] == 'N')
                         signBit = SignBit.Non;
                     else if (swText[0] != '*')
-                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");
+                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");                    
 
                     // Parse flags
                     flagsText = Regex.Replace(flagsText, "-", "*");
@@ -259,18 +288,11 @@ namespace Final.ITP
                     //
                     // Issues:
                     // Sometimes there is a | character, so we need to remove that
+                    
 
-                    string[] opSplit = opAndFields
-                        .Replace("|", "")
-                        .Split(new[] { ' ' });
+                    
 
-                    byte op = 0;
-                    Span<string> fieldsSplitted = Span<string>.Empty;
-                    if (opSplit.Length > 0)
-                    {
-                        op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
-                        fieldsSplitted = opSplit.AsSpan(1);
-                    }
+                    
 #if GENERATE_CS
                     string originalMemonics = mnemonics;
 
@@ -292,6 +314,32 @@ namespace Final.ITP
                     for (int i = 0; i < fieldsSplitted.Length; i++)
                         fields[i] = Field.Parse(fieldsSplitted[i]);
 
+                    bool hasDataFields = false;
+                    foreach (var field in fields)
+                    {
+                        switch (field.Type)
+                        {
+                            case FieldType.Displacement0:
+                            case FieldType.Displacement1:
+                            case FieldType.Immediate0:
+                            case FieldType.Immediate1:
+                            case FieldType.Immediate2:
+                            case FieldType.Immediate3:
+                            case FieldType.Immediate0to3:
+                            case FieldType.Offset0:
+                            case FieldType.Offset1:
+                            case FieldType.Segment0:
+                            case FieldType.Segment1:
+                            case FieldType.RelativeLabelDisplacement0:
+                            case FieldType.RelativeLabelDisplacement1:
+                            case FieldType.ShortLabelOrShortLow:
+                            case FieldType.LongLabel:
+                            case FieldType.ShortHigh:
+                                hasDataFields |= true;
+                                break;
+                        }
+                    }
+
                     // Get family, so we can group the instructions into a family of instructions
                     // For example: MOV is a family, but contains dozens of instructions with varieties
                     string familyText;
@@ -305,7 +353,7 @@ namespace Final.ITP
                     // The family can contain multiple names, but we are only interested in the very first one
                     string[] splittedFamily = familyText.Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-                    InstructionFamily family = new InstructionFamily(splittedFamily[0], title, platform);
+                    InstructionFamily family = new InstructionFamily(opName, title, platform);
 
                     if (!familyOpTypeListMap.TryGetValue(family, out List<string> opNames))
                     {
@@ -363,7 +411,7 @@ namespace Final.ITP
                     }
                     //else
                     //    Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
-#endif // !GENERATE_INSTRUCTION_TYPES
+#endif // !GENERATE_INSTRUCTION_CLASSES
 
 #endif // GENERATE_CS
 
@@ -412,13 +460,13 @@ namespace Final.ITP
             instructionTypesText.AppendLine("\tNone = 0,");
 
             StringBuilder parseNamesMethodText = new StringBuilder();
-            parseNamesMethodText.AppendLine($"public static bool TryParse(string name, out {nameof(InstructionName)} result) {{");
+            parseNamesMethodText.AppendLine($"public static bool TryParse(string name, out {nameof(Mnemonic)} result) {{");
             parseNamesMethodText.AppendLine($"\t{nameof(InstructionType)} type = (name ?? string.Empty) switch {{");
 
             StringBuilder nameToStringMethodText = new StringBuilder();
             nameToStringMethodText.AppendLine($"public override string {nameof(object.ToString)}()");
             nameToStringMethodText.AppendLine("{");
-            nameToStringMethodText.AppendLine($"\treturn {nameof(InstructionName.Type)} switch {{");
+            nameToStringMethodText.AppendLine($"\treturn {nameof(Mnemonic.Type)} switch {{");
 
             foreach (InstructionFamily family in orderedFamilies)
             {
@@ -439,8 +487,8 @@ namespace Final.ITP
 
             parseNamesMethodText.AppendLine($"\t\t_ => {nameof(InstructionType)}.{nameof(InstructionType.None)},");
             parseNamesMethodText.AppendLine($"\t}};");
-            parseNamesMethodText.AppendLine($"\tresult = new {nameof(InstructionName)}(type);");
-            parseNamesMethodText.AppendLine($"\treturn result.{nameof(InstructionName.Type)} != {nameof(InstructionType)}.{nameof(InstructionType.None)};");
+            parseNamesMethodText.AppendLine($"\tresult = new {nameof(Mnemonic)}(type);");
+            parseNamesMethodText.AppendLine($"\treturn result.{nameof(Mnemonic.Type)} != {nameof(InstructionType)}.{nameof(InstructionType.None)};");
             parseNamesMethodText.AppendLine("}");
 
             nameToStringMethodText.AppendLine("\t\t_ => string.Empty,");

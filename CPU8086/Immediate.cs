@@ -102,7 +102,11 @@ namespace Final.CPU8086
 
         public static string IntToHex(int value, DataWidthType dataWidth, int digits)
         {
-            string result = value.ToString($"X{digits}");
+            string result;
+            if (digits > 0)
+                 result = value.ToString($"X{digits}");
+            else
+                result = value.ToString("X");
             switch (dataWidth)
             {
                 case DataWidthType.Byte:
@@ -123,7 +127,7 @@ namespace Final.CPU8086
                     break;
                 case DataWidthType.TenBytes:
                 default:
-                    return null;
+                    break;
             }
             return result;
         }
@@ -203,7 +207,7 @@ namespace Final.CPU8086
             }
             return outputMode switch
             {
-                OutputValueMode.AsHex => $"{hexPrefix}{IntToHex(v, dataWidth, 1)}",
+                OutputValueMode.AsHex => $"{hexPrefix}{IntToHex(v, dataWidth, -1)}",
                 OutputValueMode.AsHex8 => $"{hexPrefix}{IntToHex(v, dataWidth, 2)}",
                 OutputValueMode.AsHex16 => $"{hexPrefix}{IntToHex(v, dataWidth, 4)}",
                 OutputValueMode.AsHex32 => $"{hexPrefix}{IntToHex(v, dataWidth, 8)}",

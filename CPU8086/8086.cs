@@ -476,8 +476,36 @@ namespace Final.CPU8086
                                 immediate |= ((int)imm8 << shift);
                             }
                             break;
-                        case FieldType.Immediate0to3:
+
+                        case FieldType.RelativeLabelDisplacement0:
+                        case FieldType.RelativeLabelDisplacement1:
+                            {
+                                int t = field.Type - FieldType.RelativeLabelDisplacement0;
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                if (value.IsT1)
+                                    return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'");
+                                byte d8 = value.AsT0;
+                                int shift = t * 8;
+                                immediate |= ((int)d8 << shift);
+                            }
                             break;
+
+                        case FieldType.Immediate0to3:
+                            {
+                                immediate = 0;
+                                for (int t = 0; t< 3; t++)
+                                {
+                                    OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                    if (value.IsT1)
+                                        return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'");
+                                    byte imm8 = value.AsT0;
+                                    int shift = t * 8;
+                                    immediate |= ((int)imm8 << shift);
+                                }
+                            }
+                            break;
+
+#if false
                         case FieldType.Offset0:
                         case FieldType.Offset1:
                             break;
@@ -491,8 +519,9 @@ namespace Final.CPU8086
                         case FieldType.LongLabel:
                         case FieldType.ShortHigh:
                             break;
+#endif
                         default:
-                            break;
+                            throw new NotSupportedException($"The field type '{field.Type}' is not supported!");
                     }
                 }
 
@@ -540,19 +569,19 @@ namespace Final.CPU8086
                             break;
                         case OperandKind.ImmediateByte:
                             if ((sbyte)immediate < 0)
-                                return new InstructionOperand((sbyte)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.None, explicitType);
                             else
-                                return new InstructionOperand((byte)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.None, explicitType);
                         case OperandKind.ImmediateWord:
                             if ((short)immediate < 0)
-                                return new InstructionOperand((short)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.None, explicitType);
                             else
-                                return new InstructionOperand((ushort)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.None, explicitType);
                         case OperandKind.ImmediateDoubleWord:
                             if ((int)immediate < 0)
-                                return new InstructionOperand((int)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
                             else
-                                return new InstructionOperand((uint)immediate, ImmediateFlag.None, explicitType);
+                                return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
                         case OperandKind.KeywordFar:
                             break;
                         case OperandKind.KeywordPointer:
@@ -573,9 +602,15 @@ namespace Final.CPU8086
                             break;
 
                         case OperandKind.ShortLabel:
-                            break;
+                            if ((sbyte)immediate < 0)
+                                return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                            else
+                                return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
                         case OperandKind.LongLabel:
-                            break;
+                            if ((short)immediate < 0)
+                                return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                            else
+                                return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
                         case OperandKind.ST:
                             break;
                         case OperandKind.ST_I:
@@ -676,7 +711,7 @@ namespace Final.CPU8086
                             return new InstructionOperand();
                     }
 
-                    throw new NotSupportedException($"The operand type '{sourceOp}' is not supported");
+                    throw new NotSupportedException($"The source operand '{sourceOp}' is not supported");
                 }
 
                 if (modField == byte.MaxValue)

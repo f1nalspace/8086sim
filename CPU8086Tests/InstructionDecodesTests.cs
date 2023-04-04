@@ -217,7 +217,7 @@ namespace Final.CPU8086
                 Span<byte> add_AL_0x2A = stackalloc byte[] { 0x04, 0x2A };
                 IS actual;
                 Assert.AreEqual(
-                    new IS(add_AL_0x2A[0], 2, IT.ADD, DWT.Byte, new IO(RT.AL), new IO(42, ImmediateFlag.None)),
+                    new IS(add_AL_0x2A[0], 2, IT.ADD, DWT.Byte, new IO(RT.AL), new IO((byte)42, ImmediateFlag.None)),
                     actual = _cpu.DecodeNext(add_AL_0x2A, nameof(add_AL_0x2A)));
                 Assert.AreEqual("ADD AL, 42", actual.Asm());
                 Assert.AreEqual("ADD AL, 42", actual.Asm(OutputValueMode.AsInteger));
@@ -235,7 +235,7 @@ namespace Final.CPU8086
                 Span<byte> mov_CX_0x0C = stackalloc byte[] { 0xB9, 0x0C, 0x00 };
                 IS actual;
                 Assert.AreEqual(
-                    new IS(mov_CX_0x0C[0], 3, IT.MOV, DWT.Word, new IO(RT.CX), new IO((short)12, ImmediateFlag.None)),
+                    new IS(mov_CX_0x0C[0], 3, IT.MOV, DWT.Word, new IO(RT.CX), new IO((ushort)12, ImmediateFlag.None)),
                     actual = _cpu.DecodeNext(mov_CX_0x0C, nameof(mov_CX_0x0C)));
                 Assert.AreEqual("MOV CX, 12", actual.Asm());
                 Assert.AreEqual("MOV CX, 12", actual.Asm(OutputValueMode.AsInteger));
@@ -255,7 +255,7 @@ namespace Final.CPU8086
                 Span<byte> mov_DX_0xF6C = stackalloc byte[] { 0xBA, 0x6C, 0x0F };
                 IS actual;
                 Assert.AreEqual(
-                    new IS(mov_DX_0xF6C[0], 3, IT.MOV, DWT.Word, new IO(RT.DX), new IO((short)3948, ImmediateFlag.None)),
+                    new IS(mov_DX_0xF6C[0], 3, IT.MOV, DWT.Word, new IO(RT.DX), new IO((ushort)3948, ImmediateFlag.None)),
                     actual = _cpu.DecodeNext(mov_DX_0xF6C, nameof(mov_DX_0xF6C)));
                 Assert.AreEqual("MOV DX, 3948", actual.Asm());
                 Assert.AreEqual("MOV DX, 3948", actual.Asm(OutputValueMode.AsInteger));

@@ -42,14 +42,20 @@ namespace Final.CPU8086
             Immediate = immediate;
         }
 
-        public InstructionOperand(byte imm8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(imm8, flags), dataType) { }
+        public InstructionOperand(byte u8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(u8, flags), dataType) { }
 
-        public InstructionOperand(short imm16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(imm16, flags), dataType) { }
+        public InstructionOperand(short s16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(s16, flags), dataType) { }
 
-        public InstructionOperand(uint imm32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(imm32, flags), dataType) { }
+        public InstructionOperand(ushort u16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(u16, flags), dataType) { }
+
+        public InstructionOperand(uint u32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(u32, flags), dataType) { }
+
+        public InstructionOperand(int s32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(s32, flags), dataType) { }
 
         public InstructionOperand(MemoryAddress address, DataType dataType = DataType.None)
         {

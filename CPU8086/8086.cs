@@ -500,7 +500,7 @@ namespace Final.CPU8086
                     switch (sourceOp.Kind)
                     {
                         case OperandKind.Value:
-                            return new InstructionOperand(sourceOp.Value);
+                            return new InstructionOperand(s32: sourceOp.Value);
 
                         case OperandKind.MemoryByte:
                         case OperandKind.MemoryWord:
@@ -535,12 +535,20 @@ namespace Final.CPU8086
                         case OperandKind.RegisterOrMemoryQuadWord:
                             break;
                         case OperandKind.ImmediateByte:
-                            return new InstructionOperand((byte)immediate, ImmediateFlag.None, explicitType);
+                            if ((sbyte)immediate < 0)
+                                return new InstructionOperand((sbyte)immediate, ImmediateFlag.None, explicitType);
+                            else
+                                return new InstructionOperand((byte)immediate, ImmediateFlag.None, explicitType);
                         case OperandKind.ImmediateWord:
-                            return new InstructionOperand((short)immediate, ImmediateFlag.None, explicitType);
+                            if ((short)immediate < 0)
+                                return new InstructionOperand((short)immediate, ImmediateFlag.None, explicitType);
+                            else
+                                return new InstructionOperand((ushort)immediate, ImmediateFlag.None, explicitType);
                         case OperandKind.ImmediateDoubleWord:
-                            return new InstructionOperand((uint)immediate, ImmediateFlag.None, explicitType);
-
+                            if ((int)immediate < 0)
+                                return new InstructionOperand((int)immediate, ImmediateFlag.None, explicitType);
+                            else
+                                return new InstructionOperand((uint)immediate, ImmediateFlag.None, explicitType);
                         case OperandKind.KeywordFar:
                             break;
                         case OperandKind.KeywordPointer:

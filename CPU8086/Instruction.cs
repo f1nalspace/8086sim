@@ -75,7 +75,7 @@ namespace Final.CPU8086
         {
             StringBuilder s = new StringBuilder();
             s.Append(Mnemonic);
-            if (Operands.Length > 0)
+            if (Operands != null && Operands.Length > 0)
             {
                 s.Append(' ');
                 for (int i = 0; i < Operands.Length; i++)
@@ -93,6 +93,8 @@ namespace Final.CPU8086
             s.Append(", ");
             s.Append(Length);
             s.Append(" bytes");
+            s.Append(", ");
+            s.Append(Width);
             s.Append(')');
             return s.ToString();
         }

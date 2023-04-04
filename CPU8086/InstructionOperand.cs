@@ -45,6 +45,9 @@ namespace Final.CPU8086
         public InstructionOperand(byte u8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
             : this(new Immediate(u8, flags), dataType) { }
 
+        public InstructionOperand(sbyte s8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(s8, flags), dataType) { }
+
         public InstructionOperand(short s16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
             : this(new Immediate(s16, flags), dataType) { }
 

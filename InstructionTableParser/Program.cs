@@ -43,8 +43,8 @@ namespace Final.ITP
             Platform = platform;
         }
 
-        public override int GetHashCode() => Name.GetHashCode();
-        public bool Equals(InstructionFamily other) => Name.Equals(other.Name);
+        public override int GetHashCode() => HashCode.Combine(Name, Platform);
+        public bool Equals(InstructionFamily other) => Name.Equals(other.Name) && Platform.Equals(other.Platform);
         public override bool Equals(object obj) => obj is InstructionFamily other && Equals(other);
 
         public override string ToString()

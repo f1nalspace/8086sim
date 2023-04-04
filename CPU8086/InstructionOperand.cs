@@ -48,6 +48,9 @@ namespace Final.CPU8086
         public InstructionOperand(short imm16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
             : this(new Immediate(imm16, flags), dataType) { }
 
+        public InstructionOperand(uint imm32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
+            : this(new Immediate(imm32, flags), dataType) { }
+
         public InstructionOperand(MemoryAddress address, DataType dataType = DataType.None)
         {
             Op = OperandType.Address;
@@ -109,8 +112,8 @@ namespace Final.CPU8086
             {
                 DataType.Byte => "byte ",
                 DataType.Byte | DataType.Pointer => "byte ptr ",
-                DataType.Short => "short ",
-                DataType.Short | DataType.Pointer => "short ptr ",
+                DataType.Word => "word ",
+                DataType.Word | DataType.Pointer => "short ptr ",
                 DataType.Int => "int ",
                 DataType.Int | DataType.Pointer => "int ptr ",
                 DataType.DoubleWord => "dword ",
@@ -134,8 +137,8 @@ namespace Final.CPU8086
             {
                 DataType.Byte => "byte ",
                 DataType.Byte | DataType.Pointer => "byte ptr ",
-                DataType.Short => "short ",
-                DataType.Short | DataType.Pointer => "short ptr ",
+                DataType.Word => "short ",
+                DataType.Word | DataType.Pointer => "short ptr ",
                 DataType.Int => "int ",
                 DataType.Int | DataType.Pointer => "int ptr ",
                 DataType.DoubleWord => "dword ",

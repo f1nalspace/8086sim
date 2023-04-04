@@ -10,6 +10,8 @@ namespace Final.CPU8086
         SignedByte,
         Word,
         SignedWord,
+        DoubleWord,
+        Int
     }
 
     [Flags]
@@ -22,8 +24,9 @@ namespace Final.CPU8086
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
     public readonly struct Immediate : IEquatable<Immediate>
     {
-        const ushort ByteIntThreshold = byte.MaxValue / 2;
+        const byte ByteIntThreshold = byte.MaxValue / 2;
         const ushort WordIntThreshold = ushort.MaxValue / 2;
+        const uint DoubleWordThreshold = uint.MaxValue / 4;
 
         [FieldOffset(0)]
         public readonly ImmediateType Type;
@@ -68,6 +71,20 @@ namespace Final.CPU8086
             Type = ImmediateType.SignedWord;
             Flags = flags;
             S16 = s16;
+        }
+
+        public Immediate(uint u32, ImmediateFlag flags) : this()
+        {
+            Type = ImmediateType.DoubleWord;
+            Flags = flags;
+            U32 = u32;
+        }
+
+        public Immediate(int s32, ImmediateFlag flags) : this()
+        {
+            Type = ImmediateType.Int;
+            Flags = flags;
+            S32 = s32;
         }
 
         public bool Equals(Immediate other)
@@ -150,6 +167,17 @@ namespace Final.CPU8086
                     else
                         v = (short)(value & 0xFFFF);
                     break;
+                case ImmediateType.DoubleWord:
+                    if (value <= DoubleWordThreshold)
+                        return value.ToString("D");
+                    else
+                        return $"{hexPrefix}{IntToHex((int)(uint)value, dataWidth, 8)}";
+                case ImmediateType.Int:
+                    if (outputMode == OutputValueMode.Auto)
+                        return $"{(int)value:D}";
+                    else
+                        v = (int)(value & 0xFFFFFFFF);
+                    break;
                 default:
                     break;
             }
@@ -195,6 +223,8 @@ namespace Final.CPU8086
                 ImmediateType.SignedByte => S8.ToString("G"),
                 ImmediateType.Word => U16.ToString("X4"),
                 ImmediateType.SignedWord => S16.ToString("G"),
+                ImmediateType.DoubleWord => U16.ToString("X8"),
+                ImmediateType.Int => S16.ToString("G"),
                 _ => string.Empty,
             };
         }

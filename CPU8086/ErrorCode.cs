@@ -5,12 +5,14 @@
         Unknown = 0,
         NotEnoughBytesInStream,
         EndOfStream,
-        TooSmallAdvancementInStream,
-        TooLargeAdvancementInStream,
+        InstructionLengthTooSmall,
+        InstructionLengthTooLarge,
         OpCodeNotImplemented,
         OpCodeMismatch,
         InstructionNotImplemented,
         InstructionMissingAdditionalData,
         ModeNotImplemented,
+        ConstantFieldMismatch,
+        RegFieldMismatch,
     }
 }

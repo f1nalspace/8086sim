@@ -371,14 +371,14 @@ namespace Final.CPU8086
             return value switch
             {
                 "(byte)" => DataType.Byte,
-                "(short)" => DataType.Short,
+                "(short)" => DataType.Word,
                 "(int)" => DataType.Int,
                 "(dword)" => DataType.DoubleWord,
                 "(ptr)" => DataType.Pointer,
                 "(far)" => DataType.Far,
                 "(far ptr)" => DataType.Far | DataType.Pointer,
                 "(byte ptr)" => DataType.Byte | DataType.Pointer,
-                "(short ptr)" => DataType.Short | DataType.Pointer,
+                "(short ptr)" => DataType.Word | DataType.Pointer,
                 "(int ptr)" => DataType.Int | DataType.Pointer,
                 "(dword ptr)" => DataType.DoubleWord | DataType.Pointer,
                 _ => DataType.None,
@@ -391,7 +391,7 @@ namespace Final.CPU8086
             {
                 if (dataType == DataType.Byte)
                     return "(byte)";
-                else if (dataType == DataType.Short)
+                else if (dataType == DataType.Word)
                     return "(short)";
                 else if (dataType == DataType.Int)
                     return "(int)";
@@ -405,7 +405,7 @@ namespace Final.CPU8086
                     return "(far ptr)";
                 else if (dataType.HasFlag(DataType.Byte) && dataType.HasFlag(DataType.Pointer))
                     return "(byte ptr)";
-                else if (dataType.HasFlag(DataType.Short) && dataType.HasFlag(DataType.Pointer))
+                else if (dataType.HasFlag(DataType.Word) && dataType.HasFlag(DataType.Pointer))
                     return "(short ptr)";
                 else if (dataType.HasFlag(DataType.Int) && dataType.HasFlag(DataType.Pointer))
                     return "(int ptr)";

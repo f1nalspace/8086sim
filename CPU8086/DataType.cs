@@ -7,7 +7,7 @@ namespace Final.CPU8086
     {
         None = 0,
         Byte = 1 << 1,
-        Short = 1 << 2,
+        Word = 1 << 2,
         Int = 1 << 3,
         DoubleWord = 1 << 4,
         Pointer = 1 << 5,

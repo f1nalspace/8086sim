@@ -47,7 +47,12 @@ namespace Final.CPU8086
                 }
                 else
                 {
-                    if (d < 0)
+                    if ((short)d < 0)
+                    {
+                        op = '-';
+                        d = Math.Abs((short)d);
+                    } 
+                    else if (d < 0)
                     {
                         op = '-';
                         d = Math.Abs(d);

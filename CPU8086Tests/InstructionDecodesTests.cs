@@ -18,7 +18,12 @@ namespace Final.CPU8086
     {
         private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
 
-        private CPU _cpu = null;
+        private readonly CPU _cpu;
+
+        public InstructionDecodesTests()
+        {
+            _cpu = new CPU();
+        }
 
         private static IEnumerable<string> CleanAssembly(string value)
         {
@@ -50,13 +55,13 @@ namespace Final.CPU8086
             }
         }
 
-        private static void TestAssembly(string name)
+        private void TestAssembly(string name)
         {
             using Stream machineCodeStream = _resources.Get(name);
             using Stream assemblyCodeStream = _resources.Get(name + ".asm");
             using StreamReader reader = new StreamReader(assemblyCodeStream, leaveOpen: true);
             string expectedAssembly = reader.ReadToEnd();
-            OneOf.OneOf<string, Error> res = CPU.GetAssembly(machineCodeStream, name, OutputValueMode.AsInteger);
+            OneOf.OneOf<string, Error> res = _cpu.GetAssembly(machineCodeStream, name, OutputValueMode.AsInteger);
             res.Switch(
                 actualAssembly => AssertAssembly(expectedAssembly, actualAssembly),
                 error => Assert.Fail(error.ToString()));
@@ -65,7 +70,6 @@ namespace Final.CPU8086
         [TestInitialize]
         public void Initialize()
         {
-            _cpu = new CPU();
         }
 
         [TestMethod]

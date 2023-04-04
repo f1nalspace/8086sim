@@ -346,7 +346,7 @@ namespace Final.ITP
                                     opDataType |= DataType.DoubleWord;
                                     break;
                                 case OperandKind.TypeShort:
-                                    opDataType |= DataType.Short;
+                                    opDataType |= DataType.Word;
                                     break;
                                 case OperandKind.TypeInt:
                                     opDataType |= DataType.Int;

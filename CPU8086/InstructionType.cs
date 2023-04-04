@@ -65,7 +65,11 @@
         /// <summary>
         /// Compare String (Byte, Word or Doubleword)
         /// </summary>
-        CMPS,
+        CMPSB,
+        /// <summary>
+        /// Compare String (Byte, Word or Doubleword)
+        /// </summary>
+        CMPSW,
         /// <summary>
         /// Convert Word to Doubleword
         /// </summary>
@@ -95,6 +99,10 @@
         /// </summary>
         IDIV,
         /// <summary>
+        /// Signed Multiply
+        /// </summary>
+        IMUL,
+        /// <summary>
         /// Input Byte or Word From Port
         /// </summary>
         IN,
@@ -115,13 +123,85 @@
         /// </summary>
         IRET,
         /// <summary>
+        /// Jump Above / Jump Not Below or Equal
+        /// </summary>
+        JA,
+        /// <summary>
+        /// Jump Above or Equal / Jump on Not Below
+        /// </summary>
+        JAE,
+        /// <summary>
+        /// Jump Below / Jump Not Above or Equal
+        /// </summary>
+        JB,
+        /// <summary>
+        /// Jump Below or Equal / Jump Not Above
+        /// </summary>
+        JBE,
+        /// <summary>
+        /// Jump on Carry
+        /// </summary>
+        JC,
+        /// <summary>
         /// Jump if Register (E)CX is Zero
         /// </summary>
         JCXZ,
         /// <summary>
+        /// Jump Equal / Jump Zero
+        /// </summary>
+        JE,
+        /// <summary>
+        /// Jump Greater / Jump Not Less or Equal
+        /// </summary>
+        JG,
+        /// <summary>
+        /// Jump Greater or Equal / Jump Not Less
+        /// </summary>
+        JGE,
+        /// <summary>
+        /// Jump Less / Jump Not Greater or Equal
+        /// </summary>
+        JL,
+        /// <summary>
+        /// Jump Less or Equal / Jump Not Greater
+        /// </summary>
+        JLE,
+        /// <summary>
         /// Unconditional Jump
         /// </summary>
         JMP,
+        /// <summary>
+        /// Jump Not Carry
+        /// </summary>
+        JNC,
+        /// <summary>
+        /// Jump Not Equal / Jump Not Zero
+        /// </summary>
+        JNE,
+        /// <summary>
+        /// Jump Not Overflow
+        /// </summary>
+        JNO,
+        /// <summary>
+        /// Jump Not Signed
+        /// </summary>
+        JNS,
+        /// <summary>
+        /// Jump Not Parity / Jump Parity Odd
+        /// </summary>
+        JNP,
+        /// <summary>
+        /// Jump on Overflow
+        /// </summary>
+        JO,
+        /// <summary>
+        /// Jump on Parity / Jump on Parity Even
+        /// </summary>
+        JP,
+        /// <summary>
+        /// Jump Signed
+        /// </summary>
+        JS,
         /// <summary>
         /// Load Register AH From Flags
         /// </summary>
@@ -145,7 +225,11 @@
         /// <summary>
         /// Load String (Byte, Word or Double)
         /// </summary>
-        LODS,
+        LODSB,
+        /// <summary>
+        /// Load String (Byte, Word or Double)
+        /// </summary>
+        LODSW,
         /// <summary>
         /// Decrement CX and Loop if CX Not Zero
         /// </summary>
@@ -165,7 +249,11 @@
         /// <summary>
         /// Move String (Byte or Word)
         /// </summary>
-        MOVS,
+        MOVSB,
+        /// <summary>
+        /// Move String (Byte or Word)
+        /// </summary>
+        MOVSW,
         /// <summary>
         /// Unsigned Multiply
         /// </summary>
@@ -231,6 +319,10 @@
         /// </summary>
         RET,
         /// <summary>
+        /// Return From Procedure
+        /// </summary>
+        RETF,
+        /// <summary>
         /// Rotate Left
         /// </summary>
         ROL,
@@ -247,6 +339,10 @@
         /// </summary>
         SAL,
         /// <summary>
+        /// Shift Arithmetic Left / Shift Logical Left
+        /// </summary>
+        SHL,
+        /// <summary>
         /// Shift Arithmetic Right
         /// </summary>
         SAR,
@@ -257,7 +353,11 @@
         /// <summary>
         /// Scan String (Byte, Word or Doubleword)
         /// </summary>
-        SCAS,
+        SCASB,
+        /// <summary>
+        /// Scan String (Byte, Word or Doubleword)
+        /// </summary>
+        SCASW,
         /// <summary>
         /// Shift Logical Right
         /// </summary>
@@ -277,7 +377,11 @@
         /// <summary>
         /// Store String (Byte, Word or Doubleword)
         /// </summary>
-        STOS,
+        STOSB,
+        /// <summary>
+        /// Store String (Byte, Word or Doubleword)
+        /// </summary>
+        STOSW,
         /// <summary>
         /// Subtract
         /// </summary>

@@ -367,6 +367,7 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation eac = EffectiveAddressCalculation.None;
                 int displacementLength = 0;
                 bool useExplicitType = false;
+                bool hasRegField = false;
 
                 foreach (Field field in entry.Fields)
                 {
@@ -400,10 +401,13 @@ namespace Final.CPU8086
                                 rmField = (byte)(mrm >> 0 & 0b111);
                                 if (field.Type != FieldType.ModRegRM)
                                 {
+                                    hasRegField = false;
                                     byte expectReg = field.Type - FieldType.Mod000RM;
                                     if (expectReg != regField)
                                         return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'");
                                 }
+                                else
+                                    hasRegField = true;
                                 mode = (Mode)modField;
                                 eac = mode switch
                                 {
@@ -686,7 +690,7 @@ namespace Final.CPU8086
                     byte register = 0;
                     if (mode == Mode.RegisterMode)
                     {
-                        if (isDest)
+                        if (isDest || !hasRegField)
                             register = rmField;
                         else
                             register = regField;
@@ -698,13 +702,14 @@ namespace Final.CPU8086
                             case OperandKind.RegisterByte:
                             case OperandKind.RegisterWord:
                             case OperandKind.RegisterDoubleWord:
-                                register = regField;
-                                break;
                             case OperandKind.RegisterOrMemoryByte:
                             case OperandKind.RegisterOrMemoryWord:
                             case OperandKind.RegisterOrMemoryDoubleWord:
                             case OperandKind.RegisterOrMemoryQuadWord:
-                                register = regField;
+                                if (!hasRegField)
+                                    register = rmField;
+                                else
+                                    register = regField;
                                 break;
                             default:
                                 break;

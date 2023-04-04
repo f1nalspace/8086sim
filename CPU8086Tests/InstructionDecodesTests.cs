@@ -223,6 +223,17 @@ namespace Final.CPU8086
                 Assert.AreEqual("ADD AL, 42", actual.Asm(OutputValueMode.AsInteger));
                 Assert.AreEqual("ADD AL, 0x2A", actual.Asm(OutputValueMode.AsHex));
             }
+
+            // JNL, 2 bytes
+            {
+                Span<byte> add_JNL_FFEE = stackalloc byte[] { 0x7D, 0xEC };
+                IS actual;
+                Assert.AreEqual(
+                    new IS(add_JNL_FFEE[0], 2, IT.JGE, DWT.None, new IO(unchecked((sbyte)0xEC), ImmediateFlag.RelativeJumpDisplacement)),
+                    actual = _cpu.DecodeNext(add_JNL_FFEE, nameof(add_JNL_FFEE)));
+                Assert.AreEqual("JGE -20", actual.Asm());
+                Assert.AreEqual("JGE -20", actual.Asm(OutputValueMode.AsInteger));
+            }
         }
 
         [TestMethod]

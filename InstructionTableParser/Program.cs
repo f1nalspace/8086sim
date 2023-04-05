@@ -247,7 +247,8 @@ namespace Final.ITP
                     if (minLen == maxLen)
                     {
                         if (minLen > fieldsLen)
-                            minLen = maxLen = fieldsLen;
+                            throw new InvalidDataException($"The min/max length of '{minLen}' for op '{mnemonics}' does not match fields length of '{fieldsLen}'");
+                            //minLen = maxLen = fieldsLen;
                     }
 
                     // Parse Signed or Word flag (SW)

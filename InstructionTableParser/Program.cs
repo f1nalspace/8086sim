@@ -476,7 +476,7 @@ namespace Final.ITP
 #endif
 
             // Fill instruction table, but skip all non 8086 platforms
-            InstructionEntryTable newTable = new InstructionEntryTable();
+            InstructionTable newTable = new InstructionTable();
             InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
             foreach (InstructionEntry instruction in sortedInstructions)
             {
@@ -492,7 +492,7 @@ namespace Final.ITP
             string listName = "IL";
             string dataWidthName = "DW";
             string dataFlagsName = "DF";
-            string tableName = nameof(InstructionEntryTable);
+            string tableName = nameof(InstructionTable);
             string varName = "_opToList";
 
             StringBuilder instructionsTableText = new StringBuilder();

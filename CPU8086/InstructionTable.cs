@@ -10,13 +10,13 @@ using System;
 
 namespace Final.CPU8086
 {
-    public class InstructionEntryTable : IReadOnlyCollection<IL>
+    public class InstructionTable : IReadOnlyCollection<IL>
     {
         private readonly IL[] _opToList = new IL[256];
 
         public ref readonly IL this[int index] => ref _opToList[index];
 
-        public InstructionEntryTable()
+        public InstructionTable()
         {
             Array.Clear(_opToList, 0, _opToList.Length);
         }

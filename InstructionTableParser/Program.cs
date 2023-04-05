@@ -30,6 +30,32 @@ namespace Final.ITP
         Non,
     }
 
+    static class AdditionalInstructions
+    {
+        public static readonly InstructionEntry[] PrefixInstructions = new InstructionEntry[] {
+            // Lock
+            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+
+            // String manipulation
+            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+
+            // Segment override
+            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}),
+            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}),
+            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}),
+            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}),
+            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}),
+            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, DataFlags.Prefix, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+
+            // Operand override (Changes size of data expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
+            new InstructionEntry(0x66, new Mnemonic(), DataWidthType.None, DataFlags.Prefix | DataFlags.Override, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+
+            // Address override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
+            new InstructionEntry(0x67, new Mnemonic(), DataWidthType.None, DataFlags.Prefix | DataFlags.Override, InstructionFlags.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+        };
+    }
+
     class InstructionFamily : IEquatable<InstructionFamily>
     {
         public string Name { get; }
@@ -254,7 +280,7 @@ namespace Final.ITP
                     {
                         if (minLen > fieldsLen)
                             throw new InvalidDataException($"The min/max length of '{minLen}' for op '{mnemonics}' does not match fields length of '{fieldsLen}'");
-                            //minLen = maxLen = fieldsLen;
+                        //minLen = maxLen = fieldsLen;
                     }
 
                     // Parse Signed or Word flag (SW)
@@ -282,15 +308,15 @@ namespace Final.ITP
                     else if (swText[0] == 'N')
                         signBit = SignBit.Non;
                     else if (swText[0] != '*')
-                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");                    
+                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");
 
                     // Parse flags
                     flagsText = Regex.Replace(flagsText, "-", "*");
                     Debug.Assert(flagsText.Length == 8);
                     InstructionFlags flags = new InstructionFlags(flagsText.AsSpan());
 
-                    
-                    
+
+
 #if GENERATE_CS
                     string originalMemonics = mnemonics;
 

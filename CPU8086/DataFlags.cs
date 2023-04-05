@@ -8,5 +8,6 @@ namespace Final.CPU8086
         None = 0,
         SignExtendedImm8 = 1 << 0,
         Prefix = 1 << 1,
+        Override = 1 << 2,
     }
 }

@@ -77,6 +77,8 @@ namespace Final.CPU8086
             };
         }
 
+        public static readonly InstructionFlags Empty = new InstructionFlags();
+
         public override string ToString()
         {
             Span<char> s = stackalloc char[8];

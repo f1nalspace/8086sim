@@ -12,7 +12,6 @@ namespace Final.CPU8086
         private const int MaxInstructionLength = 6;
 
         private readonly InstructionEntryTable _entryTable = new InstructionEntryTable();
-        private static readonly InstructionTable _opTable = new InstructionTable();
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 

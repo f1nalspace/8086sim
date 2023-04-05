@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace Final.CPU8086
 {
     // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
-    public enum OperandKind : int
+    public enum OperandKind : byte
     {
         Unknown = 0,
 
@@ -108,7 +108,7 @@ namespace Final.CPU8086
         GS,
     }
 
-    [StructLayout(LayoutKind.Sequential, Pack = 1, Size = 8)]
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct Operand
     {
         private static readonly Regex _rexMNumber = new Regex("(?<prefix>[m])(?<num>[0-9]{1,2})", RegexOptions.Compiled);
@@ -117,12 +117,14 @@ namespace Final.CPU8086
         public OperandKind Kind { get; }
         public DataType DataType { get; }
         public int Value { get; }
+        public short Padding { get; }
 
         public Operand(OperandKind kind, DataType dataType, int value = 0)
         {
             Kind = kind;
             DataType = dataType;
             Value = value;
+            Padding = 0;
         }
 
         public Operand(int value, DataType dataType) : this(OperandKind.Value, dataType, value) { }

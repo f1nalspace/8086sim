@@ -44,6 +44,8 @@ namespace Final.CPU8086
         public readonly uint U32;
         [FieldOffset(2)]
         public readonly int S32;
+        [FieldOffset(6)]
+        public readonly short Padding;
 
         public Immediate(byte u8, ImmediateFlag flags) : this()
         {

@@ -208,7 +208,13 @@ namespace Final.ITP
                     if (platform < globalPlatform)
                         platform = globalPlatform;
 
-                    // Split fields, so we get one array that contains the op and all fields
+                    // Split fields that defines each byte in the instruction stream
+                    // 
+                    // Each field is separated by a space, so if we split by space, we get all the fields.
+                    // The very first field contains the full op-code byte always, so we parse that right away
+                    //
+                    // Issues:
+                    // Sometimes there is a | character, so we need to remove that
                     string[] opSplit = opAndFields
                         .Replace("|", "")
                         .Split(new[] { ' ' });
@@ -235,7 +241,7 @@ namespace Final.ITP
                     if (maxLen == 0)
                         maxLen = minLen;
 
-                    // Table bugfix for incorrect length
+                    // Check for entries with an incorrect length
                     int fieldsLen = 0;
                     foreach (string single in opSplit)
                     {
@@ -283,16 +289,7 @@ namespace Final.ITP
                     Debug.Assert(flagsText.Length == 8);
                     InstructionFlags flags = new InstructionFlags(flagsText.AsSpan());
 
-                    // Parse fields that defines each byte in the instruction stream.
-                    // Each field is separated by a space, so if we split by space, we get all the fields.
-                    // The very first field contains the full op-code byte always.
-                    //
-                    // Issues:
-                    // Sometimes there is a | character, so we need to remove that
                     
-
-                    
-
                     
 #if GENERATE_CS
                     string originalMemonics = mnemonics;
@@ -314,32 +311,6 @@ namespace Final.ITP
                     Field[] fields = new Field[fieldsSplitted.Length];
                     for (int i = 0; i < fieldsSplitted.Length; i++)
                         fields[i] = Field.Parse(fieldsSplitted[i]);
-
-                    bool hasDataFields = false;
-                    foreach (var field in fields)
-                    {
-                        switch (field.Type)
-                        {
-                            case FieldType.Displacement0:
-                            case FieldType.Displacement1:
-                            case FieldType.Immediate0:
-                            case FieldType.Immediate1:
-                            case FieldType.Immediate2:
-                            case FieldType.Immediate3:
-                            case FieldType.Immediate0to3:
-                            case FieldType.Offset0:
-                            case FieldType.Offset1:
-                            case FieldType.Segment0:
-                            case FieldType.Segment1:
-                            case FieldType.RelativeLabelDisplacement0:
-                            case FieldType.RelativeLabelDisplacement1:
-                            case FieldType.ShortLabelOrShortLow:
-                            case FieldType.LongLabel:
-                            case FieldType.ShortHigh:
-                                hasDataFields |= true;
-                                break;
-                        }
-                    }
 
                     // Get family, so we can group the instructions into a family of instructions
                     // For example: MOV is a family, but contains dozens of instructions with varieties

@@ -3,10 +3,16 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
+    <RootNamespace>Final.CPU8086</RootNamespace>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DevExpressMvvm" Version="22.1.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CPU8086.Resources\CPU8086.Resources.csproj" />
     <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
   </ItemGroup>
 

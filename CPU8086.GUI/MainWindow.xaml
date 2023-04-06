@@ -1,12 +1,286 @@
-﻿<Window x:Class="CPU8086.GUI.MainWindow"
+﻿<Window x:Class="Final.CPU8086.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:CPU8086.GUI"
+        xmlns:local="clr-namespace:Final.CPU8086"
+        xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MainWindow" 
+        Height="450" 
+        Width="800" 
+        FontSize="16"
+        FontFamily="Consolas"
+        d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}" 
+        DataContext="{dxmvvm:ViewModelSource local:MainViewModel}">
+    <Window.Resources>
+        <local:MultiValueEqualityConverter x:Key="multiValueEqConverter" />
+    </Window.Resources>
+    <DockPanel LastChildFill="True" Margin="10">
+        <StackPanel DockPanel.Dock="Top" Margin="0 0 0 10">
+            <ComboBox ItemsSource="{Binding ResourceStreams}" SelectedValue="{Binding CurrentResource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True" />
+            <StackPanel Orientation="Horizontal">
+                <CheckBox IsChecked="{Binding ShowRegisterAsHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                <TextBlock Text="Register as Hex" Margin="4 0 0 0" />
+                <Separator Width="10" />
+                <CheckBox IsChecked="{Binding ShowStreamAsHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center" />
+                <TextBlock Text="Stream as Hex" Margin="4 0 0 0" />
+            </StackPanel>
+        </StackPanel>
+        <DockPanel LastChildFill="True">
+            <Grid DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Name: " />
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding CurrentResource, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="Length: " />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding CurrentStream.Length, UpdateSourceTrigger=PropertyChanged}" />
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="10" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                   
+                    <!-- AX -->
+                    <Grid Grid.Row="0" Background="Yellow">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="AX" HorizontalAlignment="Right" Padding="4 0" />
+                        <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.AX" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
 
-    </Grid>
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.AH" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.AL" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- BX -->
+                    <Grid Grid.Row="1" Background="LightGreen">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="BX" HorizontalAlignment="Right" Padding="4 0" />
+                        <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.BX" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.BH" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.BL" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- CX -->
+                    <Grid Grid.Row="2" Background="LightBlue">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="CX" HorizontalAlignment="Right" Padding="4 0" />
+                        <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.CX" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.CH" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.CL" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- DX -->
+                    <Grid Grid.Row="3" Background="LavenderBlush">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="50" />
+                            <ColumnDefinition Width="20" />
+                            <ColumnDefinition Width="30" />
+                            <ColumnDefinition Width="5" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Column="0" Grid.Row="0" Text="DX" HorizontalAlignment="Right" Padding="4 0" />
+                        <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.DX" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.DH" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" Padding="4 0" />
+                        <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                            <TextBlock.Text>
+                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                    <Binding Path="Register.DL" UpdateSourceTrigger="PropertyChanged" />
+                                    <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                </MultiBinding>
+                            </TextBlock.Text>
+                        </TextBlock>
+                    </Grid>
+
+                </Grid>
+                <Separator Grid.Column="1" />
+                <Grid Grid.Column="2">
+                    <ScrollViewer Width="400" HorizontalAlignment="Left">
+                        <ItemsControl ItemsSource="{Binding CurrentStream}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                        <TextBlock Width="40" TextAlignment="Right">
+                                            <TextBlock.Text>
+                                                <MultiBinding Converter="{local:HexCellValueConverter}">
+                                                    <Binding />
+                                                    <Binding Path="DataContext.ShowStreamAsHex" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Value="True">
+                                                            <DataTrigger.Binding>
+                                                                <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                                                                    <Binding Path="Index" />
+                                                                    <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                </MultiBinding>
+                                                            </DataTrigger.Binding>
+                                                            <Setter Property="Background" Value="LightBlue" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
+        </DockPanel>
+    </DockPanel>
 </Window>

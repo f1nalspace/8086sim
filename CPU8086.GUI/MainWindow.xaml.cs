@@ -13,7 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace CPU8086.GUI
+namespace Final.CPU8086
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

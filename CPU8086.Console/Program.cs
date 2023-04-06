@@ -1,26 +1,154 @@
 ﻿using OneOf;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Final.CPU8086
 {
     public class Program
     {
+        enum ArgumentQuantifier
+        {
+            Zero = 0,
+            One,
+            Value,
+        }
+
+        readonly struct Argument
+        {
+            public string Key { get; }
+            public string Value { get; }
+            public ArgumentQuantifier Quantifier { get; }
+
+            public Argument(string key, ArgumentQuantifier quantifier, string value = null)
+            {
+                Key = key;
+                Value = value;
+                Quantifier = quantifier;
+            }
+
+            public Argument(string key, string value)
+            {
+                Key = key;
+                Value = value;
+                Quantifier = ArgumentQuantifier.One;
+            }
+
+            public Argument(string value)
+            {
+                Key = null;
+                Value = value;
+                Quantifier = ArgumentQuantifier.Value;
+            }
+
+            public override string ToString()
+            {
+                if (Value != null)
+                    return $"{Key} => '{Value}' [{Quantifier}]";
+                else
+                    return $"{Key} [{Quantifier}]";
+            }
+        }
+
+        static IEnumerable<Argument> ParseArguments(string[] args, params Argument[] registered)
+        {
+            IReadOnlyDictionary<string, Argument> dict = registered
+                .Where(x => !string.IsNullOrWhiteSpace(x.Key))
+                .ToDictionary(x => x.Key, x => x) ?? new Dictionary<string, Argument>();
+
+            List<Argument> result = new List<Argument>();
+
+            Argument currentArg = new Argument();
+            for (int index = 0; index < args.Length; ++index)
+            {
+                bool isMinus;
+                if ((isMinus = args[index].StartsWith('-')) || args[index].StartsWith('/'))
+                {
+                    string argName = args[index].Substring(1);
+                    if (string.IsNullOrEmpty(argName))
+                        throw new FormatException($"Missing argument key for argument [{index}]'{args[index]}'");
+
+                    int maxNameLen;
+                    if (isMinus && argName.StartsWith('-'))
+                    {
+                        // Double minus, so we have a long named argument
+                        argName = argName.Substring(1);
+                        maxNameLen = int.MaxValue;
+                    }
+                    else
+                        maxNameLen = 1;
+
+                    int equalsIndex;
+                    if ((equalsIndex = argName.IndexOf('=')) != -1)
+                        argName = argName.Substring(0, equalsIndex);
+
+                    if (argName.Length > maxNameLen)
+                        throw new FormatException($"Expect argument name '{argName}' to be length of 1, but got '{argName.Length}' for argument [{index}] '{args[index]}'");
+
+                    if (dict.TryGetValue(argName, out Argument mappedArgument))
+                    {
+                        if (mappedArgument.Quantifier == ArgumentQuantifier.Zero)
+                        {
+                            result.Add(new Argument(argName, ArgumentQuantifier.Zero));
+                            currentArg = new Argument();
+                        }
+                        else if (mappedArgument.Quantifier == ArgumentQuantifier.One)
+                        {
+                            if (equalsIndex != -1)
+                            {
+                                string argValue = argName.Substring(equalsIndex + 1);
+                                result.Add(new Argument(argName, ArgumentQuantifier.One, argValue));
+                                currentArg = new Argument();
+                            }
+                            else
+                                currentArg = mappedArgument;
+                        }
+                        else
+                            throw new NotSupportedException($"The mapped argument '{mappedArgument.Quantifier}' is not supported for argument [{index}] '{args[index]}'");
+                    }
+                    else
+                    {
+                        result.Add(new Argument(argName, ArgumentQuantifier.Zero));
+                        currentArg = new Argument();
+                    }
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(currentArg.Key))
+                        result.Add(new Argument(currentArg.Key, args[index]));
+                    else
+                        result.Add(new Argument(args[index]));
+                    currentArg = new Argument();
+                }
+            }
+
+            return result;
+        }
+
         public static int Main(string[] args)
         {
-            if (args.Length < 1)
+            IEnumerable<Argument> parsedArgs = ParseArguments(args);
+            if (!parsedArgs.Any())
             {
                 Console.Error.WriteLine($"No arguments specified, please specify the file argument");
                 return -1;
             }
 
-            string filePath = args[0];
+            string[] files = parsedArgs
+                .Where(x => string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrWhiteSpace(x.Value))
+                .Select(x => x.Value)
+                .ToArray();
 
-            if (!File.Exists(filePath))
+            if (files.Length == 0)
             {
-                Console.Error.WriteLine($"File not found: {filePath}");
+                Console.Error.WriteLine("No file arguments found");
                 return -1;
             }
+
+            string filePath = files[0];
 
             byte[] data = File.ReadAllBytes(filePath);
 

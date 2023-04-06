@@ -1,13 +1,15 @@
 ﻿using OneOf;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Final.CPU8086
 {
-    public class CPU
+    public class CPU : INotifyPropertyChanged
     {
         private const int MaxInstructionLength = 6;
 
@@ -15,9 +17,31 @@ namespace Final.CPU8086
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void RaisePropertyChanged(string propertyName)
+            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+        private void SetValue<T>(ref T target, T value, [CallerMemberName] string propertyName = null)
+        {
+            if (!object.Equals(target, value))
+            {
+                target = value;
+                RaisePropertyChanged(propertyName);
+            }
+        }
+
+        public CPURegister Register { get => _register; private set => SetValue(ref _register, value); }
+        private CPURegister _register = new CPURegister();
+
         public CPU()
         {
             _entryTable.Load();
+        }
+
+        public void Reset()
+        {
+            Register = new CPURegister();
         }
 
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
@@ -143,7 +167,7 @@ namespace Final.CPU8086
             _ => value.ToString(),
         };
 
-        public static string GetRegisterAssembly(RegisterType regType) => Register.GetLowerName(regType);
+        public static string GetRegisterAssembly(RegisterType regType) => CPU8086.Register.GetLowerName(regType);
 
         public static string GetRegisterAssembly(Register reg) => GetRegisterAssembly(reg?.Type ?? RegisterType.Unknown);
 

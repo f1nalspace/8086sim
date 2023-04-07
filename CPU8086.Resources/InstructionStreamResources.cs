@@ -20,7 +20,7 @@ namespace Final.CPU8086
         public string[] GetNames()
         {
             string[] names = _asm.GetManifestResourceNames();
-            return names.Select(s => s.Remove(0, Namespace.Length)).ToArray();
+            return names.Select(s => s.Remove(0, Namespace.Length)).OrderBy(s => s).ToArray();
         }
     }
 }

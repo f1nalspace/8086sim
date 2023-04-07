@@ -25,6 +25,9 @@ namespace Final.CPU8086
         public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value); }
         private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
 
+        public ImmutableArray<Error> Errors { get => _errors; private set => SetValue(ref _errors, value); }
+        private ImmutableArray<Error> _errors = ImmutableArray<Error>.Empty;
+
         public int CurrentStreamPosition
         {
             get => _currentStreamPosition;
@@ -99,6 +102,7 @@ namespace Final.CPU8086
 
         private void DecodeInstructions(ImmutableArray<byte> stream)
         {
+            List<Error> errors = new List<Error>();
             List<Instruction> list = new List<Instruction>();
             ReadOnlySpan<byte> cur = stream.AsSpan();
             int position = 0;
@@ -106,13 +110,17 @@ namespace Final.CPU8086
             {
                 OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, CurrentResource, position);
                 if (r.IsT1)
+                {
+                    errors.Add(r.AsT1);
                     break;
+                }
                 Instruction instruction = r.AsT0;
                 list.Add(instruction);
                 cur = cur.Slice(instruction.Length);
                 position += instruction.Length;
             }
             Instructions = list.ToImmutableArray();
+            Errors = errors.ToImmutableArray();
         }
 
         public void CurrentStreamChanged(ImmutableArray<byte> stream)

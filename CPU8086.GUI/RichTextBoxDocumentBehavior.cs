@@ -13,26 +13,30 @@ namespace Final.CPU8086
         private static void DocumentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is RichTextBoxDocumentBehavior behavior)
-            {
-                behavior.Document = e.NewValue as FlowDocument;
-            }
+                behavior.SetDocument(e.NewValue as FlowDocument);
         }
 
         public FlowDocument Document
         {
             get => GetValue(DocumentProperty) as FlowDocument;
-            set => SetValue(DocumentProperty, value);
+            set => SetCurrentValue(DocumentProperty, value);
+        }
+
+        private void SetDocument(FlowDocument doc)
+        {
+            if (AssociatedObject != null)
+                AssociatedObject.Document = doc;
         }
 
         protected override void OnAttached()
         {
             base.OnAttached();
-            AssociatedObject.Document = Document;
+            SetDocument(Document);
         }
 
         protected override void OnDetaching()
         {
-            AssociatedObject.Document = null;
+            SetDocument(null);
             base.OnDetaching();
         }
     }

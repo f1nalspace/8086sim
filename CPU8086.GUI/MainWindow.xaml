@@ -419,7 +419,11 @@
                 </Grid.ColumnDefinitions>
                 <TabControl Grid.Column="0">
                     <TabItem Header="Assembly">
-                        <RichTextBox FontFamily="Consolas" FontSize="16" IsReadOnly="True" />
+                        <RichTextBox FontFamily="Consolas" FontSize="16" IsReadOnly="True">
+                            <dxmvvm:Interaction.Behaviors>
+                                <local:RichTextBoxDocumentBehavior Document="{Binding Instructions, UpdateSourceTrigger=PropertyChanged, Converter={local:InstructionsToFlowDocumentConverter}}" />
+                            </dxmvvm:Interaction.Behaviors>
+                        </RichTextBox>
                     </TabItem>
                 </TabControl>
                 <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />

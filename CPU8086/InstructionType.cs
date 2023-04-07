@@ -1,6 +1,6 @@
 ﻿namespace Final.CPU8086
 {
-    public enum InstructionType
+    public enum InstructionType : byte
     {
         /// <summary>
         /// None

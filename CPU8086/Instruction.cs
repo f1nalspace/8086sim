@@ -3,16 +3,18 @@ using System.Text;
 
 namespace Final.CPU8086
 {
-    public readonly struct Instruction : IEquatable<Instruction>
+    public class Instruction : IEquatable<Instruction>
     {
+        public int Position { get; }
         public byte OpCode { get; }
         public byte Length { get; }
         public Mnemonic Mnemonic { get; }
         public DataWidth Width { get; }
         public InstructionOperand[] Operands { get; }
 
-        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
+        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
         {
+            Position = position;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
@@ -20,8 +22,9 @@ namespace Final.CPU8086
             Operands = operands;
         }
 
-        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
+        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
         {
+            Position = position;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
@@ -29,13 +32,13 @@ namespace Final.CPU8086
             Operands = operands.ToArray();
         }
 
-        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
-            : this(opCode, length, mnemonic, width, new[] { dest, source }) { }
+        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
+            : this(position, opCode, length, mnemonic, width, new[] { dest, source }) { }
 
-        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
-            : this(opCode, length, mnemonic, width, new[] { dest }) { }
+        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
+            : this(position, opCode, length, mnemonic, width, new[] { dest }) { }
 
-        public Instruction(byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
+        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(position, opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
 
         public bool Equals(Instruction other)
         {
@@ -43,6 +46,7 @@ namespace Final.CPU8086
             if (Length != other.Length) return false;
             if (!Mnemonic.Equals(other.Mnemonic)) return false;
             if (!Width.Equals(other.Width)) return false;
+            if (Position != other.Position) return false;
             if (Operands.Length != other.Operands.Length) return false;
             for (int i = 0; i < Operands.Length; ++i)
             {
@@ -53,7 +57,7 @@ namespace Final.CPU8086
         }
 
         public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
-        public override int GetHashCode() => Mnemonic.GetHashCode();
+        public override int GetHashCode() => HashCode.Combine(OpCode, Length,  Mnemonic, Width, Position);
 
         public string Asm(OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
         {
@@ -91,10 +95,11 @@ namespace Final.CPU8086
             s.Append("op: ");
             s.Append(OpCode.ToString("X2"));
             s.Append(", ");
+            s.Append("length: ");
             s.Append(Length);
-            s.Append(" bytes");
             s.Append(", ");
-            s.Append(Width);
+            s.Append("index: ");
+            s.Append(Position);
             s.Append(')');
             return s.ToString();
         }

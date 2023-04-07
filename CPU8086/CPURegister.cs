@@ -60,6 +60,11 @@ namespace Final.CPU8086
         [FieldOffset(14)]
         private ushort _DI;
 
+        public ushort SP { get => _SP; set => _SP = value; }
+        public ushort BP { get => _BP; set => _BP = value; }
+        public ushort SI { get => _SI; set => _SI = value; }
+        public ushort DI { get => _DI; set => _DI = value; }
+
         [FieldOffset(16)]
         private ushort _CS;
         [FieldOffset(18)]
@@ -69,14 +74,19 @@ namespace Final.CPU8086
         [FieldOffset(22)]
         private ushort _ES;
 
+        public ushort CS { get => _CS; set => _CS = value; }
+        public ushort DS { get => _DS; set => _DS = value; }
+        public ushort SS { get => _SS; set => _SS = value; }
+        public ushort ES { get => _ES; set => _ES = value; }
+
         [FieldOffset(24)]
         private ushort _IP;
 
+        public ushort IP { get => _IP; set => _IP = value; }
+
         [FieldOffset(26)]
         private ushort _Status;
-        [FieldOffset(26)]
-        private ushort _StatusLow;
-        [FieldOffset(27)]
-        private ushort _StatusHigh;
+
+        public ushort Status { get => _Status; set => _Status = value; }
     }
 }

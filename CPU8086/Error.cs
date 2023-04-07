@@ -6,19 +6,22 @@ namespace Final.CPU8086
     {
         public ErrorCode Code { get; }
         public string Message { get; }
+        public int Position { get; }
 
-        public Error(ErrorCode code, string message)
+        public Error(ErrorCode code, string message, int position)
         {
             Code = code;
             Message = message;
+            Position = position;
         }
 
-        public Error(Error error, string message)
+        public Error(Error error, string message, int position)
         {
             Code = error.Code;
             Message = $"{message}: {error.Message}";
+            Position = position;
         }
 
-        public override string ToString() => $"[{Code}] {Message}";
+        public override string ToString() => $"[{Position}][{Code}] {Message}";
     }
 }

@@ -44,132 +44,14 @@ namespace Final.CPU8086
             Register = new CPURegister();
         }
 
-        private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName)
+        private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, int position)
         {
             if (stream.Length < 1)
-                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read U8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
+                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read U8, because stream '{streamName}' is already finished or is not long enough for 1 byte", position);
             byte result = stream[0];
             stream = stream.Slice(1);
             return result;
         }
-
-        private static OneOf<sbyte, Error> ReadS8(ref ReadOnlySpan<byte> stream, string streamName)
-        {
-            if (stream.Length < 1)
-                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S8, because stream '{streamName}' is already finished or is not long enough for 1 byte");
-            sbyte result = (sbyte)stream[0];
-            stream = stream.Slice(1);
-            return result;
-        }
-
-        private static OneOf<short, Error> ReadS16(ref ReadOnlySpan<byte> stream, string streamName)
-        {
-            if (stream.Length < 2)
-                return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read S16, because stream '{streamName}' is already finished or is not long enough for 2 bytes");
-            byte first = stream[0];
-            byte second = stream[1];
-            short result = (short)(first | second << 8);
-            stream = stream.Slice(2);
-            return result;
-        }
-
-        public static string GetAddressAssembly(byte address8, OutputValueMode outputMode)
-        {
-            short displacement;
-            if ((address8 & 0b10000000) == 0b10000000)
-                displacement = (sbyte)address8;
-            else
-                displacement = address8;
-            return GetValueAssembly(displacement, outputMode);
-        }
-
-        public static string GetAddressAssembly(EffectiveAddressCalculation eac, short displacementOrAddress, OutputValueMode outputMode)
-        {
-            string append;
-            if (displacementOrAddress == 0)
-                append = string.Empty;
-            else
-            {
-                byte displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
-
-                char op = '+';
-                if (displacementLength == 1)
-                {
-                    if ((sbyte)displacementOrAddress < 0)
-                    {
-                        op = '-';
-                        displacementOrAddress = Math.Abs((sbyte)displacementOrAddress);
-                    }
-                }
-                else
-                {
-                    if (displacementOrAddress < 0)
-                    {
-                        op = '-';
-                        displacementOrAddress = Math.Abs(displacementOrAddress);
-                    }
-                }
-                string address = GetValueAssembly(displacementOrAddress, outputMode);
-                append = $" {op} {address}";
-            }
-
-            return eac switch
-            {
-                EffectiveAddressCalculation.BX_SI => "[bx + si]",
-                EffectiveAddressCalculation.BX_DI => "[bx + di]",
-                EffectiveAddressCalculation.BP_SI => "[bp + si]",
-                EffectiveAddressCalculation.BP_DI => "[bp + di]",
-                EffectiveAddressCalculation.SI => "[si]",
-                EffectiveAddressCalculation.DI => "[di]",
-                EffectiveAddressCalculation.DirectAddress => $"[{GetValueAssembly(displacementOrAddress, outputMode)}]",
-                EffectiveAddressCalculation.BX => "[bx]",
-                EffectiveAddressCalculation.BX_SI_D8 => $"[bx + si{append}]",
-                EffectiveAddressCalculation.BX_DI_D8 => $"[bx + di{append}]",
-                EffectiveAddressCalculation.BP_SI_D8 => $"[bp + si{append}]",
-                EffectiveAddressCalculation.BP_DI_D8 => $"[bp + di{append}]",
-                EffectiveAddressCalculation.SI_D8 => $"[si{append}]",
-                EffectiveAddressCalculation.DI_D8 => $"[di{append}]",
-                EffectiveAddressCalculation.BP_D8 => $"[bp{append}]",
-                EffectiveAddressCalculation.BX_D8 => $"[bx{append}]",
-                EffectiveAddressCalculation.BX_SI_D16 => $"[bx + si{append}]",
-                EffectiveAddressCalculation.BX_DI_D16 => $"[bx + di{append}]",
-                EffectiveAddressCalculation.BP_SI_D16 => $"[bp + si{append}]",
-                EffectiveAddressCalculation.BP_DI_D16 => $"[bp + di{append}]",
-                EffectiveAddressCalculation.SI_D16 => $"[si{append}]",
-                EffectiveAddressCalculation.DI_D16 => $"[di{append}]",
-                EffectiveAddressCalculation.BP_D16 => $"[bp{append}]",
-                EffectiveAddressCalculation.BX_D16 => $"[bx{append}]",
-                _ => throw new NotImplementedException($"Not supported effective address calculation of '{eac}'"),
-            };
-        }
-
-        public static string GetValueAssembly(byte value, OutputValueMode outputMode)
-        {
-            short v = (value & 0b10000000) == 0b10000000 ? (sbyte)value : value;
-            return outputMode switch
-            {
-                OutputValueMode.AsHex => $"0x{v:X}",
-                OutputValueMode.AsHex8 => $"0x{v:X2}",
-                OutputValueMode.AsHex16 => $"0x{v:X4}",
-                OutputValueMode.AsHex32 => $"0x{v:X8}",
-                OutputValueMode.AsHex64 => $"0x{v:X16}",
-                _ => v.ToString(),
-            };
-        }
-
-        public static string GetValueAssembly(short value, OutputValueMode outputMode) => outputMode switch
-        {
-            OutputValueMode.AsHex => $"0x{value:X}",
-            OutputValueMode.AsHex8 => $"0x{value:X2}",
-            OutputValueMode.AsHex16 => $"0x{value:X4}",
-            OutputValueMode.AsHex32 => $"0x{value:X8}",
-            OutputValueMode.AsHex64 => $"0x{value:X16}",
-            _ => value.ToString(),
-        };
-
-        public static string GetRegisterAssembly(RegisterType regType) => CPU8086.Register.GetLowerName(regType);
-
-        public static string GetRegisterAssembly(Register reg) => GetRegisterAssembly(reg?.Type ?? RegisterType.Unknown);
 
         public OneOf<string, Error> GetAssembly(Stream stream, string name, OutputValueMode outputMode)
         {
@@ -177,154 +59,6 @@ namespace Final.CPU8086
             byte[] data = new byte[len];
             stream.Read(data);
             return GetAssembly(data, name, outputMode);
-        }
-
-        readonly struct ModRegRM
-        {
-            public byte ModField { get; }
-            public byte RegField { get; }
-            public byte RMField { get; }
-
-            public Mode Mode { get; }
-            public EffectiveAddressCalculation EAC { get; }
-
-            public ModRegRM(byte modField, byte regField, byte rmField)
-            {
-                ModField = modField;
-                RegField = regField;
-                RMField = rmField;
-                Mode = (Mode)modField;
-                EAC = Mode switch
-                {
-                    Mode.RegisterMode => EffectiveAddressCalculation.None,
-                    _ => _effectiveAddressCalculationTable.Get(rmField, modField)
-                };
-            }
-        }
-
-        private static ModRegRM ReadModRegRM(byte value)
-        {
-            byte modField = (byte)(value >> 6 & 0b111);
-            byte regField = (byte)(value >> 3 & 0b111);
-            byte rmField = (byte)(value >> 0 & 0b111);
-            ModRegRM result = new ModRegRM(modField, regField, rmField);
-            return result;
-        }
-
-        private static OneOf<short, Error> LoadDisplacementOrZero(EffectiveAddressCalculation eac, ref ReadOnlySpan<byte> stream, string streamName, out byte outLen)
-        {
-            outLen = eac switch
-            {
-                // Mod == 01
-                EffectiveAddressCalculation.BX_SI_D8 or
-                EffectiveAddressCalculation.BX_DI_D8 or
-                EffectiveAddressCalculation.BP_SI_D8 or
-                EffectiveAddressCalculation.BP_DI_D8 or
-                EffectiveAddressCalculation.SI_D8 or
-                EffectiveAddressCalculation.DI_D8 or
-                EffectiveAddressCalculation.BP_D8 or
-                EffectiveAddressCalculation.BX_D8 => 1,
-
-                // Mod == 10
-                EffectiveAddressCalculation.DirectAddress or
-                EffectiveAddressCalculation.BX_SI_D16 or
-                EffectiveAddressCalculation.BX_DI_D16 or
-                EffectiveAddressCalculation.BP_SI_D16 or
-                EffectiveAddressCalculation.BP_DI_D16 or
-                EffectiveAddressCalculation.SI_D16 or
-                EffectiveAddressCalculation.DI_D16 or
-                EffectiveAddressCalculation.BP_D16 or
-                EffectiveAddressCalculation.BX_D16 => 2,
-
-                _ => 0,
-            };
-
-            if (outLen == 1)
-            {
-                OneOf<byte, Error> u8 = ReadU8(ref stream, streamName);
-                if (u8.IsT1)
-                    return new Error(u8.AsT1, $"Cannot load 8-bit displacement for EAC '{eac}'");
-                return u8.AsT0;
-            }
-            else if (outLen == 2)
-            {
-                OneOf<short, Error> s16 = ReadS16(ref stream, streamName);
-                if (s16.IsT1)
-                    return new Error(s16.AsT1, $"Cannot load 16-bit displacement for EAC '{eac}'");
-                return s16.AsT0;
-            }
-            else
-                return 0;
-        }
-
-        private static (string destination, string source) GetDestinationAndSource(ModRegRM modRegRM, bool destinationIsToRegister, bool isWord, short displacement, OutputValueMode outputMode)
-        {
-            string destination, source;
-            if (modRegRM.Mode == Mode.RegisterMode)
-            {
-                if (isWord)
-                {
-                    // 16-bit Register to Register
-                    if (destinationIsToRegister)
-                    {
-                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                    }
-                    else
-                    {
-                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RMField));
-                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                    }
-                }
-                else
-                {
-                    // 8-bit Register to Register
-                    if (destinationIsToRegister)
-                    {
-                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                    }
-                    else
-                    {
-                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RMField));
-                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                    }
-                }
-            }
-            else
-            {
-                if (isWord)
-                {
-                    if (destinationIsToRegister)
-                    {
-                        // 16-bit Memory to Register
-                        destination = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                    }
-                    else
-                    {
-                        // 16-bit Register to Memory
-                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                        source = GetRegisterAssembly(_regTable.GetWord(modRegRM.RegField));
-                    }
-                }
-                else
-                {
-                    if (destinationIsToRegister)
-                    {
-                        // 8-bit Memory to Register
-                        destination = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                        source = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                    }
-                    else
-                    {
-                        // 8-bit Register to Memory
-                        destination = GetAddressAssembly(modRegRM.EAC, displacement, outputMode);
-                        source = GetRegisterAssembly(_regTable.GetByte(modRegRM.RegField));
-                    }
-                }
-            }
-            return (destination, source);
         }
 
         public Instruction DecodeNext(ReadOnlySpan<byte> stream, string streamName, int position = 0)
@@ -521,14 +255,14 @@ namespace Final.CPU8086
             throw new NotSupportedException($"The source operand '{sourceOp}' is not supported");
         }
 
-        static OneOf<Instruction, Error> LoadInstruction(int position, ReadOnlySpan<byte> stream, string streamName, InstructionEntry entry)
+        static OneOf<Instruction, Error> LoadInstruction(ReadOnlySpan<byte> stream, string streamName, int position, InstructionEntry entry)
         {
             if (stream.Length == 0)
-                return new Error(ErrorCode.EndOfStream, $"Expect at least one byte of stream length!");
+                return new Error(ErrorCode.EndOfStream, $"Expect at least one byte of stream length!", position);
 
             byte opCode = stream[0];
             if (opCode != entry.Op)
-                return new Error(ErrorCode.OpCodeMismatch, $"Expect op-code '{entry.Op}', but got '{opCode}'");
+                return new Error(ErrorCode.OpCodeMismatch, $"Expect op-code '{entry.Op}', but got '{opCode}'", position);
 
 #if DEBUG
             StringBuilder streamBytes = new StringBuilder();
@@ -572,11 +306,11 @@ namespace Final.CPU8086
                 {
                     case FieldType.Constant:
                         {
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return value.AsT1;
                             if (field.Value != value.AsT0)
-                                return new Error(ErrorCode.ConstantFieldMismatch, $"Expect constant to be '{field.Value}', but got instead '{value.AsT0}' in field '{field}'");
+                                return new Error(ErrorCode.ConstantFieldMismatch, $"Expect constant to be '{field.Value}', but got instead '{value.AsT0}' in field '{field}'", position);
                         }
                         break;
                     case FieldType.ModRegRM:
@@ -589,7 +323,7 @@ namespace Final.CPU8086
                     case FieldType.Mod110RM:
                     case FieldType.Mod111RM:
                         {
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return value.AsT1;
                             byte mrm = value.AsT0;
@@ -601,7 +335,7 @@ namespace Final.CPU8086
                                 hasRegField = false;
                                 byte expectReg = field.Type - FieldType.Mod000RM;
                                 if (expectReg != regField)
-                                    return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'");
+                                    return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'", position);
                             }
                             else
                                 hasRegField = true;
@@ -650,9 +384,9 @@ namespace Final.CPU8086
                             int t = field.Type - FieldType.Displacement0;
                             if (modField == byte.MaxValue || (displacementLength > 0 && t < displacementLength))
                             {
-                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                                 if (value.IsT1)
-                                    return new Error(value.AsT1, $"No more bytes left for reading the displacement-{t} in field '{field}'");
+                                    return new Error(value.AsT1, $"No more bytes left for reading the displacement-{t} in field '{field}'", position);
                                 byte d8 = value.AsT0;
                                 int shift = t * 8;
                                 displacement |= ((int)d8 << shift);
@@ -665,9 +399,9 @@ namespace Final.CPU8086
                     case FieldType.Immediate3:
                         {
                             int t = (int)field.Type - (int)FieldType.Immediate0;
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'");
+                                return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
                             byte imm8 = value.AsT0;
                             int shift = t * 8;
                             immediate |= ((int)imm8 << shift);
@@ -678,9 +412,9 @@ namespace Final.CPU8086
                     case FieldType.RelativeLabelDisplacement1:
                         {
                             int t = field.Type - FieldType.RelativeLabelDisplacement0;
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'");
+                                return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'", position);
                             byte d8 = value.AsT0;
                             int shift = t * 8;
                             immediate |= ((int)d8 << shift);
@@ -692,9 +426,9 @@ namespace Final.CPU8086
                             immediate = 0;
                             for (int t = 0; t < 3; t++)
                             {
-                                OneOf<byte, Error> value = ReadU8(ref cur, streamName);
+                                OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                                 if (value.IsT1)
-                                    return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'");
+                                    return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
                                 byte imm8 = value.AsT0;
                                 int shift = t * 8;
                                 immediate |= ((int)imm8 << shift);
@@ -724,8 +458,6 @@ namespace Final.CPU8086
 
             Span<InstructionOperand> targetOps = stackalloc InstructionOperand[4];
             int opCount = 0;
-
-            
 
             if (modField == byte.MaxValue)
                 eac = EffectiveAddressCalculation.DirectAddress;
@@ -783,11 +515,11 @@ namespace Final.CPU8086
 
             int length = stream.Length - cur.Length;
             if (length > MaxInstructionLength)
-                return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{MaxInstructionLength}' bytes");
+                return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{MaxInstructionLength}' bytes", position);
             if (length < entry.MinLength)
-                return new Error(ErrorCode.InstructionLengthTooSmall, $"Expect instruction length to be at least '{entry.MinLength}' bytes, but got '{length}' bytes for instruction '{entry}'");
+                return new Error(ErrorCode.InstructionLengthTooSmall, $"Expect instruction length to be at least '{entry.MinLength}' bytes, but got '{length}' bytes for instruction '{entry}'", position);
             if (length > entry.MaxLength)
-                return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes");
+                return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes", position);
 
             Span<InstructionOperand> actualOps = targetOps.Slice(0, opCount);
             return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, actualOps);
@@ -796,23 +528,23 @@ namespace Final.CPU8086
         public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, int position = 0)
         {
             ReadOnlySpan<byte> tmp = stream;
-            OneOf<byte, Error> opCodeRes = ReadU8(ref tmp, streamName);
+            OneOf<byte, Error> opCodeRes = ReadU8(ref tmp, streamName, position);
             if (opCodeRes.IsT1)
                 return opCodeRes.AsT1;
 
             byte opCode = opCodeRes.AsT0;
             InstructionList instructionList = _entryTable[opCode];
             if (instructionList == null)
-                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!");
+                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!", position);
             else if ((byte)instructionList.Op != opCode)
-                return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instructionList.Op}'");
+                return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instructionList.Op}'", position);
 
             if (instructionList.Count == 1)
             {
                 InstructionEntry entry = instructionList.First();
-                OneOf<Instruction, Error> loadRes = LoadInstruction(position, stream, streamName, entry);
+                OneOf<Instruction, Error> loadRes = LoadInstruction(stream, streamName, position, entry);
                 if (loadRes.TryPickT1(out Error error, out _))
-                    return new Error(error, $"Failed to decode instruction stream '{streamName}' for single entry '{entry}'");
+                    return new Error(error, $"Failed to decode instruction stream '{streamName}' for single entry '{entry}'", position);
                 return loadRes.AsT0;
             }
             else
@@ -820,13 +552,13 @@ namespace Final.CPU8086
                 // Expect that there is at least one more byte
                 foreach (InstructionEntry instructionEntry in instructionList)
                 {
-                    OneOf<Instruction, Error> loadRes = LoadInstruction(position, stream, streamName, instructionEntry);
+                    OneOf<Instruction, Error> loadRes = LoadInstruction(stream, streamName, position, instructionEntry);
                     if (loadRes.TryPickT0(out Instruction instruction, out _))
                         return instruction;
                 }
             }
 
-            return new Error(ErrorCode.OpCodeNotImplemented, $"No instruction entry found, that matches the opcode '{opCode}' in stream '{streamName}'");
+            return new Error(ErrorCode.OpCodeNotImplemented, $"No instruction entry found that matches the opcode '{opCode:X2}' in stream '{streamName}'", position);
         }
 
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode, string hexPrefix = "0x")

@@ -1,13 +1,10 @@
 ﻿using DevExpress.Mvvm;
-using DevExpress.Mvvm.UI.Native;
-using Final.CPU8086;
+using OneOf;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Windows.Documents;
 
 namespace Final.CPU8086
 {
@@ -19,11 +16,14 @@ namespace Final.CPU8086
 
         public string[] ResourceStreams { get; }
 
-        public string CurrentResource { get => _currentResource; set => SetValue(ref _currentResource, value, () => CurrentResourceChanged(value)); }
+        public string CurrentResource { get => _currentResource; set => SetValue(ref _currentResource, value, () => LoadStreamFromResource(value)); }
         private string _currentResource = null;
 
-        public ImmutableArray<StreamByte> CurrentStream { get => _currentStream; private set => SetValue(ref _currentStream, value, () => CurrentStreamChanged(value)); }
-        private ImmutableArray<StreamByte> _currentStream = ImmutableArray<StreamByte>.Empty;
+        public ImmutableArray<byte> CurrentStream { get => _currentStream; private set => SetValue(ref _currentStream, value, () => CurrentStreamChanged(value)); }
+        private ImmutableArray<byte> _currentStream = ImmutableArray<byte>.Empty;
+
+        public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value); }
+        private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
 
         public int CurrentStreamPosition
         {
@@ -41,8 +41,12 @@ namespace Final.CPU8086
 
         public CPURegister Register => _cpu.Register;
 
+        public DelegateCommand ResetCommand { get; }
+
         public MainViewModel()
         {
+            ResetCommand = new DelegateCommand(Reset);
+
             _cpu = new CPU();
             _cpu.PropertyChanged += OnCPUPropertyChanged;
 
@@ -57,12 +61,7 @@ namespace Final.CPU8086
             byte[] data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);
 
-            int index = 0;
-            _currentStream = data
-                .Select(d => new StreamByte(Interlocked.Add(ref index, 1) - 1, d))
-                .ToImmutableArray();
-
-            _currentStreamPosition = 0;
+            CurrentStream = data.ToImmutableArray();
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -71,21 +70,55 @@ namespace Final.CPU8086
                 RaisePropertyChanged(nameof(Register));
         }
 
-        public void CurrentResourceChanged(string newName)
+        public void LoadStreamFromResource(string name)
         {
-            Stream stream = _resources.Get(newName);
-            byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
-            int index = 0;
-            CurrentStream = data
-                .Select(d => new StreamByte(Interlocked.Add(ref index, 1), d))
-                .ToImmutableArray();
-            CurrentStreamPosition = 0;
+            if (!string.IsNullOrWhiteSpace(name) && _resources.Get(name) is Stream stream)
+            {
+                byte[] data = new byte[stream.Length];
+                stream.Read(data, 0, data.Length);
+                CurrentStream = data.ToImmutableArray();
+
+            }
+            else
+                CurrentStream = ImmutableArray<byte>.Empty;
         }
 
-        public void CurrentStreamChanged(ImmutableArray<StreamByte> newStream)
+        private void Reset()
         {
+            Reset(CurrentStream);
+        }
 
+        private void Reset(ImmutableArray<byte> stream)
+        {
+            if (stream.Length > 0)
+                CurrentStreamPosition = 0;
+            else
+                CurrentStreamPosition = -1;
+            _cpu.Reset();
+        }
+
+        private void DecodeInstructions(ImmutableArray<byte> stream)
+        {
+            List<Instruction> list = new List<Instruction>();
+            ReadOnlySpan<byte> cur = stream.AsSpan();
+            int position = 0;
+            while (cur.Length > 0)
+            {
+                OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, CurrentResource, position);
+                if (r.IsT1)
+                    break;
+                Instruction instruction = r.AsT0;
+                list.Add(instruction);
+                cur = cur.Slice(instruction.Length);
+                position += instruction.Length;
+            }
+            Instructions = list.ToImmutableArray();
+        }
+
+        public void CurrentStreamChanged(ImmutableArray<byte> stream)
+        {
+            Reset(stream);
+            DecodeInstructions(stream);
         }
     }
 }

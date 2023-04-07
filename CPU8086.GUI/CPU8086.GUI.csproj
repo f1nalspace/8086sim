@@ -8,12 +8,42 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Resources\Backward_16x16.png" />
+    <None Remove="Resources\Backward_32x32.png" />
+    <None Remove="Resources\Close_16x16.png" />
+    <None Remove="Resources\Close_32x32.png" />
+    <None Remove="Resources\Forward_16x16.png" />
+    <None Remove="Resources\Forward_32x32.png" />
+    <None Remove="Resources\Index_16x16.png" />
+    <None Remove="Resources\Index_32x32.png" />
+    <None Remove="Resources\Reset_16x16.png" />
+    <None Remove="Resources\Reset_32x32.png" />
+    <None Remove="Resources\Run_16x16.png" />
+    <None Remove="Resources\Run_32x32.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DevExpressMvvm" Version="22.1.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\CPU8086.Resources\CPU8086.Resources.csproj" />
     <ProjectReference Include="..\CPU8086\CPU8086.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\Backward_16x16.png" />
+    <Resource Include="Resources\Backward_32x32.png" />
+    <Resource Include="Resources\Close_16x16.png" />
+    <Resource Include="Resources\Close_32x32.png" />
+    <Resource Include="Resources\Forward_16x16.png" />
+    <Resource Include="Resources\Forward_32x32.png" />
+    <Resource Include="Resources\Index_16x16.png" />
+    <Resource Include="Resources\Index_32x32.png" />
+    <Resource Include="Resources\Reset_16x16.png" />
+    <Resource Include="Resources\Reset_32x32.png" />
+    <Resource Include="Resources\Run_16x16.png" />
+    <Resource Include="Resources\Run_32x32.png" />
   </ItemGroup>
 
 </Project>

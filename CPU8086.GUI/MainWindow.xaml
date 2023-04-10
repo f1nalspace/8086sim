@@ -58,10 +58,10 @@
                 </RibbonGroup>
                 <RibbonGroup Header="Execution">
                     <RibbonButton Label="Run" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" Command="{Binding RunCommand}" />
-                    <RibbonButton Label="Stop" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" Command="{Binding StopCommand}" />
+                    <RibbonButton Label="Stop" SmallImageSource="Resources/Stop_16x16.png" LargeImageSource="Resources/Stop_32x32.png" Command="{Binding StopCommand}" />
                 </RibbonGroup>
                 <RibbonGroup Header="Debug">
-                    <RibbonButton Label="Step" SmallImageSource="Resources/Forward_16x16.png" LargeImageSource="Resources/Forward_32x32.png" Command="{Binding StepCommand}" />
+                    <RibbonButton Label="Step" SmallImageSource="Resources/StepIn_16x16.png" LargeImageSource="Resources/StepIn_32x32.png" Command="{Binding StepCommand}" />
                 </RibbonGroup>
             </RibbonTab>
             <RibbonTab Header="View">

@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿using System;
 using System.Runtime.InteropServices;
 
 namespace Final.CPU8086
@@ -8,85 +7,129 @@ namespace Final.CPU8086
     public class CPURegister
     {
         [FieldOffset(0)]
-        private ushort _AX;
+        private short _AX;
         [FieldOffset(0)]
-        private byte _AL;
+        private sbyte _AL;
         [FieldOffset(1)]
-        private byte _AH;
+        private sbyte _AH;
 
-        public ushort AX { get => _AX; set => _AX = value; }
-        public byte AL { get => _AL; set => _AL = value; }
-        public byte AH { get => _AH; set => _AH = value; }
+        public short AX { get => _AX; set => _AX = value; }
+        public sbyte AL { get => _AL; set => _AL = value; }
+        public sbyte AH { get => _AH; set => _AH = value; }
 
         [FieldOffset(2)]
-        private ushort _BX;
+        private short _BX;
         [FieldOffset(2)]
-        private byte _BL;
+        private sbyte _BL;
         [FieldOffset(3)]
-        private byte _BH;
+        private sbyte _BH;
 
-        public ushort BX { get => _BX; set => _BX = value; }
-        public byte BL { get => _BL; set => _BL = value; }
-        public byte BH { get => _BH; set => _BH = value; }
+        public short BX { get => _BX; set => _BX = value; }
+        public sbyte BL { get => _BL; set => _BL = value; }
+        public sbyte BH { get => _BH; set => _BH = value; }
 
         [FieldOffset(4)]
-        private ushort _CX;
+        private short _CX;
         [FieldOffset(4)]
-        private byte _CL;
+        private sbyte _CL;
         [FieldOffset(5)]
-        private byte _CH;
+        private sbyte _CH;
 
-        public ushort CX { get => _CX; set => _CX = value; }
-        public byte CL { get => _CL; set => _CL = value; }
-        public byte CH { get => _CH; set => _CH = value; }
+        public short CX { get => _CX; set => _CX = value; }
+        public sbyte CL { get => _CL; set => _CL = value; }
+        public sbyte CH { get => _CH; set => _CH = value; }
 
         [FieldOffset(6)]
-        private ushort _DX;
+        private short _DX;
         [FieldOffset(6)]
-        private byte _DL;
+        private sbyte _DL;
         [FieldOffset(7)]
-        private byte _DH;
+        private sbyte _DH;
 
-        public ushort DX { get => _DX; set => _DX = value; }
-        public byte DL { get => _DL; set => _DL = value; }
-        public byte DH { get => _DH; set => _DH = value; }
+        public short DX { get => _DX; set => _DX = value; }
+        public sbyte DL { get => _DL; set => _DL = value; }
+        public sbyte DH { get => _DH; set => _DH = value; }
 
         [FieldOffset(8)]
-        private ushort _SP;
+        private short _SP;
         [FieldOffset(10)]
-        private ushort _BP;
+        private short _BP;
         [FieldOffset(12)]
-        private ushort _SI;
+        private short _SI;
         [FieldOffset(14)]
-        private ushort _DI;
+        private short _DI;
 
-        public ushort SP { get => _SP; set => _SP = value; }
-        public ushort BP { get => _BP; set => _BP = value; }
-        public ushort SI { get => _SI; set => _SI = value; }
-        public ushort DI { get => _DI; set => _DI = value; }
+        public short SP { get => _SP; set => _SP = value; }
+        public short BP { get => _BP; set => _BP = value; }
+        public short SI { get => _SI; set => _SI = value; }
+        public short DI { get => _DI; set => _DI = value; }
 
         [FieldOffset(16)]
-        private ushort _CS;
+        private short _CS;
         [FieldOffset(18)]
-        private ushort _DS;
+        private short _DS;
         [FieldOffset(20)]
-        private ushort _SS;
+        private short _SS;
         [FieldOffset(22)]
-        private ushort _ES;
+        private short _ES;
 
-        public ushort CS { get => _CS; set => _CS = value; }
-        public ushort DS { get => _DS; set => _DS = value; }
-        public ushort SS { get => _SS; set => _SS = value; }
-        public ushort ES { get => _ES; set => _ES = value; }
+        public short CS { get => _CS; set => _CS = value; }
+        public short DS { get => _DS; set => _DS = value; }
+        public short SS { get => _SS; set => _SS = value; }
+        public short ES { get => _ES; set => _ES = value; }
 
         [FieldOffset(24)]
         private ushort _IP;
-
         public ushort IP { get => _IP; set => _IP = value; }
 
         [FieldOffset(26)]
         private ushort _Status;
-
         public ushort Status { get => _Status; set => _Status = value; }
+
+        public void Reset()
+        {
+            AX = 0;
+            BX = 0;
+            CX = 0;
+            DX = 0;
+
+            SP = 0;
+            BP = 0;
+            SI = 0;
+            DI = 0;
+
+            CS = 0;
+            DS = 0;
+            SS = 0;
+            ES = 0;
+
+            IP = 0;
+
+            Status = 0;
+        }
+
+        public void Assign(CPURegister register)
+        {
+            if (register == null)
+                throw new ArgumentNullException(nameof(register));
+            AX = register.AX;
+            BX = register.BX;
+            CX = register.CX;
+            DX = register.DX;
+
+            SP = register.SP;
+            BP = register.BP;
+            SI = register.SI;
+            DI = register.DI;
+
+            CS = register.CS;
+            DS = register.DS;
+            SS = register.SS;
+            ES = register.ES;
+
+            IP = register.IP;
+
+            Status = register.Status;
+        }
     }
 }

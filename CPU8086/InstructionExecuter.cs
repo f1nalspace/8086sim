@@ -25,7 +25,7 @@ namespace Final.CPU8086
         public OneOf<int, Error> Execute(Instruction instruction)
         {
             if (instruction == null)
-                return new Error(ErrorCode.InstructionParameterMissing, $"The instruction parameter is missing!", 0);
+                return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
             InstructionType type = instruction.Mnemonic.Type;
             Contract.Assert((int)type < _typeFunctionTable.Length);
             ExecuteInstructionFunction func = _typeFunctionTable[(int)type];

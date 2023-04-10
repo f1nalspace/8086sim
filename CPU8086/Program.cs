@@ -8,15 +8,16 @@ namespace Final.CPU8086
         public string Name { get; }
         public ImmutableArray<byte> Stream { get; }
         public CPURegister Register { get; }
+        public int Length => Stream.Length;
 
-        public Program(string name, ImmutableArray<byte> stream, CPURegister register = null)
+        public Program(string name, ImmutableArray<byte> stream, CPURegister register = default)
         {
             Name = name;
             Stream = stream;
             Register = register;
         }
 
-        public Program(string name, Stream stream, CPURegister register = null)
+        public Program(string name, Stream stream, CPURegister register = default)
         {
             Name = name;
             byte[] data = new byte[stream.Length];

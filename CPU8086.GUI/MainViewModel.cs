@@ -159,8 +159,9 @@ namespace Final.CPU8086
             Contract.Assert(CanRun());
             CurrentInstruction = Instructions.First();
             CurrentStreamPosition = CurrentInstruction.Position;
-            ExecutionState = ExecutionState.Running;
+            _cpu.Reset();
             _isStopping = 0;
+            ExecutionState = ExecutionState.Running;
             _executionTask = Task.Run(() => ExecuteAsync(false));
         }
 
@@ -178,13 +179,13 @@ namespace Final.CPU8086
                         break;
                     }
 
-                    await Task.Delay(1000);
+                    await Task.Delay(10);
 
                     OneOf<int, Error> r = _cpu.ExecuteInstruction(CurrentInstruction);
                     if (r.IsT1)
                     {
                         ExecutionState = ExecutionState.Failed;
-                        _dispatcherService.Invoke(() => Errors.Add(new Error(r.AsT1, $"Failed executing instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}'", CurrentStreamPosition)));
+                        _dispatcherService.Invoke(() => Errors.Add(r.AsT1));
                         break;
                     }
 
@@ -284,10 +285,17 @@ namespace Final.CPU8086
             {
                 CurrentInstruction = Instructions.First();
                 CurrentStreamPosition = CurrentInstruction.Position;
+                Interlocked.Exchange(ref _isStopping, 0);
+                ExecutionState = ExecutionState.Halted;
             }
-            ExecutionState = ExecutionState.Running;
-            Interlocked.Exchange(ref _isStopping, 0);
-            _executionTask = Task.Run(() => ExecuteAsync(true));
+            else if (ExecutionState == ExecutionState.Halted)
+            {
+                Interlocked.Exchange(ref _isStopping, 0);
+                ExecutionState = ExecutionState.Running;
+                _executionTask = Task.Run(() => ExecuteAsync(true));
+            }
+            
+            
         }
 
         private void DecodeInstructions(IProgram program)

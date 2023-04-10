@@ -21,6 +21,10 @@
     <None Remove="Resources\Reset_32x32.png" />
     <None Remove="Resources\Run_16x16.png" />
     <None Remove="Resources\Run_32x32.png" />
+    <None Remove="Resources\StepIn_16x16.png" />
+    <None Remove="Resources\StepIn_32x32.png" />
+    <None Remove="Resources\Stop_16x16.png" />
+    <None Remove="Resources\Stop_32x32.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -46,6 +50,10 @@
     <Resource Include="Resources\Reset_32x32.png" />
     <Resource Include="Resources\Run_16x16.png" />
     <Resource Include="Resources\Run_32x32.png" />
+    <Resource Include="Resources\StepIn_16x16.png" />
+    <Resource Include="Resources\StepIn_32x32.png" />
+    <Resource Include="Resources\Stop_16x16.png" />
+    <Resource Include="Resources\Stop_32x32.png" />
   </ItemGroup>
 
 </Project>

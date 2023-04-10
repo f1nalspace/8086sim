@@ -4,7 +4,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Final.CPU8086
@@ -13,13 +15,11 @@ namespace Final.CPU8086
     {
         private const int MaxInstructionLength = 6;
 
-        private readonly InstructionTable _entryTable = new InstructionTable();
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
+        private readonly InstructionTable _entryTable = new InstructionTable();
         private readonly InstructionExecuter _executer;
-
-        private readonly byte[] _memory;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -35,143 +35,201 @@ namespace Final.CPU8086
             }
         }
 
-        public CPURegister Register { get => _register; private set => SetValue(ref _register, value); }
-        private CPURegister _register = new CPURegister();
+        public CPURegister Register { get; }
+
+        public ReadOnlySpan<byte> Memory => _memory;
+        private readonly byte[] _memory = new byte[0xFFFFF];
+
+        public IProgram ActiveProgram { get => _activeProgram; private set => SetValue(ref _activeProgram, value); }
+        private IProgram _activeProgram = null;
 
         public CPU()
         {
-            _executer = new InstructionExecuter(this);
-            _memory = new byte[0xFFFFF];
             _entryTable.Load();
+
+            _executer = new InstructionExecuter(this);
+
+            Register = new CPURegister();
         }
 
         public void Reset()
         {
-            Register = new CPURegister();
+            if (ActiveProgram != null)
+                LoadProgram(ActiveProgram);
+            else
+            {
+                Register.Reset();
+                RaisePropertyChanged(nameof(Register));
+
+                Array.Clear(_memory, 0, _memory.Length);
+                RaisePropertyChanged(nameof(Memory));
+            }
+        }
+
+        public OneOf<int, Error> LoadProgram(IProgram program)
+        {
+            if (program == null)
+                return new Error(ErrorCode.MissingProgramParameter, $"Missing program argument!", 0);
+
+            ActiveProgram = program;
+
+            Register.Assign(program.Register);
+            RaisePropertyChanged(nameof(Register));
+
+            Array.Clear(_memory, 0, _memory.Length);
+            RaisePropertyChanged(nameof(Memory));
+
+            return program.Length;
         }
 
         public OneOf<Immediate, Error> LoadRegister(RegisterType type)
         {
             return type switch
             {
-                RegisterType.AX => new Immediate(_register.AX, ImmediateFlag.None),
-                RegisterType.AL => new Immediate(_register.AL, ImmediateFlag.None),
-                RegisterType.AH => new Immediate(_register.AH, ImmediateFlag.None),
+                RegisterType.AX => new Immediate(Register.AX, ImmediateFlag.None),
+                RegisterType.AL => new Immediate(Register.AL, ImmediateFlag.None),
+                RegisterType.AH => new Immediate(Register.AH, ImmediateFlag.None),
 
-                RegisterType.BX => new Immediate(_register.BX, ImmediateFlag.None),
-                RegisterType.BL => new Immediate(_register.BL, ImmediateFlag.None),
-                RegisterType.BH => new Immediate(_register.BH, ImmediateFlag.None),
+                RegisterType.BX => new Immediate(Register.BX, ImmediateFlag.None),
+                RegisterType.BL => new Immediate(Register.BL, ImmediateFlag.None),
+                RegisterType.BH => new Immediate(Register.BH, ImmediateFlag.None),
 
-                RegisterType.CX => new Immediate(_register.CX, ImmediateFlag.None),
-                RegisterType.CL => new Immediate(_register.CL, ImmediateFlag.None),
-                RegisterType.CH => new Immediate(_register.CH, ImmediateFlag.None),
+                RegisterType.CX => new Immediate(Register.CX, ImmediateFlag.None),
+                RegisterType.CL => new Immediate(Register.CL, ImmediateFlag.None),
+                RegisterType.CH => new Immediate(Register.CH, ImmediateFlag.None),
 
-                RegisterType.DX => new Immediate(_register.DX, ImmediateFlag.None),
-                RegisterType.DL => new Immediate(_register.DL, ImmediateFlag.None),
-                RegisterType.DH => new Immediate(_register.DH, ImmediateFlag.None),
+                RegisterType.DX => new Immediate(Register.DX, ImmediateFlag.None),
+                RegisterType.DL => new Immediate(Register.DL, ImmediateFlag.None),
+                RegisterType.DH => new Immediate(Register.DH, ImmediateFlag.None),
 
-                RegisterType.SP => new Immediate(_register.SP, ImmediateFlag.None),
-                RegisterType.BP => new Immediate(_register.BP, ImmediateFlag.None),
-                RegisterType.SI => new Immediate(_register.SI, ImmediateFlag.None),
-                RegisterType.DI => new Immediate(_register.DI, ImmediateFlag.None),
+                RegisterType.SP => new Immediate(Register.SP, ImmediateFlag.None),
+                RegisterType.BP => new Immediate(Register.BP, ImmediateFlag.None),
+                RegisterType.SI => new Immediate(Register.SI, ImmediateFlag.None),
+                RegisterType.DI => new Immediate(Register.DI, ImmediateFlag.None),
 
-                RegisterType.CS => new Immediate(_register.CS, ImmediateFlag.None),
-                RegisterType.DS => new Immediate(_register.DS, ImmediateFlag.None),
-                RegisterType.SS => new Immediate(_register.SS, ImmediateFlag.None),
-                RegisterType.ES => new Immediate(_register.ES, ImmediateFlag.None),
+                RegisterType.CS => new Immediate(Register.CS, ImmediateFlag.None),
+                RegisterType.DS => new Immediate(Register.DS, ImmediateFlag.None),
+                RegisterType.SS => new Immediate(Register.SS, ImmediateFlag.None),
+                RegisterType.ES => new Immediate(Register.ES, ImmediateFlag.None),
 
                 _ => new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0),
             };
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static short ImmediateToS16(Immediate value)
+        {
+            return value.Type switch
+            {
+                ImmediateType.Byte => (short)value.U8,
+                ImmediateType.SignedByte => (short)value.S8,
+                ImmediateType.Word => (short)value.U16,
+                ImmediateType.SignedWord => value.S16,
+                _ => 0,
+            };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static sbyte ImmediateToS8(Immediate value)
+        {
+            return value.Type switch
+            {
+                ImmediateType.Byte => (sbyte)value.U8,
+                ImmediateType.SignedByte => value.S8,
+                ImmediateType.Word => (sbyte)value.U16,
+                ImmediateType.SignedWord => (sbyte)value.S16,
+                _ => 0,
+            };
+        }
+
         public OneOf<byte, Error> StoreRegister(RegisterType type, Immediate value)
         {
-            byte result = 0;
+            byte result;
             switch (type)
             {
                 case RegisterType.AX:
-                    _register.AX = value.U16;
+                    Register.AX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.AL:
-                    _register.AL = value.U8;
+                    Register.AL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.AH:
-                    _register.AH = value.U8;
+                    Register.AH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.BX:
-                    _register.BX = value.U16;
+                    Register.BX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BL:
-                    _register.BL = value.U8;
+                    Register.BL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.BH:
-                    _register.BH = value.U8;
+                    Register.BH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.CX:
-                    _register.CX = value.U16;
+                    Register.CX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.CL:
-                    _register.CL = value.U8;
+                    Register.CL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.CH:
-                    _register.CH = value.U8;
+                    Register.CH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.DX:
-                    _register.DX = value.U16;
+                    Register.DX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DL:
-                    _register.DL = value.U8;
+                    Register.DL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.DH:
-                    _register.DH = value.U8;
+                    Register.DH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.SP:
-                    _register.SP = value.U16;
+                    Register.SP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BP:
-                    _register.BP = value.U16;
+                    Register.BP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SI:
-                    _register.SI = value.U16;
+                    Register.SI = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DI:
-                    _register.DI = value.U16;
+                    Register.DI = ImmediateToS16(value);
                     result = 2;
                     break;
 
                 case RegisterType.CS:
-                    _register.CS = value.U16;
+                    Register.CS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DS:
-                    _register.DS = value.U16;
+                    Register.DS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SS:
-                    _register.SS = value.U16;
+                    Register.SS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.ES:
-                    _register.ES = value.U16;
+                    Register.ES = ImmediateToS16(value);
                     result = 2;
                     break;
 
@@ -220,31 +278,31 @@ namespace Final.CPU8086
             int d16 = (u16 & 0b10000000_00000000) == 0b10000000_00000000 ? (-u16) : u16;
             int result = address.EAC switch
             {
-                EffectiveAddressCalculation.BX_SI => _register.BX + _register.SI,
-                EffectiveAddressCalculation.BX_DI => _register.BX + _register.DI,
-                EffectiveAddressCalculation.BP_SI => _register.BP + _register.SI,
-                EffectiveAddressCalculation.BP_DI => _register.BP + _register.DI,
-                EffectiveAddressCalculation.SI => _register.SI,
-                EffectiveAddressCalculation.DI => _register.DI,
+                EffectiveAddressCalculation.BX_SI => Register.BX + Register.SI,
+                EffectiveAddressCalculation.BX_DI => Register.BX + Register.DI,
+                EffectiveAddressCalculation.BP_SI => Register.BP + Register.SI,
+                EffectiveAddressCalculation.BP_DI => Register.BP + Register.DI,
+                EffectiveAddressCalculation.SI => Register.SI,
+                EffectiveAddressCalculation.DI => Register.DI,
                 EffectiveAddressCalculation.DirectAddress => address.Displacement & 0xFFFF,
-                EffectiveAddressCalculation.BX => _register.BX,
-                EffectiveAddressCalculation.BX_SI_D8 => _register.BX + _register.SI + d8,
-                EffectiveAddressCalculation.BX_DI_D8 => _register.BX + _register.DI + d8,
-                EffectiveAddressCalculation.BP_SI_D8 => _register.BP + _register.SI + d8,
-                EffectiveAddressCalculation.BP_DI_D8 => _register.BP + _register.DI + d8,
-                EffectiveAddressCalculation.SI_D8 => _register.SI + d8,
-                EffectiveAddressCalculation.DI_D8 => _register.DI + d8,
-                EffectiveAddressCalculation.BP_D8 => _register.BP + d8,
-                EffectiveAddressCalculation.BX_D8 => _register.BX + d8,
-                EffectiveAddressCalculation.BX_SI_D16 => _register.BX + _register.SI + d16,
-                EffectiveAddressCalculation.BX_DI_D16 => _register.BX + _register.DI + d16,
-                EffectiveAddressCalculation.BP_SI_D16 => _register.BP + _register.SI + d16,
-                EffectiveAddressCalculation.BP_DI_D16 => _register.BP + _register.DI + d16,
-                EffectiveAddressCalculation.SI_D16 => _register.SI + d16,
-                EffectiveAddressCalculation.DI_D16 => _register.DI + d16,
-                EffectiveAddressCalculation.BP_D16 => _register.BP + d16,
-                EffectiveAddressCalculation.BX_D16 => _register.BX + d16,
-                _ => -1,
+                EffectiveAddressCalculation.BX => Register.BX,
+                EffectiveAddressCalculation.BX_SI_D8 => Register.BX + Register.SI + d8,
+                EffectiveAddressCalculation.BX_DI_D8 => Register.BX + Register.DI + d8,
+                EffectiveAddressCalculation.BP_SI_D8 => Register.BP + Register.SI + d8,
+                EffectiveAddressCalculation.BP_DI_D8 => Register.BP + Register.DI + d8,
+                EffectiveAddressCalculation.SI_D8 => Register.SI + d8,
+                EffectiveAddressCalculation.DI_D8 => Register.DI + d8,
+                EffectiveAddressCalculation.BP_D8 => Register.BP + d8,
+                EffectiveAddressCalculation.BX_D8 => Register.BX + d8,
+                EffectiveAddressCalculation.BX_SI_D16 => Register.BX + Register.SI + d16,
+                EffectiveAddressCalculation.BX_DI_D16 => Register.BX + Register.DI + d16,
+                EffectiveAddressCalculation.BP_SI_D16 => Register.BP + Register.SI + d16,
+                EffectiveAddressCalculation.BP_DI_D16 => Register.BP + Register.DI + d16,
+                EffectiveAddressCalculation.SI_D16 => Register.SI + d16,
+                EffectiveAddressCalculation.DI_D16 => Register.DI + d16,
+                EffectiveAddressCalculation.BP_D16 => Register.BP + d16,
+                EffectiveAddressCalculation.BX_D16 => Register.BX + d16,
+                _ => int.MinValue,
             };
             return result;
         }
@@ -296,17 +354,15 @@ namespace Final.CPU8086
         public OneOf<byte, Error> StoreMemory(MemoryAddress address, DataType type, Immediate value)
         {
             int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress < 0)
+            if (absoluteAddress == int.MinValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return StoreMemory(absoluteAddress, type, value);
         }
 
-        
-
         public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
         {
             int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress < 0)
+            if (absoluteAddress == int.MinValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return LoadMemory(absoluteAddress, type);
         }
@@ -865,7 +921,7 @@ namespace Final.CPU8086
         public OneOf<int, Error> ExecuteInstruction(Instruction instruction)
         {
             if (instruction == null)
-                return new Error(ErrorCode.InstructionParameterMissing, $"The instruction parameter is missing!", 0);
+                return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
             return _executer.Execute(instruction);
         }
     }

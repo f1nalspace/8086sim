@@ -244,7 +244,7 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation.DI_D16 => _register.DI + d16,
                 EffectiveAddressCalculation.BP_D16 => _register.BP + d16,
                 EffectiveAddressCalculation.BX_D16 => _register.BX + d16,
-                _ => 0,
+                _ => -1,
             };
             return result;
         }
@@ -296,7 +296,7 @@ namespace Final.CPU8086
         public OneOf<byte, Error> StoreMemory(MemoryAddress address, DataType type, Immediate value)
         {
             int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == 0)
+            if (absoluteAddress < 0)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return StoreMemory(absoluteAddress, type, value);
         }
@@ -306,7 +306,7 @@ namespace Final.CPU8086
         public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
         {
             int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == 0)
+            if (absoluteAddress < 0)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return LoadMemory(absoluteAddress, type);
         }

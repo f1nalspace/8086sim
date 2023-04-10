@@ -2,18 +2,14 @@
 using DevExpress.Mvvm.Native;
 using OneOf;
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Permissions;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Media.Animation;
 
 namespace Final.CPU8086
 {
@@ -25,13 +21,11 @@ namespace Final.CPU8086
 
         private readonly CPU _cpu;
 
-        public string[] ResourceStreams { get; }
+        public IProgram[] Programs { get; }
 
-        public string CurrentStreamName { get => _currentStreamName; set => SetValue(ref _currentStreamName, value, () => LoadStreamFromResource(value)); }
-        private string _currentStreamName = null;
+        public IProgram CurrentProgram { get => GetValue<IProgram>(); set => SetValue(value, () => LoadProgram(value)); }
 
-        public ImmutableArray<byte> CurrentStream { get => _currentStream; private set => SetValue(ref _currentStream, value, () => CurrentStreamChanged(value, CurrentStreamName)); }
-        private ImmutableArray<byte> _currentStream = ImmutableArray<byte>.Empty;
+        public ImmutableArray<byte> CurrentStream { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
 
         public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value); }
         private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
@@ -108,19 +102,21 @@ namespace Final.CPU8086
             Errors = new ObservableCollection<Error>();
 
             _executionTask = null;
+
             CurrentInstruction = null;
+            CurrentProgram = null;
+            CurrentStream = ImmutableArray<byte>.Empty;
             DecodeState = DecodeState.None;
             ExecutionState = ExecutionState.Stopped;
 
-            var names = _resources.GetNames();
-            ResourceStreams = names.Where(n => string.IsNullOrEmpty(Path.GetExtension(n))).ToArray();
+            string[] resNames = _resources.GetNames();
 
-            _currentStreamName = ResourceStreams[0];
-            Stream stream = _resources.Get(CurrentStreamName);
-            byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
+            Programs = resNames
+                .Where(n => string.IsNullOrEmpty(Path.GetExtension(n)))
+                .Select(n => new Program(n, _resources.Get(n)))
+                .ToArray();
 
-            CurrentStream = data.ToImmutableArray();
+            CurrentProgram = Programs[0];
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -129,14 +125,15 @@ namespace Final.CPU8086
                 RaisePropertyChanged(nameof(Register));
         }
 
-        public void LoadStreamFromResource(string name)
+        public void LoadProgram(IProgram program)
         {
-            if (!string.IsNullOrWhiteSpace(name) && _resources.Get(name) is Stream stream)
-            {
-                byte[] data = new byte[stream.Length];
-                stream.Read(data, 0, data.Length);
-                CurrentStream = data.ToImmutableArray();
+            if (CanStop())
+                Stop();
 
+            if (program != null)
+            {
+                CurrentStream = program.Stream;
+                DecodeInstructions(program);
             }
             else
                 CurrentStream = ImmutableArray<byte>.Empty;
@@ -293,8 +290,11 @@ namespace Final.CPU8086
             _executionTask = Task.Run(() => ExecuteAsync(true));
         }
 
-        private void DecodeInstructions(ImmutableArray<byte> stream, string streamName)
+        private void DecodeInstructions(IProgram program)
         {
+            if (program == null)
+                throw new ArgumentNullException(nameof(program));
+
             Contract.Assert(ExecutionState == ExecutionState.Stopped);
             Contract.Assert(CurrentInstruction == null);
             Contract.Assert(CurrentStreamPosition == -1);
@@ -303,6 +303,8 @@ namespace Final.CPU8086
 
             List<Error> errors = new List<Error>();
             List<Instruction> list = new List<Instruction>();
+
+            ImmutableArray<byte> stream = program.Stream;
 
             int[] instructionIndexMap = new int[stream.Length];
             for (int i = 0; i < stream.Length; ++i)
@@ -315,10 +317,10 @@ namespace Final.CPU8086
                 int position = 0;
                 while (cur.Length > 0)
                 {
-                    OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, CurrentStreamName, position);
+                    OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, program.Name, position);
                     if (r.IsT1)
                     {
-                        var err = new Error(r.AsT1, $"Failed to decode instruction stream '{streamName}'", position);
+                        var err = new Error(r.AsT1, $"Failed to decode instruction stream '{program}'", position);
                         Errors.Add(err);
                         break;
                     }
@@ -335,13 +337,6 @@ namespace Final.CPU8086
             {
                 DecodeState = (Errors.Any() || stream.Length == 0) ? DecodeState.Failed : DecodeState.Success;
             }
-        }
-
-        public void CurrentStreamChanged(ImmutableArray<byte> stream, string streamName)
-        {
-            if (CanStop())
-                Stop();
-            DecodeInstructions(stream, streamName);
         }
     }
 }

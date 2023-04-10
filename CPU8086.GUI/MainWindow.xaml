@@ -53,8 +53,8 @@
                 </RibbonApplicationMenu>
             </Ribbon.ApplicationMenu>
             <RibbonTab Header="Home">
-                <RibbonGroup Header="Current Stream">
-                    <ComboBox Width="200" ItemsSource="{Binding ResourceStreams}" SelectedValue="{Binding CurrentStreamName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True" IsEnabled="{Binding CanChangeStream, UpdateSourceTrigger=PropertyChanged}" />
+                <RibbonGroup Header="Program">
+                    <ComboBox Width="200" ItemsSource="{Binding Programs}" SelectedValue="{Binding CurrentProgram, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True" IsEnabled="{Binding CanChangeStream, UpdateSourceTrigger=PropertyChanged}" />
                 </RibbonGroup>
                 <RibbonGroup Header="Execution">
                     <RibbonButton Label="Run" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" Command="{Binding RunCommand}" />
@@ -634,9 +634,9 @@
         </Grid>
 
         <StatusBar Grid.Row="2" FontFamily="Consolas" FontSize="16">
-            <StatusBarItem Content="Name:" />
+            <StatusBarItem Content="Program:" />
             <Separator />
-            <StatusBarItem Content="{Binding CurrentStreamName, UpdateSourceTrigger=PropertyChanged}" />
+            <StatusBarItem Content="{Binding CurrentProgram, UpdateSourceTrigger=PropertyChanged}" />
             <Separator />
             <StatusBarItem Content="Length:" />
             <Separator />
@@ -648,7 +648,7 @@
             <Separator />
             <StatusBarItem Content="Errors:" />
             <Separator />
-            <StatusBarItem Content="{Binding Errors.Length, UpdateSourceTrigger=PropertyChanged}" />
+            <StatusBarItem Content="{Binding Errors.Count, UpdateSourceTrigger=PropertyChanged}" />
             <Separator />
             <StatusBarItem Content="Decode:" />
             <Separator />

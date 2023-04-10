@@ -1,6 +1,5 @@
 ﻿using OneOf;
 using System;
-using System.Collections.Immutable;
 using System.Diagnostics.Contracts;
 
 namespace Final.CPU8086

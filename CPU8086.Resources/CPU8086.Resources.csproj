@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -6,11 +6,49 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\listing_*" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs.txt" Link="Resources\listing_0043_immediate_movs.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs.txt" Link="Resources\listing_0044_register_movs.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs.txt" Link="Resources\listing_0045_challenge_register_movs.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp.txt" Link="Resources\listing_0046_add_sub_cmp.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags.txt" Link="Resources\listing_0047_challenge_flags.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register.txt" Link="Resources\listing_0048_ip_register.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps.txt" Link="Resources\listing_0049_conditional_jumps.txt" />
+    <Content Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps.txt" Link="Resources\listing_0050_challenge_jumps.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\listing_*" />
+    <Folder Include="Resources\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0037_single_register_mov" Link="Resources\listing_0037_single_register_mov" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0037_single_register_mov.asm" Link="Resources\listing_0037_single_register_mov.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0038_many_register_mov" Link="Resources\listing_0038_many_register_mov" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0038_many_register_mov.asm" Link="Resources\listing_0038_many_register_mov.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0039_more_movs" Link="Resources\listing_0039_more_movs" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0039_more_movs.asm" Link="Resources\listing_0039_more_movs.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0040_challenge_movs" Link="Resources\listing_0040_challenge_movs" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0040_challenge_movs.asm" Link="Resources\listing_0040_challenge_movs.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0041_add_sub_cmp_jnz" Link="Resources\listing_0041_add_sub_cmp_jnz" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0041_add_sub_cmp_jnz.asm" Link="Resources\listing_0041_add_sub_cmp_jnz.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0042_completionist_decode" Link="Resources\listing_0042_completionist_decode" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0042_completionist_decode.asm" Link="Resources\listing_0042_completionist_decode.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs" Link="Resources\listing_0043_immediate_movs" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs.asm" Link="Resources\listing_0043_immediate_movs.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs" Link="Resources\listing_0044_register_movs" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs.asm" Link="Resources\listing_0044_register_movs.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs" Link="Resources\listing_0045_challenge_register_movs" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs.asm" Link="Resources\listing_0045_challenge_register_movs.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp" Link="Resources\listing_0046_add_sub_cmp" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp.asm" Link="Resources\listing_0046_add_sub_cmp.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags" Link="Resources\listing_0047_challenge_flags" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags.asm" Link="Resources\listing_0047_challenge_flags.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register" Link="Resources\listing_0048_ip_register" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register.asm" Link="Resources\listing_0048_ip_register.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps" Link="Resources\listing_0049_conditional_jumps" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps.asm" Link="Resources\listing_0049_conditional_jumps.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps" Link="Resources\listing_0050_challenge_jumps" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps.asm" Link="Resources\listing_0050_challenge_jumps.asm" />
   </ItemGroup>
 
 </Project>

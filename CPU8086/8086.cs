@@ -1,6 +1,8 @@
 ﻿using OneOf;
 using System;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -263,7 +265,8 @@ namespace Final.CPU8086
                 DataType.Byte => 1,
                 DataType.Word => 2,
                 DataType.Int => 4,
-                DataType.DoubleWord => 8,
+                DataType.DoubleWord => 4,
+                DataType.QuadWord => 8,
                 DataType.Pointer => 8,
                 DataType.Far => 8,
                 _ => 0,
@@ -411,6 +414,16 @@ namespace Final.CPU8086
                 case OperandKind.MemoryTenByteReal:
                     break;
 
+                case OperandKind.SourceRegister:
+                    {
+                        if (sourceOp.DataType == DataType.Byte)
+                            return new InstructionOperand(_regTable.GetByte(registerBits));
+                        else if (sourceOp.DataType == DataType.Word)
+                            return new InstructionOperand(_regTable.GetWord(registerBits));
+                        else
+                            throw new NotSupportedException($"Unsupported data type of '{sourceOp.DataType}' for source register");
+                    }
+
                 case OperandKind.RegisterByte:
                     return new InstructionOperand(_regTable.GetByte(registerBits));
                 case OperandKind.RegisterWord:
@@ -461,8 +474,6 @@ namespace Final.CPU8086
                 case OperandKind.NearPointer:
                     break;
                 case OperandKind.FarPointer:
-                    break;
-                case OperandKind.SourceRegister:
                     break;
 
                 case OperandKind.ShortLabel:
@@ -785,6 +796,116 @@ namespace Final.CPU8086
             if (modField == byte.MaxValue)
                 eac = EffectiveAddressCalculation.DirectAddress;
 
+            DataType bestInferredType = DataType.None;
+            if (entry.DataWidth.Type == DataWidthType.None)
+            {
+                foreach (Operand sourceOp in entry.Operands)
+                {
+                    DataType inferredType = sourceOp.Kind switch
+                    {
+                        OperandKind.MemoryByte => DataType.Byte,
+                        OperandKind.MemoryWord => DataType.Word,
+                        OperandKind.MemoryDoubleWord => DataType.DoubleWord,
+                        OperandKind.MemoryQuadWord => DataType.QuadWord,
+
+                        OperandKind.MemoryWordReal => DataType.Word,
+                        OperandKind.MemoryDoubleWordReal => DataType.DoubleWord,
+                        OperandKind.MemoryQuadWordReal => DataType.QuadWord,
+                        OperandKind.MemoryTenByteReal => throw new NotImplementedException(),
+
+                        OperandKind.RegisterByte => DataType.Byte,
+                        OperandKind.RegisterWord => DataType.Word,
+                        OperandKind.RegisterDoubleWord => DataType.DoubleWord,
+                        OperandKind.RegisterOrMemoryByte => DataType.Byte,
+                        OperandKind.RegisterOrMemoryWord => DataType.Word,
+                        OperandKind.RegisterOrMemoryDoubleWord => DataType.DoubleWord,
+                        OperandKind.RegisterOrMemoryQuadWord => DataType.QuadWord,
+
+                        OperandKind.ImmediateByte => DataType.Byte,
+                        OperandKind.ImmediateWord => DataType.Word,
+                        OperandKind.ImmediateDoubleWord => DataType.DoubleWord,
+
+                        OperandKind.KeywordPointer => DataType.Pointer,
+
+                        OperandKind.TypeShort => DataType.Word,
+                        OperandKind.TypeDoubleWord => DataType.DoubleWord,
+                        OperandKind.TypeInt => DataType.DoubleWord,
+
+                        OperandKind.NearPointer => DataType.Pointer,
+                        OperandKind.FarPointer => DataType.Pointer | DataType.Far,
+
+                        OperandKind.ShortLabel => DataType.Byte,
+                        OperandKind.LongLabel => DataType.Word,
+
+                        OperandKind.RAX => DataType.QuadWord,
+                        OperandKind.EAX => DataType.DoubleWord,
+                        OperandKind.AX => DataType.Word,
+                        OperandKind.AL => DataType.Byte,
+                        OperandKind.AH => DataType.Byte,
+
+                        OperandKind.RBX => DataType.QuadWord,
+                        OperandKind.EBX => DataType.DoubleWord,
+                        OperandKind.BX => DataType.Word,
+                        OperandKind.BL => DataType.Byte,
+                        OperandKind.BH => DataType.Byte,
+
+                        OperandKind.RCX => DataType.QuadWord,
+                        OperandKind.ECX => DataType.DoubleWord,
+                        OperandKind.CX => DataType.Word,
+                        OperandKind.CL => DataType.Byte,
+                        OperandKind.CH => DataType.Byte,
+
+                        OperandKind.RDX => DataType.QuadWord,
+                        OperandKind.EDX => DataType.DoubleWord,
+                        OperandKind.DX => DataType.Word,
+                        OperandKind.DL => DataType.Byte,
+                        OperandKind.DH => DataType.Byte,
+
+                        OperandKind.RSP => DataType.QuadWord,
+                        OperandKind.ESP => DataType.DoubleWord,
+                        OperandKind.SP => DataType.Word,
+
+                        OperandKind.RBP => DataType.QuadWord,
+                        OperandKind.EBP => DataType.DoubleWord,
+                        OperandKind.BP => DataType.Word,
+
+                        OperandKind.RSI => DataType.QuadWord,
+                        OperandKind.ESI => DataType.DoubleWord,
+                        OperandKind.SI => DataType.Word,
+
+                        OperandKind.RDI => DataType.QuadWord,
+                        OperandKind.EDI => DataType.DoubleWord,
+                        OperandKind.DI => DataType.Word,
+
+                        OperandKind.CS or
+                        OperandKind.DS or
+                        OperandKind.SS or
+                        OperandKind.ES or
+                        OperandKind.CR => DataType.Word,
+
+                        OperandKind.DR or
+                        OperandKind.TR or
+                        OperandKind.FS or
+                        OperandKind.GS => DataType.Word,
+
+                        _ => DataType.None,
+                    };
+                    if (bestInferredType == DataType.None || inferredType > bestInferredType)
+                        bestInferredType = inferredType;
+                }
+            }
+            else
+            {
+                if (entry.DataWidth.Type == DataWidthType.Byte)
+                    bestInferredType = DataType.Byte;
+                else if (entry.DataWidth.Type == DataWidthType.Word)
+                    bestInferredType = DataType.Word;
+                else if (entry.DataWidth.Type == DataWidthType.DoubleWord)
+                    bestInferredType = DataType.DoubleWord;
+                else if (entry.DataWidth.Type == DataWidthType.QuadWord)
+                    bestInferredType = DataType.QuadWord;
+            }
+
             bool isDest = true;
             foreach (Operand sourceOp in entry.Operands)
             {
@@ -821,12 +942,7 @@ namespace Final.CPU8086
 
                 DataType explicitType = DataType.None;
                 if (useExplicitType)
-                {
-                    if (entry.DataWidth.Type == DataWidthType.Byte)
-                        explicitType = DataType.Byte;
-                    else if (entry.DataWidth.Type == DataWidthType.Word)
-                        explicitType = DataType.Word;
-                }
+                    explicitType = bestInferredType;
 
                 InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, explicitType);
 

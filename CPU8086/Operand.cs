@@ -376,6 +376,7 @@ namespace Final.CPU8086
                 "(short)" => DataType.Word,
                 "(int)" => DataType.Int,
                 "(dword)" => DataType.DoubleWord,
+                "(qword)" => DataType.QuadWord,
                 "(ptr)" => DataType.Pointer,
                 "(far)" => DataType.Far,
                 "(far ptr)" => DataType.Far | DataType.Pointer,
@@ -383,6 +384,7 @@ namespace Final.CPU8086
                 "(short ptr)" => DataType.Word | DataType.Pointer,
                 "(int ptr)" => DataType.Int | DataType.Pointer,
                 "(dword ptr)" => DataType.DoubleWord | DataType.Pointer,
+                "(qword ptr)" => DataType.QuadWord | DataType.Pointer,
                 _ => DataType.None,
             };
         }
@@ -399,6 +401,8 @@ namespace Final.CPU8086
                     return "(int)";
                 else if (dataType == DataType.DoubleWord)
                     return "(dword)";
+                else if (dataType == DataType.QuadWord)
+                    return "(qword)";
                 else if (dataType == DataType.Pointer)
                     return "(ptr)";
                 else if (dataType == DataType.Far)
@@ -413,6 +417,8 @@ namespace Final.CPU8086
                     return "(int ptr)";
                 else if (dataType.HasFlag(DataType.DoubleWord) && dataType.HasFlag(DataType.Pointer))
                     return "(dword ptr)";
+                else if (dataType.HasFlag(DataType.QuadWord) && dataType.HasFlag(DataType.Pointer))
+                    return "(qword ptr)";
             }
             return string.Empty;
         }

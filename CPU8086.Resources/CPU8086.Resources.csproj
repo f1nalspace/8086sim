@@ -6,33 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Resources\listing_0037_single_register_mov" />
-    <None Remove="Resources\listing_0037_single_register_mov.asm" />
-    <None Remove="Resources\listing_0038_many_register_mov" />
-    <None Remove="Resources\listing_0038_many_register_mov.asm" />
-    <None Remove="Resources\listing_0039_more_movs" />
-    <None Remove="Resources\listing_0039_more_movs.asm" />
-    <None Remove="Resources\listing_0040_challenge_movs" />
-    <None Remove="Resources\listing_0040_challenge_movs.asm" />
-    <None Remove="Resources\listing_0041_add_sub_cmp_jnz" />
-    <None Remove="Resources\listing_0041_add_sub_cmp_jnz.asm" />
-    <None Remove="Resources\listing_0042_completionist_decode" />
-    <None Remove="Resources\listing_0042_completionist_decode.asm" />
+    <None Remove="Resources\listing_*" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Resources\listing_0039_more_movs" />
-    <EmbeddedResource Include="Resources\listing_0039_more_movs.asm" />
-    <EmbeddedResource Include="Resources\listing_0040_challenge_movs" />
-    <EmbeddedResource Include="Resources\listing_0040_challenge_movs.asm" />
-    <EmbeddedResource Include="Resources\listing_0037_single_register_mov" />
-    <EmbeddedResource Include="Resources\listing_0037_single_register_mov.asm" />
-    <EmbeddedResource Include="Resources\listing_0038_many_register_mov" />
-    <EmbeddedResource Include="Resources\listing_0038_many_register_mov.asm" />
-    <EmbeddedResource Include="Resources\listing_0041_add_sub_cmp_jnz" />
-    <EmbeddedResource Include="Resources\listing_0041_add_sub_cmp_jnz.asm" />
-    <EmbeddedResource Include="Resources\listing_0042_completionist_decode" />
-    <EmbeddedResource Include="Resources\listing_0042_completionist_decode.asm" />
+    <EmbeddedResource Include="Resources\listing_*" />
   </ItemGroup>
 
 </Project>

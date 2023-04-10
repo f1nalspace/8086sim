@@ -594,5 +594,18 @@ namespace Final.CPU8086
             }
             return s.ToString();
         }
+
+        public OneOf<int, Error> ExecuteInstruction(Instruction instruction)
+        {
+            if (instruction == null)
+                return new Error(ErrorCode.InstructionParameterMissing, $"The instruction parameter is missing!", 0);
+
+            int relativePosition = 0;
+
+            // Execute code
+            relativePosition += instruction.Length;
+
+            return relativePosition;
+        }
     }
 }

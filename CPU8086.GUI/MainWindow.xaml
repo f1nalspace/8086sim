@@ -13,8 +13,24 @@
         FontFamily="Consolas"
         d:DataContext="{d:DesignInstance local:MainViewModel, IsDesignTimeCreatable=True}" 
         DataContext="{dxmvvm:ViewModelSource local:MainViewModel}">
+    <dxmvvm:Interaction.Behaviors>
+        <dxmvvm:DispatcherService DispatcherPriority="DataBind" />
+    </dxmvvm:Interaction.Behaviors>
     <Window.Resources>
         <local:MultiValueEqualityConverter x:Key="multiValueEqConverter" />
+        <Style TargetType="Image" x:Key="imgPositionIcon">
+            <Style.Triggers>
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                            <Binding Path="Position" />
+                            <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                        </MultiBinding>
+                    </DataTrigger.Binding>
+                    <Setter Property="Source" Value="Resources/Forward_16x16.png" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
@@ -29,7 +45,6 @@
             </Ribbon.HelpPaneContent>
             <Ribbon.QuickAccessToolBar>
                 <RibbonQuickAccessToolBar>
-                    <RibbonButton Command="{Binding ResetCommand}" SmallImageSource="Resources\Reset_16x16.png" />
                 </RibbonQuickAccessToolBar>
             </Ribbon.QuickAccessToolBar>
             <Ribbon.ApplicationMenu>
@@ -39,14 +54,14 @@
             </Ribbon.ApplicationMenu>
             <RibbonTab Header="Home">
                 <RibbonGroup Header="Current Stream">
-                    <ComboBox Width="200" ItemsSource="{Binding ResourceStreams}" SelectedValue="{Binding CurrentResource, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True" />
+                    <ComboBox Width="200" ItemsSource="{Binding ResourceStreams}" SelectedValue="{Binding CurrentStreamName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True" IsEnabled="{Binding CanChangeStream, UpdateSourceTrigger=PropertyChanged}" />
                 </RibbonGroup>
                 <RibbonGroup Header="Execution">
-                    <RibbonButton Label="Run" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" />
-                    <RibbonButton Label="Run Without Debugging" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" />
+                    <RibbonButton Label="Run" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" Command="{Binding RunCommand}" />
+                    <RibbonButton Label="Stop" SmallImageSource="Resources/Run_16x16.png" LargeImageSource="Resources/Run_32x32.png" Command="{Binding StopCommand}" />
                 </RibbonGroup>
                 <RibbonGroup Header="Debug">
-                    <RibbonButton Label="Step" SmallImageSource="Resources/Forward_16x16.png" LargeImageSource="Resources/Forward_32x32.png" />
+                    <RibbonButton Label="Step" SmallImageSource="Resources/Forward_16x16.png" LargeImageSource="Resources/Forward_32x32.png" Command="{Binding StepCommand}" />
                 </RibbonGroup>
             </RibbonTab>
             <RibbonTab Header="View">
@@ -427,19 +442,56 @@
                     <TabControl Grid.Column="0">
                         <TabItem Header="Assembly">
                             <ScrollViewer>
-                                <RichTextBox FontFamily="Consolas" FontSize="16" IsReadOnly="True">
-                                    <dxmvvm:Interaction.Behaviors>
-                                        <local:RichTextBoxDocumentBehavior Document="{Binding Instructions, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={local:InstructionsToFlowDocumentConverter}}" />
-                                    </dxmvvm:Interaction.Behaviors>
-                                </RichTextBox>
+                                <ItemsControl ItemsSource="{Binding Instructions}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Grid.Style>
+                                                    <Style TargetType="Grid">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True">
+                                                                <DataTrigger.Binding>
+                                                                    <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                                                                        <Binding Path="Position" />
+                                                                        <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                    </MultiBinding>
+                                                                </DataTrigger.Binding>
+                                                                <Setter Property="Background" Value="LightBlue" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Grid.Style>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="20" />
+                                                    <ColumnDefinition Width="5" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <Image Grid.Column="0" Width="16" Height="16" Style="{StaticResource imgPositionIcon}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding Converter={local:InstructionAssemblyConverter}}" />
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
                             </ScrollViewer>
                         </TabItem>
                     </TabControl>
                     <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
                     <TabControl Grid.Column="2">
                         <TabItem Header="Instructions">
-                            <DataGrid IsReadOnly="True" ItemsSource="{Binding Instructions, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
+                            <DataGrid IsReadOnly="True" SelectionMode="Single" ItemsSource="{Binding Instructions, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
+                                    <DataGridTemplateColumn>
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image Width="16" Height="16" Style="{StaticResource imgPositionIcon}" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
                                     <DataGridTextColumn Header="Op" Binding="{Binding OpCode, Converter={local:HexCellValueConverter}}" />
                                     <DataGridTextColumn Header="Mnemonic" Binding="{Binding Mnemonic}" />
@@ -458,9 +510,10 @@
                                                         <Binding Path="DataContext.CurrentStreamPosition" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                     </MultiBinding>
                                                 </DataTrigger.Binding>
-                                                <Setter Property="Background" Value="DeepSkyBlue" />
+                                                <Setter Property="Background" Value="LightBlue" />
                                             </DataTrigger>
                                         </Style.Triggers>
+                                        <Setter Property="IsHitTestVisible" Value="False"/>
                                     </Style>
                                 </DataGrid.RowStyle>
                             </DataGrid>
@@ -562,6 +615,13 @@
                         <ListView.View>
                             <GridView>
                                 <GridView.Columns>
+                                    <GridViewColumn>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image Width="16" Height="16" Source="Resources/Error_16x16.png" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
                                     <GridViewColumn Header="Pos" DisplayMemberBinding="{Binding Position}" Width="60" />
                                     <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="200" />
                                     <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="600" />
@@ -576,7 +636,7 @@
         <StatusBar Grid.Row="2" FontFamily="Consolas" FontSize="16">
             <StatusBarItem Content="Name:" />
             <Separator />
-            <StatusBarItem Content="{Binding CurrentResource, UpdateSourceTrigger=PropertyChanged}" />
+            <StatusBarItem Content="{Binding CurrentStreamName, UpdateSourceTrigger=PropertyChanged}" />
             <Separator />
             <StatusBarItem Content="Length:" />
             <Separator />
@@ -585,9 +645,18 @@
             <StatusBarItem Content="Position:" />
             <Separator />
             <StatusBarItem Content="{Binding CurrentStreamPosition, UpdateSourceTrigger=PropertyChanged}" />
+            <Separator />
             <StatusBarItem Content="Errors:" />
             <Separator />
             <StatusBarItem Content="{Binding Errors.Length, UpdateSourceTrigger=PropertyChanged}" />
+            <Separator />
+            <StatusBarItem Content="Decode:" />
+            <Separator />
+            <StatusBarItem Content="{Binding DecodeState, UpdateSourceTrigger=PropertyChanged}" />
+            <Separator />
+            <StatusBarItem Content="Execution:" />
+            <Separator />
+            <StatusBarItem Content="{Binding ExecutionState, UpdateSourceTrigger=PropertyChanged}" />
         </StatusBar>
     </Grid>
 </Window>

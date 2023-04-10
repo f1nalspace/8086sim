@@ -12,6 +12,7 @@
     <None Remove="Resources\Backward_32x32.png" />
     <None Remove="Resources\Close_16x16.png" />
     <None Remove="Resources\Close_32x32.png" />
+    <None Remove="Resources\Error_16x16.png" />
     <None Remove="Resources\Forward_16x16.png" />
     <None Remove="Resources\Forward_32x32.png" />
     <None Remove="Resources\Index_16x16.png" />
@@ -36,6 +37,7 @@
     <Resource Include="Resources\Backward_32x32.png" />
     <Resource Include="Resources\Close_16x16.png" />
     <Resource Include="Resources\Close_32x32.png" />
+    <Resource Include="Resources\Error_16x16.png" />
     <Resource Include="Resources\Forward_16x16.png" />
     <Resource Include="Resources\Forward_32x32.png" />
     <Resource Include="Resources\Index_16x16.png" />

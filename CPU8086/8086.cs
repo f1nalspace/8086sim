@@ -17,6 +17,10 @@ namespace Final.CPU8086
         private static readonly RegisterTable _regTable = new RegisterTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
+        private readonly InstructionExecuter _executer;
+
+        private readonly byte[] _memory;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void RaisePropertyChanged(string propertyName)
@@ -36,12 +40,275 @@ namespace Final.CPU8086
 
         public CPU()
         {
+            _executer = new InstructionExecuter(this);
+            _memory = new byte[0xFFFFF];
             _entryTable.Load();
         }
 
         public void Reset()
         {
             Register = new CPURegister();
+        }
+
+        public OneOf<Immediate, Error> LoadRegister(RegisterType type)
+        {
+            return type switch
+            {
+                RegisterType.AX => new Immediate(_register.AX, ImmediateFlag.None),
+                RegisterType.AL => new Immediate(_register.AL, ImmediateFlag.None),
+                RegisterType.AH => new Immediate(_register.AH, ImmediateFlag.None),
+
+                RegisterType.BX => new Immediate(_register.BX, ImmediateFlag.None),
+                RegisterType.BL => new Immediate(_register.BL, ImmediateFlag.None),
+                RegisterType.BH => new Immediate(_register.BH, ImmediateFlag.None),
+
+                RegisterType.CX => new Immediate(_register.CX, ImmediateFlag.None),
+                RegisterType.CL => new Immediate(_register.CL, ImmediateFlag.None),
+                RegisterType.CH => new Immediate(_register.CH, ImmediateFlag.None),
+
+                RegisterType.DX => new Immediate(_register.DX, ImmediateFlag.None),
+                RegisterType.DL => new Immediate(_register.DL, ImmediateFlag.None),
+                RegisterType.DH => new Immediate(_register.DH, ImmediateFlag.None),
+
+                RegisterType.SP => new Immediate(_register.SP, ImmediateFlag.None),
+                RegisterType.BP => new Immediate(_register.BP, ImmediateFlag.None),
+                RegisterType.SI => new Immediate(_register.SI, ImmediateFlag.None),
+                RegisterType.DI => new Immediate(_register.DI, ImmediateFlag.None),
+
+                RegisterType.CS => new Immediate(_register.CS, ImmediateFlag.None),
+                RegisterType.DS => new Immediate(_register.DS, ImmediateFlag.None),
+                RegisterType.SS => new Immediate(_register.SS, ImmediateFlag.None),
+                RegisterType.ES => new Immediate(_register.ES, ImmediateFlag.None),
+
+                _ => new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0),
+            };
+        }
+
+        public OneOf<byte, Error> StoreRegister(RegisterType type, Immediate value)
+        {
+            byte result = 0;
+            switch (type)
+            {
+                case RegisterType.AX:
+                    _register.AX = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.AL:
+                    _register.AL = value.U8;
+                    result = 1;
+                    break;
+                case RegisterType.AH:
+                    _register.AH = value.U8;
+                    result = 1;
+                    break;
+
+                case RegisterType.BX:
+                    _register.BX = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.BL:
+                    _register.BL = value.U8;
+                    result = 1;
+                    break;
+                case RegisterType.BH:
+                    _register.BH = value.U8;
+                    result = 1;
+                    break;
+
+                case RegisterType.CX:
+                    _register.CX = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.CL:
+                    _register.CL = value.U8;
+                    result = 1;
+                    break;
+                case RegisterType.CH:
+                    _register.CH = value.U8;
+                    result = 1;
+                    break;
+
+                case RegisterType.DX:
+                    _register.DX = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.DL:
+                    _register.DL = value.U8;
+                    result = 1;
+                    break;
+                case RegisterType.DH:
+                    _register.DH = value.U8;
+                    result = 1;
+                    break;
+
+                case RegisterType.SP:
+                    _register.SP = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.BP:
+                    _register.BP = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.SI:
+                    _register.SI = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.DI:
+                    _register.DI = value.U16;
+                    result = 2;
+                    break;
+
+                case RegisterType.CS:
+                    _register.CS = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.DS:
+                    _register.DS = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.SS:
+                    _register.SS = value.U16;
+                    result = 2;
+                    break;
+                case RegisterType.ES:
+                    _register.ES = value.U16;
+                    result = 2;
+                    break;
+
+                default:
+                    return new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0);
+            }
+
+            RaisePropertyChanged(nameof(Register));
+
+            return result;
+        }
+
+        private const int HighestMemoryAddress = 0xFFFFF;
+
+        private const int EndExtraSegmentStart = 0x7FFFF;
+        private const int StartExtraSegmentStart = 0x70000;
+
+        private const int EndStackSegmentStart = 0x5FFFF;
+        private const int StartStackSegmentStart = 0x50000;
+
+        private const int EndCodeSegmentStart = 0x3FFFF;
+        private const int StartCodeSegmentStart = 0x30000;
+
+        private const int EndDataSegmentStart = 0x2FFFF;
+        private const int StartDataSegmentStart = 0x20000;
+
+        private static int GetDataTypeSize(DataType type)
+        {
+            return type switch
+            {
+                DataType.Byte => 1,
+                DataType.Word => 2,
+                DataType.Int => 4,
+                DataType.DoubleWord => 8,
+                DataType.Pointer => 8,
+                DataType.Far => 8,
+                _ => 0,
+            };
+        }
+
+        private int GetAbsoluteMemoryAddress(MemoryAddress address)
+        {
+            byte u8 = (byte)(address.Displacement & 0xFF);
+            ushort u16 = (ushort)(address.Displacement & 0xFFFF);
+            int d8 = (u8 & 0b10000000) == 0b10000000 ? (-u8) : u8;
+            int d16 = (u16 & 0b10000000_00000000) == 0b10000000_00000000 ? (-u16) : u16;
+            int result = address.EAC switch
+            {
+                EffectiveAddressCalculation.BX_SI => _register.BX + _register.SI,
+                EffectiveAddressCalculation.BX_DI => _register.BX + _register.DI,
+                EffectiveAddressCalculation.BP_SI => _register.BP + _register.SI,
+                EffectiveAddressCalculation.BP_DI => _register.BP + _register.DI,
+                EffectiveAddressCalculation.SI => _register.SI,
+                EffectiveAddressCalculation.DI => _register.DI,
+                EffectiveAddressCalculation.DirectAddress => address.Displacement & 0xFFFF,
+                EffectiveAddressCalculation.BX => _register.BX,
+                EffectiveAddressCalculation.BX_SI_D8 => _register.BX + _register.SI + d8,
+                EffectiveAddressCalculation.BX_DI_D8 => _register.BX + _register.DI + d8,
+                EffectiveAddressCalculation.BP_SI_D8 => _register.BP + _register.SI + d8,
+                EffectiveAddressCalculation.BP_DI_D8 => _register.BP + _register.DI + d8,
+                EffectiveAddressCalculation.SI_D8 => _register.SI + d8,
+                EffectiveAddressCalculation.DI_D8 => _register.DI + d8,
+                EffectiveAddressCalculation.BP_D8 => _register.BP + d8,
+                EffectiveAddressCalculation.BX_D8 => _register.BX + d8,
+                EffectiveAddressCalculation.BX_SI_D16 => _register.BX + _register.SI + d16,
+                EffectiveAddressCalculation.BX_DI_D16 => _register.BX + _register.DI + d16,
+                EffectiveAddressCalculation.BP_SI_D16 => _register.BP + _register.SI + d16,
+                EffectiveAddressCalculation.BP_DI_D16 => _register.BP + _register.DI + d16,
+                EffectiveAddressCalculation.SI_D16 => _register.SI + d16,
+                EffectiveAddressCalculation.DI_D16 => _register.DI + d16,
+                EffectiveAddressCalculation.BP_D16 => _register.BP + d16,
+                EffectiveAddressCalculation.BX_D16 => _register.BX + d16,
+                _ => 0,
+            };
+            return result;
+        }
+
+        private OneOf<Immediate, Error> LoadMemory(int absoluteAddress, DataType type)
+        {
+            int typeSize = GetDataTypeSize(type);
+            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= _memory.Length)
+                return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute source memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
+
+            switch (type)
+            {
+                case DataType.Byte:
+                    return new Immediate(_memory[absoluteAddress], ImmediateFlag.None);
+                case DataType.Word:
+                    {
+                        byte low = _memory[absoluteAddress + 0];
+                        byte high = _memory[absoluteAddress + 1];
+                        ushort u16 = (ushort)(low | (high << 8));
+                        return new Immediate(u16, ImmediateFlag.None);
+                    }
+                default:
+                    return new Error(ErrorCode.UnsupportedDataWidth, $"The source memory type '{type}' is not supported!", 0);
+            }
+        }
+
+        private OneOf<byte, Error> StoreMemory(int absoluteAddress, DataType type, Immediate value)
+        {
+            int typeSize = GetDataTypeSize(type);
+            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= _memory.Length)
+                return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute destination memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
+            switch (type)
+            {
+                case DataType.Byte:
+                    _memory[absoluteAddress] = value.U8;
+                    return 1;
+                case DataType.Word:
+                    {
+                        ushort u16 = value.U16;
+                        _memory[absoluteAddress + 0] = (byte)((u16 >> 0) & 0xFF);
+                        _memory[absoluteAddress + 1] = (byte)((u16 >> 8) & 0xFF);
+                        return 2;
+                    }
+                default:
+                    return new Error(ErrorCode.UnsupportedDataWidth, $"The destination memory type '{type}' is not supported!", 0);
+            }
+        }
+
+        public OneOf<byte, Error> StoreMemory(MemoryAddress address, DataType type, Immediate value)
+        {
+            int absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == 0)
+                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
+            return StoreMemory(absoluteAddress, type, value);
+        }
+
+        
+
+        public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
+        {
+            int absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == 0)
+                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
+            return LoadMemory(absoluteAddress, type);
         }
 
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, int position)
@@ -599,13 +866,7 @@ namespace Final.CPU8086
         {
             if (instruction == null)
                 return new Error(ErrorCode.InstructionParameterMissing, $"The instruction parameter is missing!", 0);
-
-            int relativePosition = 0;
-
-            // Execute code
-            relativePosition += instruction.Length;
-
-            return relativePosition;
+            return _executer.Execute(instruction);
         }
     }
 }

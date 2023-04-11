@@ -33,6 +33,8 @@ namespace Final.CPU8086
 
         public ObservableCollection<Error> Errors { get; }
 
+        public ObservableCollection<LogItemViewModel> Logs { get; }
+
         public int CurrentStreamPosition
         {
             get => _currentStreamPosition;
@@ -86,10 +88,11 @@ namespace Final.CPU8086
 
         public ImmutableArray<byte> MemoryPage { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
         public int MemoryPageIndex { get => GetValue<int>(); set => SetValue(value, () => MemoryPageIndexChanged(value)); }
-        public int MemoryPageOffset  { get => GetValue<int>(); private set => SetValue(value);
-    }
+        public int MemoryPageOffset { get => GetValue<int>(); private set => SetValue(value); }
 
-    public bool CanChangeStream => ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed || ExecutionState == ExecutionState.Halted;
+        public int SelectedStreamOrMemoryTabIndex { get => GetValue<int>(); set => SetValue(value); }
+
+        public bool CanChangeStream => ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed || ExecutionState == ExecutionState.Halted;
 
         public DelegateCommand RunCommand { get; }
         public DelegateCommand StopCommand { get; }
@@ -99,8 +102,6 @@ namespace Final.CPU8086
 
         private volatile Task _executionTask = null;
         private volatile int _isStopping = 0;
-
-        private readonly byte[] _currentMemory = new byte[0xFF];
 
         public MainViewModel()
         {
@@ -114,6 +115,7 @@ namespace Final.CPU8086
             JumpToLastMemoryPageCommand = new DelegateCommand(JumpToLastMemoryPage, CanJumpToLastMemoryPage);
 
             Errors = new ObservableCollection<Error>();
+            Logs = new ObservableCollection<LogItemViewModel>();
 
             _executionTask = null;
 
@@ -122,6 +124,7 @@ namespace Final.CPU8086
             CurrentStream = ImmutableArray<byte>.Empty;
             DecodeState = DecodeState.None;
             ExecutionState = ExecutionState.Stopped;
+            SelectedStreamOrMemoryTabIndex = 0;
 
             string[] resNames = _resources.GetNames();
 
@@ -137,15 +140,25 @@ namespace Final.CPU8086
             MemoryPageOffset = MemoryPageIndex * MemoryTable.PageSize;
         }
 
+        private void AddLog(int position, string message)
+        {
+            if (_dispatcherService != null)
+                _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
+            else
+                Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now));
+        }
+
         private bool CanJumpToFirstMemoryPage() => MemoryPageIndex > 0;
         private void JumpToFirstMemoryPage()
         {
+            SelectedStreamOrMemoryTabIndex = 1;
             MemoryPageIndex = 0;
         }
 
         private bool CanJumpToLastMemoryPage() => MemoryPageIndex < (_cpu.Memory.PageCount - 1);
         private void JumpToLastMemoryPage()
         {
+            SelectedStreamOrMemoryTabIndex = 1;
             MemoryPageIndex = _cpu.Memory.PageCount - 1;
         }
 
@@ -167,6 +180,8 @@ namespace Final.CPU8086
 
         public void LoadProgram(IProgram program)
         {
+            AddLog(0, $"Loading program '{program}'");
+
             if (CanStop())
                 Stop();
 
@@ -197,11 +212,16 @@ namespace Final.CPU8086
         private void Run()
         {
             Contract.Assert(CanRun());
+            
             CurrentInstruction = Instructions.First();
             CurrentStreamPosition = CurrentInstruction.Position;
-            _cpu.Reset();
             _isStopping = 0;
             ExecutionState = ExecutionState.Running;
+
+            AddLog(CurrentStreamPosition, $"Running program '{CurrentProgram}' with '{CurrentInstruction.Length}' instructions");
+
+            _cpu.Reset();
+
             _executionTask = Task.Run(() => ExecuteAsync(false));
         }
 
@@ -221,6 +241,7 @@ namespace Final.CPU8086
 
                     await Task.Delay(10);
 
+                    AddLog(CurrentInstruction.Position, $"Execute instruction '{CurrentInstruction}'");
                     OneOf<int, Error> r = _cpu.ExecuteInstruction(CurrentInstruction);
                     if (r.IsT1)
                     {
@@ -286,6 +307,7 @@ namespace Final.CPU8086
         private async void Stop()
         {
             Contract.Assert(CanStop());
+            AddLog(CurrentInstruction.Position, $"Stopping program '{CurrentProgram}'");
             await StopAsync();
         }
 
@@ -323,6 +345,7 @@ namespace Final.CPU8086
             Contract.Assert(CanStep());
             if (ExecutionState == ExecutionState.Stopped)
             {
+                AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}' with '{Instructions.Length}' instructions");
                 CurrentInstruction = Instructions.First();
                 CurrentStreamPosition = CurrentInstruction.Position;
                 Interlocked.Exchange(ref _isStopping, 0);
@@ -330,12 +353,11 @@ namespace Final.CPU8086
             }
             else if (ExecutionState == ExecutionState.Halted)
             {
+                AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}' with '{Instructions.Length}' instructions");
                 Interlocked.Exchange(ref _isStopping, 0);
                 ExecutionState = ExecutionState.Running;
                 _executionTask = Task.Run(() => ExecuteAsync(true));
             }
-            
-            
         }
 
         private void DecodeInstructions(IProgram program)
@@ -346,6 +368,8 @@ namespace Final.CPU8086
             Contract.Assert(ExecutionState == ExecutionState.Stopped);
             Contract.Assert(CurrentInstruction == null);
             Contract.Assert(CurrentStreamPosition == -1);
+
+            AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
 
             DecodeState = DecodeState.Decoding;
 

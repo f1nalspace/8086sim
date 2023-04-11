@@ -974,7 +974,7 @@ namespace Final.CPU8086
             byte opCode = opCodeRes.AsT0;
             InstructionList instructionList = _entryTable[opCode];
             if (instructionList == null)
-                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'!", position);
+                return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'", position);
             else if ((byte)instructionList.Op != opCode)
                 return new Error(ErrorCode.OpCodeMismatch, $"Mismatch opcode! Expect '${opCode:X2}', but got '{instructionList.Op}'", position);
 
@@ -983,7 +983,7 @@ namespace Final.CPU8086
                 InstructionEntry entry = instructionList.First();
                 OneOf<Instruction, Error> loadRes = LoadInstruction(stream, streamName, position, entry);
                 if (loadRes.TryPickT1(out Error error, out _))
-                    return new Error(error, $"Failed to decode instruction stream '{streamName}' for single entry '{entry}'", position);
+                    return new Error(error, $"Failed to decode instruction '{entry}'", position);
                 return loadRes.AsT0;
             }
             else
@@ -995,9 +995,8 @@ namespace Final.CPU8086
                     if (loadRes.TryPickT0(out Instruction instruction, out _))
                         return instruction;
                 }
+                return new Error(ErrorCode.OpCodeNotImplemented, $"No instruction entry found that matches the opcode '{opCode:X2}'", position);
             }
-
-            return new Error(ErrorCode.OpCodeNotImplemented, $"No instruction entry found that matches the opcode '{opCode:X2}' in stream '{streamName}'", position);
         }
 
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode, string hexPrefix = "0x")

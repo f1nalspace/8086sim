@@ -8,7 +8,7 @@
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="MainWindow" 
-        Height="720" 
+        Height="960" 
         Width="1280" 
         FontSize="16"
         FontFamily="Consolas"
@@ -43,6 +43,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
@@ -95,6 +96,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="5" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
@@ -406,7 +408,7 @@
                     </TabItem>
                 </TabControl>
 
-                <TabControl DockPanel.Dock="Right">
+                <TabControl DockPanel.Dock="Right" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsSynchronizedWithCurrentItem="True">
                     <TabItem Header="Stream">
                         <ScrollViewer Width="500" HorizontalAlignment="Left">
                             <Grid>
@@ -580,7 +582,7 @@
                     <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
                     <TabControl Grid.Column="2">
                         <TabItem Header="Instructions">
-                            <DataGrid IsReadOnly="True" SelectionMode="Single" ItemsSource="{Binding Instructions, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
+                            <DataGrid IsReadOnly="True" CanUserSortColumns="False" CanUserReorderColumns="False" SelectionMode="Single" ItemsSource="{Binding Instructions, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" AutoGenerateColumns="False">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn>
                                         <DataGridTemplateColumn.CellTemplate>
@@ -621,7 +623,50 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" />
 
-            <TabControl Grid.Row="2" MinHeight="90">
+            <TabControl Grid.Row="2" MinHeight="200">
+                <TabItem Header="Errors">
+                    <ListView ItemsSource="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
+                        <ListView.View>
+                            <GridView>
+                                <GridView.Columns>
+                                    <GridViewColumn>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image Width="16" Height="16" Source="Resources/Error_16x16.png" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Pos" DisplayMemberBinding="{Binding Position}" Width="60" />
+                                    <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="200" />
+                                    <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="600" />
+                                </GridView.Columns>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+                <TabItem Header="Log">
+                    <ListView ItemsSource="{Binding Logs, UpdateSourceTrigger=PropertyChanged}">
+                        <ListView.View>
+                            <GridView>
+                                <GridView.Columns>
+                                    <GridViewColumn>
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Image Width="16" Height="16" Source="Resources/Info_16x16.png" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Header="Date" DisplayMemberBinding="{Binding DateTime, StringFormat=yyyy-mm-dd HH:mm:ss:fff}" Width="220" />
+                                    <GridViewColumn Header="Pos" DisplayMemberBinding="{Binding Position}" Width="60" />
+                                    <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="600" />
+                                </GridView.Columns>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </TabItem>
+            </TabControl>
+
+            <TabControl Grid.Row="3" MinHeight="90">
                 <TabItem Header="Status">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -707,30 +752,10 @@
                         <TextBlock Grid.Row="2" Grid.Column="15" Text="0" HorizontalAlignment="Center" Padding="4 0" Background="PaleVioletRed" />
                     </Grid>
                 </TabItem>
-                <TabItem Header="Errors">
-                    <ListView ItemsSource="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
-                        <ListView.View>
-                            <GridView>
-                                <GridView.Columns>
-                                    <GridViewColumn>
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <Image Width="16" Height="16" Source="Resources/Error_16x16.png" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Header="Pos" DisplayMemberBinding="{Binding Position}" Width="60" />
-                                    <GridViewColumn Header="Code" DisplayMemberBinding="{Binding Code}" Width="200" />
-                                    <GridViewColumn Header="Message" DisplayMemberBinding="{Binding Message}" Width="600" />
-                                </GridView.Columns>
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </TabItem>
             </TabControl>
         </Grid>
 
-        <StatusBar Grid.Row="2" FontFamily="Consolas" FontSize="16">
+        <StatusBar Grid.Row="3" FontFamily="Consolas" FontSize="16">
             <StatusBarItem Content="Program:" />
             <Separator />
             <StatusBarItem Content="{Binding CurrentProgram, UpdateSourceTrigger=PropertyChanged}" />

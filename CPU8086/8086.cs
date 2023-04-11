@@ -37,10 +37,9 @@ namespace Final.CPU8086
             }
         }
 
-        public CPURegister Register { get; }
+        public MemoryTable Memory { get; }
 
-        public ReadOnlySpan<byte> Memory => _memory;
-        private readonly byte[] _memory = new byte[0xFFFFF];
+        public CPURegister Register { get; }
 
         public IProgram ActiveProgram { get => _activeProgram; private set => SetValue(ref _activeProgram, value); }
         private IProgram _activeProgram = null;
@@ -51,6 +50,7 @@ namespace Final.CPU8086
 
             _executer = new InstructionExecuter(this);
 
+            Memory = new MemoryTable();
             Register = new CPURegister();
         }
 
@@ -63,7 +63,7 @@ namespace Final.CPU8086
                 Register.Reset();
                 RaisePropertyChanged(nameof(Register));
 
-                Array.Clear(_memory, 0, _memory.Length);
+                Memory.Clear();
                 RaisePropertyChanged(nameof(Memory));
             }
         }
@@ -78,7 +78,7 @@ namespace Final.CPU8086
             Register.Assign(program.Register);
             RaisePropertyChanged(nameof(Register));
 
-            Array.Clear(_memory, 0, _memory.Length);
+            Memory.Clear();
             RaisePropertyChanged(nameof(Memory));
 
             return program.Length;
@@ -313,17 +313,17 @@ namespace Final.CPU8086
         private OneOf<Immediate, Error> LoadMemory(int absoluteAddress, DataType type)
         {
             int typeSize = GetDataTypeSize(type);
-            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= _memory.Length)
+            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute source memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
 
             switch (type)
             {
                 case DataType.Byte:
-                    return new Immediate(_memory[absoluteAddress], ImmediateFlag.None);
+                    return new Immediate(Memory[absoluteAddress], ImmediateFlag.None);
                 case DataType.Word:
                     {
-                        byte low = _memory[absoluteAddress + 0];
-                        byte high = _memory[absoluteAddress + 1];
+                        byte low = Memory[absoluteAddress + 0];
+                        byte high = Memory[absoluteAddress + 1];
                         ushort u16 = (ushort)(low | (high << 8));
                         return new Immediate(u16, ImmediateFlag.None);
                     }
@@ -335,18 +335,18 @@ namespace Final.CPU8086
         private OneOf<byte, Error> StoreMemory(int absoluteAddress, DataType type, Immediate value)
         {
             int typeSize = GetDataTypeSize(type);
-            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= _memory.Length)
+            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute destination memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
             switch (type)
             {
                 case DataType.Byte:
-                    _memory[absoluteAddress] = value.U8;
+                    Memory[absoluteAddress] = value.U8;
                     return 1;
                 case DataType.Word:
                     {
                         ushort u16 = value.U16;
-                        _memory[absoluteAddress + 0] = (byte)((u16 >> 0) & 0xFF);
-                        _memory[absoluteAddress + 1] = (byte)((u16 >> 8) & 0xFF);
+                        Memory[absoluteAddress + 0] = (byte)((u16 >> 0) & 0xFF);
+                        Memory[absoluteAddress + 1] = (byte)((u16 >> 8) & 0xFF);
                         return 2;
                     }
                 default:

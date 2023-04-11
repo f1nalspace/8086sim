@@ -53,6 +53,9 @@ namespace Final.CPU8086
         public bool ShowAssemblyAsHex { get => _showAssemblyAsHex; set => SetValue(ref _showAssemblyAsHex, value); }
         private bool _showAssemblyAsHex = true;
 
+        public bool ShowMemoryAsHex { get => _showMemoryAsHex; set => SetValue(ref _showMemoryAsHex, value); }
+        private bool _showMemoryAsHex = true;
+
         public ExecutionState ExecutionState
         {
             get => _executionState;
@@ -81,14 +84,23 @@ namespace Final.CPU8086
 
         public CPURegister Register => _cpu.Register;
 
-        public bool CanChangeStream => ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed || ExecutionState == ExecutionState.Halted;
+        public ImmutableArray<byte> MemoryPage { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
+        public int MemoryPageIndex { get => GetValue<int>(); set => SetValue(value, () => MemoryPageIndexChanged(value)); }
+        public int MemoryPageOffset  { get => GetValue<int>(); private set => SetValue(value);
+    }
+
+    public bool CanChangeStream => ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed || ExecutionState == ExecutionState.Halted;
 
         public DelegateCommand RunCommand { get; }
         public DelegateCommand StopCommand { get; }
         public DelegateCommand StepCommand { get; }
+        public DelegateCommand JumpToFirstMemoryPageCommand { get; }
+        public DelegateCommand JumpToLastMemoryPageCommand { get; }
 
         private volatile Task _executionTask = null;
         private volatile int _isStopping = 0;
+
+        private readonly byte[] _currentMemory = new byte[0xFF];
 
         public MainViewModel()
         {
@@ -98,6 +110,8 @@ namespace Final.CPU8086
             RunCommand = new DelegateCommand(Run, CanRun);
             StopCommand = new DelegateCommand(Stop, CanStop);
             StepCommand = new DelegateCommand(Step, CanStep);
+            JumpToFirstMemoryPageCommand = new DelegateCommand(JumpToFirstMemoryPage, CanJumpToFirstMemoryPage);
+            JumpToLastMemoryPageCommand = new DelegateCommand(JumpToLastMemoryPage, CanJumpToLastMemoryPage);
 
             Errors = new ObservableCollection<Error>();
 
@@ -117,12 +131,38 @@ namespace Final.CPU8086
                 .ToArray();
 
             CurrentProgram = Programs[0];
+
+            MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
+            MemoryPageIndex = 0;
+            MemoryPageOffset = MemoryPageIndex * MemoryTable.PageSize;
         }
+
+        private bool CanJumpToFirstMemoryPage() => MemoryPageIndex > 0;
+        private void JumpToFirstMemoryPage()
+        {
+            MemoryPageIndex = 0;
+        }
+
+        private bool CanJumpToLastMemoryPage() => MemoryPageIndex < (_cpu.Memory.PageCount - 1);
+        private void JumpToLastMemoryPage()
+        {
+            MemoryPageIndex = _cpu.Memory.PageCount - 1;
+        }
+
+        private void MemoryPageIndexChanged(int index)
+        {
+            MemoryPageOffset = index * MemoryTable.PageSize;
+            JumpToFirstMemoryPageCommand.RaiseCanExecuteChanged();
+            JumpToLastMemoryPageCommand.RaiseCanExecuteChanged();
+        }
+
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (nameof(CPU.Register).Equals(e.PropertyName))
                 RaisePropertyChanged(nameof(Register));
+            else if (nameof(CPU.Memory).Equals(e.PropertyName))
+                MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
         }
 
         public void LoadProgram(IProgram program)

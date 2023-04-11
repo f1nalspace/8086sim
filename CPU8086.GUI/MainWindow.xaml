@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Final.CPU8086"
         xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+        xmlns:s="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
         Title="MainWindow" 
         Height="720" 
@@ -17,7 +18,13 @@
         <dxmvvm:DispatcherService DispatcherPriority="DataBind" />
     </dxmvvm:Interaction.Behaviors>
     <Window.Resources>
+        <s:Boolean x:Key="trueValue">True</s:Boolean>
+        <s:Boolean x:Key="falseValue">False</s:Boolean>
+        
         <local:MultiValueEqualityConverter x:Key="multiValueEqConverter" />
+
+        <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+
         <Style TargetType="Image" x:Key="imgPositionIcon">
             <Style.Triggers>
                 <DataTrigger Value="True">
@@ -63,6 +70,10 @@
                 <RibbonGroup Header="Debug">
                     <RibbonButton Label="Step" SmallImageSource="Resources/StepIn_16x16.png" LargeImageSource="Resources/StepIn_32x32.png" Command="{Binding StepCommand}" />
                 </RibbonGroup>
+                <RibbonGroup Header="Memory">
+                    <RibbonButton Label="First Page" LargeImageSource="Resources/MemoryPageFirst_32x32.png" Command="{Binding JumpToFirstMemoryPageCommand}" />
+                    <RibbonButton Label="Last Page" LargeImageSource="Resources/MemoryPageLast_32x32.png" Command="{Binding JumpToLastMemoryPageCommand}" />
+                </RibbonGroup>
             </RibbonTab>
             <RibbonTab Header="View">
                 <RibbonGroup Header="Register">
@@ -70,6 +81,12 @@
                 </RibbonGroup>
                 <RibbonGroup Header="Stream">
                     <RibbonCheckBox Label="As Hex" IsChecked="{Binding ShowStreamAsHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </RibbonGroup>
+                <RibbonGroup Header="Memory">
+                    <RibbonCheckBox Label="As Hex" IsChecked="{Binding ShowMemoryAsHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </RibbonGroup>
+                <RibbonGroup Header="Assembly">
+                    <RibbonCheckBox Label="As Hex" IsChecked="{Binding ShowAssemblyAsHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 </RibbonGroup>
             </RibbonTab>
         </Ribbon>
@@ -80,7 +97,7 @@
                 <RowDefinition Height="5" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
-            
+
             <DockPanel Grid.Row="0" LastChildFill="True">
                 <TabControl DockPanel.Dock="Left">
                     <TabItem Header="Register">
@@ -391,44 +408,124 @@
 
                 <TabControl DockPanel.Dock="Right">
                     <TabItem Header="Stream">
-                        <ScrollViewer Width="400" HorizontalAlignment="Left">
-                            <ItemsControl ItemsSource="{Binding CurrentStream, Converter={local:BytesToStreamBytesConverter}, UpdateSourceTrigger=PropertyChanged}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
-                                            <TextBlock Width="40" TextAlignment="Right">
-                                                <TextBlock.Text>
-                                                    <MultiBinding Converter="{local:HexCellValueConverter}">
-                                                        <Binding />
-                                                        <Binding Path="DataContext.ShowStreamAsHex" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
+                        <ScrollViewer Width="500" HorizontalAlignment="Left">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ItemsControl Grid.Column="0" Width="100" ItemsSource="{Binding CurrentStream.Length, Converter={local:LengthToPosConverter}, UpdateSourceTrigger=PropertyChanged}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                                <TextBlock TextAlignment="Right" Foreground="Gray">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                                            <Binding />
+                                                            <Binding Source="{StaticResource trueValue}" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding CurrentStream, Converter={local:BytesToStreamBytesConverter}, UpdateSourceTrigger=PropertyChanged}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                                <TextBlock Width="40" TextAlignment="Right">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.ShowStreamAsHex" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
 
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Value="True">
-                                                                <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource multiValueEqConverter}">
-                                                                        <Binding Path="Index" />
-                                                                        <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
-                                                                    </MultiBinding>
-                                                                </DataTrigger.Binding>
-                                                                <Setter Property="Background" Value="LightBlue" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Value="True">
+                                                                    <DataTrigger.Binding>
+                                                                        <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                                                                            <Binding Path="Index" />
+                                                                            <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                        </MultiBinding>
+                                                                    </DataTrigger.Binding>
+                                                                    <Setter Property="Background" Value="LightBlue" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </ScrollViewer>
+                    </TabItem>
+                    <TabItem Header="Memory">
+                        <ScrollViewer Width="500" HorizontalAlignment="Left">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <ItemsControl Grid.Column="0" Width="100" ItemsSource="{Binding MemoryPage.Length, Converter={local:LengthToPosConverter}, UpdateSourceTrigger=PropertyChanged}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Vertical" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                                <TextBlock TextAlignment="Right" Foreground="Gray">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.ShowStreamAsHex" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
+                                                            <Binding Path="DataContext.MemoryPageOffset" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <ItemsControl Grid.Column="1" ItemsSource="{Binding MemoryPage, UpdateSourceTrigger=PropertyChanged}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                                <TextBlock Width="40" TextAlignment="Right">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.ShowMemoryAsHex" RelativeSource="{RelativeSource AncestorType=Window}" UpdateSourceTrigger="PropertyChanged" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
                         </ScrollViewer>
                     </TabItem>
                 </TabControl>

@@ -5,14 +5,14 @@ namespace Final.CPU8086
 {
     public class Instruction : IEquatable<Instruction>
     {
-        public int Position { get; }
+        public uint Position { get; }
         public byte OpCode { get; }
         public byte Length { get; }
         public Mnemonic Mnemonic { get; }
         public DataWidth Width { get; }
         public InstructionOperand[] Operands { get; }
 
-        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
         {
             Position = position;
             OpCode = opCode;
@@ -22,7 +22,7 @@ namespace Final.CPU8086
             Operands = operands;
         }
 
-        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
         {
             Position = position;
             OpCode = opCode;
@@ -32,13 +32,13 @@ namespace Final.CPU8086
             Operands = operands.ToArray();
         }
 
-        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
             : this(position, opCode, length, mnemonic, width, new[] { dest, source }) { }
 
-        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
             : this(position, opCode, length, mnemonic, width, new[] { dest }) { }
 
-        public Instruction(int position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(position, opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(position, opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
 
         public bool Equals(Instruction other)
         {

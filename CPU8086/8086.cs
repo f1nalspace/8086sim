@@ -1,5 +1,6 @@
 ﻿using OneOf;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.Design;
@@ -370,7 +371,7 @@ namespace Final.CPU8086
             return LoadMemory(absoluteAddress, type);
         }
 
-        private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, int position)
+        private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, uint position)
         {
             if (stream.Length < 1)
                 return new Error(ErrorCode.NotEnoughBytesInStream, $"Cannot read U8, because stream '{streamName}' is already finished or is not long enough for 1 byte", position);
@@ -387,7 +388,7 @@ namespace Final.CPU8086
             return GetAssembly(data, name, outputMode);
         }
 
-        public Instruction DecodeNext(ReadOnlySpan<byte> stream, string streamName, int position = 0)
+        public Instruction DecodeNext(ReadOnlySpan<byte> stream, string streamName, uint position = 0)
         {
             OneOf<Instruction, Error> r = TryDecodeNext(stream, streamName, position);
             if (r.IsT0)
@@ -395,7 +396,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, DataType explicitType)
+        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, DataType sourceType, DataType explicitType)
         {
             switch (sourceOp.Kind)
             {
@@ -416,12 +417,12 @@ namespace Final.CPU8086
 
                 case OperandKind.SourceRegister:
                     {
-                        if (sourceOp.DataType == DataType.Byte)
+                        if (sourceType == DataType.Byte)
                             return new InstructionOperand(_regTable.GetByte(registerBits));
-                        else if (sourceOp.DataType == DataType.Word)
+                        else if (sourceType == DataType.Word)
                             return new InstructionOperand(_regTable.GetWord(registerBits));
                         else
-                            throw new NotSupportedException($"Unsupported data type of '{sourceOp.DataType}' for source register");
+                            throw new NotSupportedException($"Unsupported type of '{sourceType}' for source register");
                     }
 
                 case OperandKind.RegisterByte:
@@ -589,7 +590,7 @@ namespace Final.CPU8086
             throw new NotSupportedException($"The source operand '{sourceOp}' is not supported");
         }
 
-        static OneOf<Instruction, Error> LoadInstruction(ReadOnlySpan<byte> stream, string streamName, int position, InstructionEntry entry)
+        static OneOf<Instruction, Error> LoadInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionEntry entry)
         {
             if (stream.Length == 0)
                 return new Error(ErrorCode.EndOfStream, $"Expect at least one byte of stream length!", position);
@@ -944,7 +945,12 @@ namespace Final.CPU8086
                 if (useExplicitType)
                     explicitType = bestInferredType;
 
-                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, explicitType);
+                DataType sourceType;
+                if (sourceOp.DataType != DataType.None)
+                    sourceType = sourceOp.DataType;
+                else
+                    sourceType = bestInferredType;
+                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, sourceType, explicitType);
 
                 targetOps[opCount++] = targetOp;
 
@@ -964,7 +970,7 @@ namespace Final.CPU8086
             return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, actualOps);
         }
 
-        public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, int position = 0)
+        public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, uint position = 0)
         {
             ReadOnlySpan<byte> tmp = stream;
             OneOf<byte, Error> opCodeRes = ReadU8(ref tmp, streamName, position);
@@ -1014,8 +1020,12 @@ namespace Final.CPU8086
             s.AppendLine("bits 16");
             s.AppendLine();
 
+            //
+            // First we decode all instructions and store it in a list
+            //
+            List<Instruction> instructions = new List<Instruction>();
             ReadOnlySpan<byte> cur = stream;
-            int position = 0;
+            uint position = 0;
             while (cur.Length > 0)
             {
                 OneOf<Instruction, Error> decodeRes = TryDecodeNext(cur, streamName, position);
@@ -1023,13 +1033,106 @@ namespace Final.CPU8086
                     return decodeRes.AsT1;
 
                 Instruction instruction = decodeRes.AsT0;
-                string asm = instruction.Asm(outputMode, hexPrefix);
-                Debug.WriteLine($"\t{asm}");
-                s.AppendLine(asm);
+                instructions.Add(instruction);
 
                 cur = cur.Slice(instruction.Length);
                 position += instruction.Length;
             }
+
+            //
+            // Second we convert the instructions into a hashtable, mapped by its position
+            //
+            Dictionary<uint, Instruction> positionToInstructionMap = instructions.ToDictionary(i => i.Position, i => i);
+
+            //
+            // Third we generate the entire jump labels
+            //
+            int labelCounter = 0;
+
+            // Maps a instruction with a "myLabel:", so that other instructions can jump into it
+            Dictionary<Instruction, string> instructionToSourceLabelMap = new Dictionary<Instruction, string>();
+
+            // Maps a instruction as a jump to specific target label, e.g. JNE myLabel
+            Dictionary<Instruction, string> instructionToTargetLabelMap = new Dictionary<Instruction, string>();
+
+            foreach (Instruction instruction in instructions)
+            {
+                switch (instruction.Mnemonic.Type)
+                {
+                    case InstructionType.CALL:
+                        // Call is handled specially
+                        break;
+                    case InstructionType.JA:
+                    case InstructionType.JAE:
+                    case InstructionType.JB:
+                    case InstructionType.JBE:
+                    case InstructionType.JC:
+                    case InstructionType.JCXZ:
+                    case InstructionType.JE:
+                    case InstructionType.JG:
+                    case InstructionType.JGE:
+                    case InstructionType.JL:
+                    case InstructionType.JLE:
+                    case InstructionType.JMP:
+                    case InstructionType.JNC:
+                    case InstructionType.JNE:
+                    case InstructionType.JNO:
+                    case InstructionType.JNS:
+                    case InstructionType.JNP:
+                    case InstructionType.JO:
+                    case InstructionType.JP:
+                    case InstructionType.JS:
+                        {
+                            if (instruction.Operands.Length != 1)
+                                return new Error(ErrorCode.InvalidOperandsLength, $"Expect number of operands to be 1, but got '{instruction.Operands.Length}' for jump instruction '{instruction}'", instruction.Position);
+
+                            InstructionOperand firstOp = instruction.Operands[0];
+                            if (firstOp.Op != OperandType.Immediate)
+                                return new Error(ErrorCode.UnsupportedOperandType, $"The operand type '{firstOp.Op}' is not supported for jump instruction '{instruction}'", instruction.Position);
+
+                            if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
+                                return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
+
+                            int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
+
+                            uint absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
+
+                            if (!positionToInstructionMap.TryGetValue(absoluteAddress, out Instruction instructionToJumpTo))
+                                return new Error(ErrorCode.JumpInstructionNotFound, $"No instruction for absolute address '{absoluteAddress}' found for jump instruction '{instruction}'", instruction.Position);
+
+                            if (!instructionToSourceLabelMap.TryGetValue(instructionToJumpTo, out string label))
+                            {
+                                label = $"label{labelCounter++}";
+                                instructionToSourceLabelMap.Add(instructionToJumpTo, label);
+                            }
+
+                            instructionToTargetLabelMap.Add(instruction, label);
+                        }
+                        break;
+                }
+
+
+            }
+
+            //
+            // Lastly we generate the assembly for each instruction and insert source labels before or replace the entire instruction with a label jump
+            //
+            foreach (Instruction instruction in instructions)
+            {
+                if (instructionToSourceLabelMap.TryGetValue(instruction, out string sourceLabel))
+                    s.AppendLine($"{sourceLabel}:");
+
+                if (instructionToTargetLabelMap.TryGetValue(instruction, out string targetLabel))
+                {
+                    s.AppendLine($"{instruction.Mnemonic} {targetLabel}");
+                    continue;
+                }
+
+                string asm = instruction.Asm(outputMode, hexPrefix);
+                Debug.WriteLine($"\t{asm}");
+                s.AppendLine(asm);
+            }
+
             return s.ToString();
         }
 

@@ -47,6 +47,23 @@ namespace Final.CPU8086
         [FieldOffset(6)]
         public readonly short Padding;
 
+        public int Value
+        {
+            get
+            {
+                return Type switch
+                {
+                    ImmediateType.Byte => U8,
+                    ImmediateType.SignedByte => S8,
+                    ImmediateType.Word => U16,
+                    ImmediateType.SignedWord => S16,
+                    ImmediateType.DoubleWord => (int)U32,
+                    ImmediateType.Int => S32,
+                    _ => 0,
+                };
+            }
+        }
+
         public Immediate(byte u8, ImmediateFlag flags) : this()
         {
             Type = ImmediateType.Byte;

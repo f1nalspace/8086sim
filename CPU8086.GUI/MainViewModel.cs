@@ -29,13 +29,13 @@ namespace Final.CPU8086
 
         public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value); }
         private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
-        private ImmutableArray<int> _instructionIndexMap = ImmutableArray<int>.Empty;
+        private ImmutableArray<uint> _instructionIndexMap = ImmutableArray<uint>.Empty;
 
         public ObservableCollection<Error> Errors { get; }
 
         public ObservableCollection<LogItemViewModel> Logs { get; }
 
-        public int CurrentStreamPosition
+        public uint CurrentStreamPosition
         {
             get => _currentStreamPosition;
             private set
@@ -44,7 +44,7 @@ namespace Final.CPU8086
                 RaisePropertyChanged(nameof(CurrentStreamPosition));
             }
         }
-        private int _currentStreamPosition = -1;
+        private uint _currentStreamPosition = uint.MaxValue;
 
         public bool ShowStreamAsHex { get => _showStreamAsHex; set => SetValue(ref _showStreamAsHex, value); }
         private bool _showStreamAsHex = true;
@@ -140,7 +140,7 @@ namespace Final.CPU8086
             MemoryPageOffset = MemoryPageIndex * MemoryTable.PageSize;
         }
 
-        private void AddLog(int position, string message)
+        private void AddLog(uint position, string message)
         {
             if (_dispatcherService != null)
                 _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
@@ -251,7 +251,7 @@ namespace Final.CPU8086
                     }
 
                     int relativePos = r.AsT0;
-                    int nextPos = CurrentStreamPosition + relativePos;
+                    uint nextPos = (uint)(CurrentStreamPosition + relativePos);
 
                     // Stream is finished
                     if (nextPos >= CurrentStream.Length)
@@ -260,12 +260,12 @@ namespace Final.CPU8086
                         break;
                     }
 
-                    int nextInstructionIndex = _instructionIndexMap[nextPos];
-                    if (nextInstructionIndex == -1)
+                    uint nextInstructionIndex = _instructionIndexMap[(int)nextPos];
+                    if (nextInstructionIndex == uint.MaxValue)
                         throw new InvalidDataException($"No instruction mapped to stream position '{nextInstructionIndex}'!");
 
                     CurrentStreamPosition = nextPos;
-                    CurrentInstruction = Instructions[nextInstructionIndex];
+                    CurrentInstruction = Instructions[(int)nextInstructionIndex];
                     if (isSingleStep)
                         break;
                 }
@@ -281,7 +281,7 @@ namespace Final.CPU8086
             if (isFinished)
             {
                 CurrentInstruction = null;
-                CurrentStreamPosition = -1;
+                CurrentStreamPosition = uint.MaxValue;
                 ExecutionState = ExecutionState.Stopped;
             }
             else if (ExecutionState != ExecutionState.Failed)
@@ -293,7 +293,7 @@ namespace Final.CPU8086
                 else
                 {
                     CurrentInstruction = null;
-                    CurrentStreamPosition = -1;
+                    CurrentStreamPosition = uint.MaxValue;
                     ExecutionState = ExecutionState.Stopped;
                 }
             }
@@ -327,7 +327,7 @@ namespace Final.CPU8086
             {
                 ExecutionState = ExecutionState.Stopped;
                 CurrentInstruction = null;
-                CurrentStreamPosition = -1;
+                CurrentStreamPosition = uint.MaxValue;
                 _isStopping = 0;
                 RefreshCommands();
             }
@@ -336,7 +336,7 @@ namespace Final.CPU8086
         private bool CanStep() =>
             Instructions.Length > 0 &&
             CurrentStream.Length > 0 &&
-            (CurrentStreamPosition == -1 || CurrentStreamPosition < CurrentStream.Length) &&
+            (CurrentStreamPosition == uint.MaxValue || CurrentStreamPosition < CurrentStream.Length) &&
             DecodeState == DecodeState.Success &&
             (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted) &&
             (_executionTask == null || _executionTask.IsCompleted);
@@ -367,7 +367,7 @@ namespace Final.CPU8086
 
             Contract.Assert(ExecutionState == ExecutionState.Stopped);
             Contract.Assert(CurrentInstruction == null);
-            Contract.Assert(CurrentStreamPosition == -1);
+            Contract.Assert(CurrentStreamPosition == uint.MaxValue);
 
             AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
 
@@ -378,15 +378,15 @@ namespace Final.CPU8086
 
             ImmutableArray<byte> stream = program.Stream;
 
-            int[] instructionIndexMap = new int[stream.Length];
+            uint[] instructionIndexMap = new uint[stream.Length];
             for (int i = 0; i < stream.Length; ++i)
-                instructionIndexMap[i] = -1;
+                instructionIndexMap[i] = uint.MaxValue;
 
             Errors.Clear();
             try
             {
                 ReadOnlySpan<byte> cur = stream.AsSpan();
-                int position = 0;
+                uint position = 0;
                 while (cur.Length > 0)
                 {
                     OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, program.Name, position);
@@ -397,7 +397,7 @@ namespace Final.CPU8086
                         break;
                     }
                     Instruction instruction = r.AsT0;
-                    instructionIndexMap[position] = list.Count;
+                    instructionIndexMap[position] = (uint)list.Count;
                     list.Add(instruction);
                     cur = cur.Slice(instruction.Length);
                     position += instruction.Length;

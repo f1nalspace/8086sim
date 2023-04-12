@@ -16,6 +16,7 @@
         UnsupportedOperandType,
         UnsupportedRegisterType,
         UnsupportedEffectiveAddressCalculation,
+        UnsupportedImmediateFlags,
         InvalidMemoryAddress,
         UnsupportedDataWidth,
         OpCodeNotImplemented,
@@ -25,5 +26,7 @@
         ModeNotImplemented,
         ConstantFieldMismatch,
         RegFieldMismatch,
+        JumpInstructionNotFound,
+        InvalidOperandsLength,
     }
 }

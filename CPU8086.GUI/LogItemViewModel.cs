@@ -5,11 +5,11 @@ namespace Final.CPU8086
 {
     public class LogItemViewModel : ViewModelBase
     {
-        public int Position { get; }
+        public uint Position { get; }
         public string Message { get; }
         public DateTimeOffset DateTime { get; }
 
-        public LogItemViewModel(int position, string message, DateTimeOffset dateTime)
+        public LogItemViewModel(uint position, string message, DateTimeOffset dateTime)
         {
             Position = position;
             Message = message;

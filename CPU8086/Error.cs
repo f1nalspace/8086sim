@@ -6,16 +6,16 @@ namespace Final.CPU8086
     {
         public ErrorCode Code { get; }
         public string Message { get; }
-        public int Position { get; }
+        public uint Position { get; }
 
-        public Error(ErrorCode code, string message, int position)
+        public Error(ErrorCode code, string message, uint position)
         {
             Code = code;
             Message = message;
             Position = position;
         }
 
-        public Error(Error error, string message, int position)
+        public Error(Error error, string message, uint position)
         {
             Code = error.Code;
             Message = $"{message}: {error.Message}";

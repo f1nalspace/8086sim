@@ -1082,6 +1082,9 @@ namespace Final.CPU8086
                     case InstructionType.JO:
                     case InstructionType.JP:
                     case InstructionType.JS:
+                    case InstructionType.LOOP:
+                    case InstructionType.LOOPE:
+                    case InstructionType.LOOPNZ:
                         {
                             if (instruction.Operands.Length != 1)
                                 return new Error(ErrorCode.InvalidOperandsLength, $"Expect number of operands to be 1, but got '{instruction.Operands.Length}' for jump instruction '{instruction}'", instruction.Position);

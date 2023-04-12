@@ -34,25 +34,25 @@ namespace Final.ITP
     {
         public static readonly InstructionEntry[] PrefixInstructions = new InstructionEntry[] {
             // Lock
-            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
 
             // String manipulation
-            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
-            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
 
             // Segment override
-            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}),
-            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}),
-            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}),
-            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}),
-            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}),
-            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, DataFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}),
+            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}),
+            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}),
+            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}),
+            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}),
+            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
 
             // Operand override (Changes size of data expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
-            new InstructionEntry(0x66, new Mnemonic(), DataWidthType.None, DataFlags.Prefix | DataFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0x66, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
 
             // Address override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
-            new InstructionEntry(0x67, new Mnemonic(), DataWidthType.None, DataFlags.Prefix | DataFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            new InstructionEntry(0x67, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
         };
     }
 
@@ -313,7 +313,7 @@ namespace Final.ITP
                     // Parse flags
                     flagsText = Regex.Replace(flagsText, "-", "*");
                     Debug.Assert(flagsText.Length == 8);
-                    States flags = new States(flagsText.AsSpan());
+                    States states = new States(flagsText.AsSpan());
 
 
 
@@ -371,9 +371,9 @@ namespace Final.ITP
                     // Convert family into instruction type and create the instruction entry to the table
                     if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
                     {
-                        DataFlags dataFlags = DataFlags.None;
+                        InstructionFlags flags = InstructionFlags.None;
                         if (signBit == SignBit.SignExtendedImm8)
-                            dataFlags |= DataFlags.SignExtendedImm8;
+                            flags |= InstructionFlags.SignExtendedImm8;
 
                         // We dont want to create any Operand´s for Keywords or Type-Casts, so we convert them into data-types
                         DataType opDataType = DataType.None;
@@ -396,6 +396,9 @@ namespace Final.ITP
                                 case OperandKind.TypeInt:
                                     opDataType |= DataType.Int;
                                     break;
+                                case OperandKind.KeywordFar:
+                                    flags |= InstructionFlags.Far;
+                                    break;
                                 default:
                                     leftOperands.Add(operand.WithDataType(opDataType));
                                     opDataType = DataType.None;
@@ -403,7 +406,7 @@ namespace Final.ITP
                             }
                         }
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, dataFlags, flags, platform, minLen, maxLen, fields, leftOperands.ToArray());
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, flags, states, platform, minLen, maxLen, fields, leftOperands.ToArray());
                         allInstructions.Add(instruction);
                     }
                     //else
@@ -498,8 +501,7 @@ namespace Final.ITP
             Debug.WriteLine(string.Empty);
             Debug.WriteLine(nameToStringMethodText.ToString());
             Debug.WriteLine(string.Empty);
-#endif
-
+#else
             // Fill instruction table, but skip all non 8086 platforms
             InstructionTable newTable = new InstructionTable();
             InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
@@ -516,7 +518,7 @@ namespace Final.ITP
             string entryName = "IE";
             string listName = "IL";
             string dataWidthName = "DW";
-            string dataFlagsName = "DF";
+            string flagsName = "IF";
             string tableName = nameof(InstructionTable);
             string varName = "_opToList";
 
@@ -524,7 +526,7 @@ namespace Final.ITP
             instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName};");
             instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName};");
             instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
-            instructionsTableText.AppendLine($"using {dataFlagsName} = {typeof(DataFlags).FullName};");
+            instructionsTableText.AppendLine($"using {flagsName} = {typeof(InstructionFlags).FullName};");
             instructionsTableText.AppendLine();
             instructionsTableText.AppendLine($"public class {tableName}");
             instructionsTableText.AppendLine("{");
@@ -532,6 +534,8 @@ namespace Final.ITP
             instructionsTableText.AppendLine();
             instructionsTableText.AppendLine($"\tpublic {tableName}()");
             instructionsTableText.AppendLine("\t{");
+
+            InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>();
 
             foreach (InstructionList list in newTable)
             {
@@ -572,25 +576,34 @@ namespace Final.ITP
                         entryText.Append(entry.DataWidth.ToString());
                         entryText.Append('"');
 
-                        // DataFlags
+                        // Flags
                         entryText.Append(", ");
-                        if (entry.DataFlags != DataFlags.None)
+                        if (entry.Flags != InstructionFlags.None)
                         {
-                            if (entry.DataFlags.HasFlag(DataFlags.SignExtendedImm8))
+                            int flagCount = 0;
+                            foreach (InstructionFlags flag in allFlags)
                             {
-                                entryText.Append(dataFlagsName);
-                                entryText.Append('.');
-                                entryText.Append(nameof(DataFlags.SignExtendedImm8));
+                                if (flag == InstructionFlags.None)
+                                    continue;
+                                if (entry.Flags.HasFlag(flag))
+                                {
+                                    if (flagCount > 0)
+                                        entryText.Append(" | ");
+                                    entryText.Append(flagsName);
+                                    entryText.Append('.');
+                                    entryText.Append(flag);
+                                    ++flagCount;
+                                }
                             }
                         }
                         else
                         {
-                            entryText.Append(dataFlagsName);
+                            entryText.Append(flagsName);
                             entryText.Append('.');
-                            entryText.Append(nameof(DataFlags.None));
+                            entryText.Append(nameof(InstructionFlags.None));
                         }
 
-                        // Flags
+                        // States
                         entryText.Append(", ");
                         entryText.Append('"');
                         entryText.Append(entry.States.ToString());
@@ -677,6 +690,7 @@ namespace Final.ITP
             instructionsTableText.AppendLine("}");
 
             Debug.WriteLine(instructionsTableText.ToString());
+#endif
 
 #endif // GENERATE_CS
 

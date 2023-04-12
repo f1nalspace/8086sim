@@ -3,6 +3,19 @@ using System.Text;
 
 namespace Final.CPU8086
 {
+    [Flags]
+    public enum InstructionFlags : uint
+    {
+        None = 0,
+        Lock = 1 << 0,
+        Rep = 1 << 1,
+        Segment = 1 << 2,
+        Far = 1 << 3,
+        SignExtendedImm8 = 1 << 4,
+        Prefix = 1 << 5,
+        Override = 1 << 6,
+    }
+
     public class Instruction : IEquatable<Instruction>
     {
         public uint Position { get; }
@@ -10,35 +23,38 @@ namespace Final.CPU8086
         public byte Length { get; }
         public Mnemonic Mnemonic { get; }
         public DataWidth Width { get; }
+        public InstructionFlags Flags { get; }
         public InstructionOperand[] Operands { get; }
 
-        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand[] operands)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, InstructionOperand[] operands)
         {
             Position = position;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
+            Flags = flags;
             Length = length;
             Operands = operands;
         }
 
-        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, ReadOnlySpan<InstructionOperand> operands)
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, ReadOnlySpan<InstructionOperand> operands)
         {
             Position = position;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
+            Flags = flags;
             Length = length;
             Operands = operands.ToArray();
         }
 
-        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest, InstructionOperand source)
-            : this(position, opCode, length, mnemonic, width, new[] { dest, source }) { }
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, InstructionOperand dest, InstructionOperand source)
+            : this(position, opCode, length, mnemonic, width, flags, new[] { dest, source }) { }
 
-        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionOperand dest)
-            : this(position, opCode, length, mnemonic, width, new[] { dest }) { }
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, InstructionOperand dest)
+            : this(position, opCode, length, mnemonic, width, flags, new[] { dest }) { }
 
-        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width) : this(position, opCode, length, mnemonic, width, Array.Empty<InstructionOperand>()) { }
+        public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags) : this(position, opCode, length, mnemonic, width, flags, Array.Empty<InstructionOperand>()) { }
 
         public bool Equals(Instruction other)
         {
@@ -46,6 +62,7 @@ namespace Final.CPU8086
             if (Length != other.Length) return false;
             if (!Mnemonic.Equals(other.Mnemonic)) return false;
             if (!Width.Equals(other.Width)) return false;
+            if (!Flags.Equals(other.Flags)) return false;
             if (Position != other.Position) return false;
             if (Operands.Length != other.Operands.Length) return false;
             for (int i = 0; i < Operands.Length; ++i)
@@ -57,7 +74,7 @@ namespace Final.CPU8086
         }
 
         public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
-        public override int GetHashCode() => HashCode.Combine(OpCode, Length,  Mnemonic, Width, Position);
+        public override int GetHashCode() => HashCode.Combine(Position, OpCode, Length,  Mnemonic, Width, Flags);
 
         public string Asm(OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
         {

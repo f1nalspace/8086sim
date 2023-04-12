@@ -786,7 +786,7 @@ namespace Final.CPU8086
                             break;
 #endif
                     default:
-                        throw new NotSupportedException($"The field type '{field.Type}' is not supported!");
+                        return new Error(ErrorCode.UnsupportedFieldType, $"The field type '{field.Type}' is not supported!", position);
                 }
             }
 
@@ -965,8 +965,10 @@ namespace Final.CPU8086
             if (length > entry.MaxLength)
                 return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes", position);
 
+            InstructionFlags flags = InstructionFlags.None;
+
             Span<InstructionOperand> actualOps = targetOps.Slice(0, opCount);
-            return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, actualOps);
+            return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, flags, actualOps);
         }
 
         public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, uint position = 0)

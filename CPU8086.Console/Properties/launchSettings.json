@@ -2,7 +2,7 @@
   "profiles": {
     "CPU8086Simulator": {
       "commandName": "Project",
-      "commandLineArgs": "--res listing_0041_add_sub_cmp_jnz"
+      "commandLineArgs": "--res listing_0050_challenge_jumps"
     }
   }
 }

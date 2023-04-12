@@ -28,5 +28,6 @@
         RegFieldMismatch,
         JumpInstructionNotFound,
         InvalidOperandsLength,
+        UnsupportedFieldType,
     }
 }

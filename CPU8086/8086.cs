@@ -1002,7 +1002,7 @@ namespace Final.CPU8086
             }
         }
 
-        public static OneOf<AssemblyLine[], Error> GetAssemblyLines(IEnumerable<Instruction> instructions, OutputValueMode outputMode, string hexPrefix = "0x")
+        public OneOf<AssemblyLine[], Error> GetAssemblyLines(IEnumerable<Instruction> instructions, OutputValueMode outputMode, string hexPrefix = "0x")
         {
             //
             // Second we convert the instructions into a hashtable, mapped by its position

@@ -27,9 +27,12 @@ namespace Final.CPU8086
 
         public ImmutableArray<byte> CurrentStream { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
 
-        public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value); }
+        public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value, () => InstructionsChanged(value)); }
         private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
         private ImmutableArray<uint> _instructionIndexMap = ImmutableArray<uint>.Empty;
+
+        public ImmutableArray<AssemblyLine> AssemblyLines { get => _assemblyLines; private set => SetValue(ref _assemblyLines, value); }
+        private ImmutableArray<AssemblyLine> _assemblyLines = ImmutableArray<AssemblyLine>.Empty;
 
         public ObservableCollection<Error> Errors { get; }
 
@@ -52,7 +55,7 @@ namespace Final.CPU8086
         public bool ShowRegisterAsHex { get => _showRegisterAsHex; set => SetValue(ref _showRegisterAsHex, value); }
         private bool _showRegisterAsHex = true;
 
-        public bool ShowAssemblyAsHex { get => _showAssemblyAsHex; set => SetValue(ref _showAssemblyAsHex, value); }
+        public bool ShowAssemblyAsHex { get => _showAssemblyAsHex; set => SetValue(ref _showAssemblyAsHex, value, () => ShowAssemblyAsHexChanged(value)); }
         private bool _showAssemblyAsHex = true;
 
         public bool ShowMemoryAsHex { get => _showMemoryAsHex; set => SetValue(ref _showMemoryAsHex, value); }
@@ -178,6 +181,16 @@ namespace Final.CPU8086
                 MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
         }
 
+        private void InstructionsChanged(IEnumerable<Instruction> instructions)
+        {
+            RefreshAssemblyLines(instructions, ShowAssemblyAsHex);
+        }
+
+        private void ShowAssemblyAsHexChanged(bool asHex)
+        {
+            RefreshAssemblyLines(Instructions, asHex);
+        }
+
         public void LoadProgram(IProgram program)
         {
             AddLog(0, $"Loading program '{program}'");
@@ -212,7 +225,7 @@ namespace Final.CPU8086
         private void Run()
         {
             Contract.Assert(CanRun());
-            
+
             CurrentInstruction = Instructions.First();
             CurrentStreamPosition = CurrentInstruction.Position;
             _isStopping = 0;
@@ -360,6 +373,15 @@ namespace Final.CPU8086
             }
         }
 
+        private void RefreshAssemblyLines(IEnumerable<Instruction> instructions, bool asHex)
+        {
+            OneOf<AssemblyLine[], Error> res = _cpu.GetAssemblyLines(instructions, asHex ? OutputValueMode.AsHex : OutputValueMode.AsInteger);
+            if (res.IsT0)
+                AssemblyLines = res.AsT0.ToImmutableArray();
+            else
+                AssemblyLines = ImmutableArray<AssemblyLine>.Empty;
+        }
+
         private void DecodeInstructions(IProgram program)
         {
             if (program == null)
@@ -373,7 +395,6 @@ namespace Final.CPU8086
 
             DecodeState = DecodeState.Decoding;
 
-            List<Error> errors = new List<Error>();
             List<Instruction> list = new List<Instruction>();
 
             ImmutableArray<byte> stream = program.Stream;
@@ -402,6 +423,7 @@ namespace Final.CPU8086
                     cur = cur.Slice(instruction.Length);
                     position += instruction.Length;
                 }
+
                 Instructions = list.ToImmutableArray();
                 _instructionIndexMap = instructionIndexMap.ToImmutableArray();
             }

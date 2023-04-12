@@ -541,7 +541,7 @@
                     <TabControl Grid.Column="0">
                         <TabItem Header="Assembly">
                             <ScrollViewer>
-                                <ItemsControl ItemsSource="{Binding Instructions}">
+                                <ItemsControl ItemsSource="{Binding AssemblyLines}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
                                             <StackPanel Orientation="Vertical" />
@@ -571,14 +571,7 @@
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Image Grid.Column="0" Width="16" Height="16" Style="{StaticResource imgPositionIcon}" />
-                                                <TextBlock Grid.Column="2">
-                                                    <TextBlock.Text>
-                                                        <MultiBinding Converter="{local:InstructionAssemblyConverter}">
-                                                            <Binding />
-                                                            <Binding Path="DataContext.ShowAssemblyAsHex" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
-                                                        </MultiBinding>
-                                                    </TextBlock.Text>
-                                                </TextBlock>
+                                                <TextBlock Grid.Column="2" Text="{Binding}" />
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

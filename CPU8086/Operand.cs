@@ -378,8 +378,6 @@ namespace Final.CPU8086
                 "(dword)" => DataType.DoubleWord,
                 "(qword)" => DataType.QuadWord,
                 "(ptr)" => DataType.Pointer,
-                "(far)" => DataType.Far,
-                "(far ptr)" => DataType.Far | DataType.Pointer,
                 "(byte ptr)" => DataType.Byte | DataType.Pointer,
                 "(short ptr)" => DataType.Word | DataType.Pointer,
                 "(int ptr)" => DataType.Int | DataType.Pointer,
@@ -405,10 +403,6 @@ namespace Final.CPU8086
                     return "(qword)";
                 else if (dataType == DataType.Pointer)
                     return "(ptr)";
-                else if (dataType == DataType.Far)
-                    return "(far)";
-                else if (dataType.HasFlag(DataType.Far) && dataType.HasFlag(DataType.Pointer))
-                    return "(far ptr)";
                 else if (dataType.HasFlag(DataType.Byte) && dataType.HasFlag(DataType.Pointer))
                     return "(byte ptr)";
                 else if (dataType.HasFlag(DataType.Word) && dataType.HasFlag(DataType.Pointer))

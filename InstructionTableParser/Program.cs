@@ -382,9 +382,8 @@ namespace Final.ITP
                         {
                             switch (operand.Kind)
                             {
-                                case OperandKind.KeywordFar:
-                                    opDataType |= DataType.Far;
-                                    break;
+                                case OperandKind.FarPointer:
+                                case OperandKind.NearPointer:
                                 case OperandKind.KeywordPointer:
                                     opDataType |= DataType.Pointer;
                                     break;

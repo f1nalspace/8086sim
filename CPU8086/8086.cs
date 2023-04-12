@@ -269,7 +269,6 @@ namespace Final.CPU8086
                 DataType.DoubleWord => 4,
                 DataType.QuadWord => 8,
                 DataType.Pointer => 8,
-                DataType.Far => 8,
                 _ => 0,
             };
         }
@@ -833,7 +832,7 @@ namespace Final.CPU8086
                         OperandKind.TypeInt => DataType.DoubleWord,
 
                         OperandKind.NearPointer => DataType.Pointer,
-                        OperandKind.FarPointer => DataType.Pointer | DataType.Far,
+                        OperandKind.FarPointer => DataType.Pointer,
 
                         OperandKind.ShortLabel => DataType.Byte,
                         OperandKind.LongLabel => DataType.Word,

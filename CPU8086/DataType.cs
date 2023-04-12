@@ -12,6 +12,5 @@ namespace Final.CPU8086
         Int = 1 << 3,
         QuadWord = 1 << 4,
         Pointer = 1 << 5,
-        Far = 1 << 6,
     }
 }

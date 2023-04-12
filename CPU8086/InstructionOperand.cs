@@ -127,7 +127,6 @@ namespace Final.CPU8086
                 DataType.Int | DataType.Pointer => "int ptr ",
                 DataType.DoubleWord => "dword ",
                 DataType.DoubleWord | DataType.Pointer => "dword ptr ",
-                DataType.Far | DataType.Pointer => "far ptr ",
                 _ => string.Empty
             };
             string value = Op switch
@@ -152,7 +151,6 @@ namespace Final.CPU8086
                 DataType.Int | DataType.Pointer => "int ptr ",
                 DataType.DoubleWord => "dword ",
                 DataType.DoubleWord | DataType.Pointer => "dword ptr ",
-                DataType.Far | DataType.Pointer => "far ptr ",
                 _ => string.Empty
             };
             string value = Op switch

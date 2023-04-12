@@ -128,33 +128,59 @@ namespace Final.CPU8086
             return result;
         }
 
+        static readonly Argument ResArgConstant = new Argument("res", ArgumentQuantifier.One);
+
         public static int Main(string[] args)
         {
-            IEnumerable<Argument> parsedArgs = ParseArguments(args);
+
+            IEnumerable<Argument> parsedArgs = ParseArguments(args, ResArgConstant);
             if (!parsedArgs.Any())
             {
                 Console.Error.WriteLine($"No arguments specified, please specify the file argument");
                 return -1;
             }
 
-            string[] files = parsedArgs
-                .Where(x => string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrWhiteSpace(x.Value))
-                .Select(x => x.Value)
-                .ToArray();
-
-            if (files.Length == 0)
-            {
-                Console.Error.WriteLine("No file arguments found");
-                return -1;
-            }
-
-            string filePath = files[0];
-
-            byte[] data = File.ReadAllBytes(filePath);
-
             CPU cpu = new CPU();
 
-            OneOf<string, Error> assemblyRes = cpu.GetAssembly(data, filePath, OutputValueMode.AsInteger);
+            OneOf<string, Error> assemblyRes;
+
+            Argument[] resArgs = parsedArgs.Where(a => ResArgConstant.Key.Equals(a.Key)).ToArray();
+            if (resArgs.Length > 0)
+            {
+                string[] resNames = resArgs.Select(a => a.Value).ToArray();
+
+                string resName = resNames[0];
+
+                InstructionStreamResources resMng = new InstructionStreamResources();
+
+                Stream resStream = resMng.Get(resName);
+                if (resStream == null)
+                {
+                    Console.Error.WriteLine($"No resource by name '{resName}' found");
+                    return -1;
+                }
+
+                assemblyRes = cpu.GetAssembly(resStream, resName, OutputValueMode.AsInteger);
+            }
+            else
+            {
+                string[] files = parsedArgs
+                    .Where(x => string.IsNullOrWhiteSpace(x.Key) && !string.IsNullOrWhiteSpace(x.Value))
+                    .Select(x => x.Value)
+                    .ToArray();
+
+                if (files.Length == 0)
+                {
+                    Console.Error.WriteLine("No file arguments found");
+                    return -1;
+                }
+
+                string filePath = files[0];
+
+                byte[] data = File.ReadAllBytes(filePath);
+
+                assemblyRes = cpu.GetAssembly(data, filePath, OutputValueMode.AsInteger);
+            }
 
             int resultCode = assemblyRes.Match(
                 assembly =>

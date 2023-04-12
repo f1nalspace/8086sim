@@ -2,7 +2,7 @@
   "profiles": {
     "CPU8086Simulator": {
       "commandName": "Project",
-      "commandLineArgs": "\"$(SolutionDir)CPU8086.Resources\\Resources\\listing_0041_add_sub_cmp_jnz\""
+      "commandLineArgs": "--res listing_0041_add_sub_cmp_jnz"
     }
   }
 }

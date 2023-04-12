@@ -124,7 +124,7 @@
                             <!-- AX -->
                             <Grid Grid.Row="0" Background="Yellow">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -133,21 +133,20 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="AX" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="AX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Padding="4 0" HorizontalAlignment="Right">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.AX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.AH" UpdateSourceTrigger="PropertyChanged" />
@@ -156,8 +155,8 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.AL" UpdateSourceTrigger="PropertyChanged" />
@@ -170,7 +169,7 @@
                             <!-- BX -->
                             <Grid Grid.Row="1" Background="LightGreen">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -181,18 +180,18 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="BX" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="BX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.BX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.BH" UpdateSourceTrigger="PropertyChanged" />
@@ -201,8 +200,8 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.BL" UpdateSourceTrigger="PropertyChanged" />
@@ -215,7 +214,7 @@
                             <!-- CX -->
                             <Grid Grid.Row="2" Background="LightBlue">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -226,18 +225,18 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="CX" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="CX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.CX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.CH" UpdateSourceTrigger="PropertyChanged" />
@@ -246,8 +245,8 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.CL" UpdateSourceTrigger="PropertyChanged" />
@@ -260,7 +259,7 @@
                             <!-- DX -->
                             <Grid Grid.Row="3" Background="LavenderBlush">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -271,18 +270,18 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="DX" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="DX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.DX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="2" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.DH" UpdateSourceTrigger="PropertyChanged" />
@@ -291,8 +290,8 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" Padding="4 0" />
-                                <TextBlock Grid.Row="1" Grid.Column="4" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
                                             <Binding Path="Register.DL" UpdateSourceTrigger="PropertyChanged" />
@@ -307,7 +306,7 @@
                             <!-- SP -->
                             <Grid Grid.Row="5" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -319,9 +318,9 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="SP" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.SP" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -332,7 +331,7 @@
                             <!-- BP -->
                             <Grid Grid.Row="6" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -344,9 +343,9 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="BP" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.BP" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -357,7 +356,7 @@
                             <!-- SI -->
                             <Grid Grid.Row="7" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -369,9 +368,9 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="BP" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.SI" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -382,7 +381,7 @@
                             <!-- DI -->
                             <Grid Grid.Row="8" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50" />
+                                    <ColumnDefinition Width="60" />
                                     <ColumnDefinition Width="20" />
                                     <ColumnDefinition Width="30" />
                                     <ColumnDefinition Width="5" />
@@ -394,11 +393,12 @@
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="DI" HorizontalAlignment="Right" Padding="4 0" />
-                                <TextBlock Grid.Column="0" Grid.Row="1" Padding="4 0" HorizontalAlignment="Right">
+                                <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.DI" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Source="$" />
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
@@ -571,7 +571,14 @@
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Image Grid.Column="0" Width="16" Height="16" Style="{StaticResource imgPositionIcon}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding Converter={local:InstructionAssemblyConverter}}" />
+                                                <TextBlock Grid.Column="2">
+                                                    <TextBlock.Text>
+                                                        <MultiBinding Converter="{local:InstructionAssemblyConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.ShowAssemblyAsHex" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                        </MultiBinding>
+                                                    </TextBlock.Text>
+                                                </TextBlock>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -623,7 +630,7 @@
 
             <GridSplitter Grid.Row="1" Height="5" HorizontalAlignment="Stretch" />
 
-            <TabControl Grid.Row="2" MinHeight="200">
+            <TabControl Grid.Row="2" Height="200">
                 <TabItem Header="Errors">
                     <ListView ItemsSource="{Binding Errors, UpdateSourceTrigger=PropertyChanged}">
                         <ListView.View>

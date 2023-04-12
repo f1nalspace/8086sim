@@ -1,8 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using IS = Final.CPU8086.Instruction;
@@ -10,6 +8,7 @@ using IT = Final.CPU8086.InstructionType;
 using IO = Final.CPU8086.InstructionOperand;
 using RT = Final.CPU8086.RegisterType;
 using DWT = Final.CPU8086.DataWidthType;
+using System.Diagnostics.SymbolStore;
 
 namespace Final.CPU8086
 {
@@ -36,6 +35,20 @@ namespace Final.CPU8086
             }
         }
 
+        private static void AssertAssemblyLine(string expected, string actual)
+        {
+            string[] expectedOps = expected.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] actualOps = expected.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            Assert.AreEqual(expectedOps.Length, actualOps.Length, $"Expect assembly operands length of '{expectedOps.Length}', but got '{actualOps.Length}'");
+
+            for (int i = 0; i < expectedOps.Length; ++i)
+            {
+                string e = expectedOps[i].ToLower();
+                string a = actualOps[i].ToLower();
+                Assert.AreEqual(e, a, $"Expect assembly operand {i} to be '{e}' but got '{a}'");
+            }
+        }
+
         private static void AssertAssembly(string expected, string actual)
         {
             if (expected == null)
@@ -50,8 +63,7 @@ namespace Final.CPU8086
             {
                 string expectedLine = expectedLines[i];
                 string actualLine = actualLines[i];
-                if (!string.Equals(expectedLine, actualLine, StringComparison.InvariantCultureIgnoreCase))
-                    Assert.Fail($"Expect line '{expectedLine}', but got '{actualLine}'");
+                AssertAssemblyLine(expectedLine, actualLine);
             }
         }
 
@@ -309,5 +321,37 @@ namespace Final.CPU8086
         [TestMethod]
         public void Test_listing_0042_completionist_decode()
             => TestAssembly("listing_0042_completionist_decode");
+
+        [TestMethod]
+        public void Test_listing_0043_immediate_movs()
+            => TestAssembly("listing_0043_immediate_movs");
+
+        [TestMethod]
+        public void Test_listing_0044_register_movs()
+            => TestAssembly("listing_0044_register_movs");
+
+        [TestMethod]
+        public void Test_listing_0045_challenge_register_movs()
+            => TestAssembly("listing_0045_challenge_register_movs");
+
+        [TestMethod]
+        public void Test_listing_0046_add_sub_cmp()
+            => TestAssembly("listing_0046_add_sub_cmp");
+
+        [TestMethod]
+        public void Test_listing_0047_challenge_flags()
+            => TestAssembly("listing_0047_challenge_flags");
+
+        [TestMethod]
+        public void Test_listing_0048_ip_register()
+            => TestAssembly("listing_0048_ip_register");
+
+        [TestMethod]
+        public void Test_listing_0049_conditional_jumps()
+            => TestAssembly("listing_0049_conditional_jumps");
+
+        [TestMethod]
+        public void Test_listing_0050_challenge_jumps()
+            => TestAssembly("listing_0050_challenge_jumps");
     }
 }

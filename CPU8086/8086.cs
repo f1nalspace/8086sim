@@ -2,14 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net.NetworkInformation;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace Final.CPU8086
@@ -618,6 +614,8 @@ namespace Final.CPU8086
             Debug.WriteLine($"Load instruction '{entry}' with bytes ({streamBytes})");
 #endif
 
+            InstructionFlags flags = entry.Flags;
+
             ReadOnlySpan<byte> cur = stream.Slice(1); // Skip op-code
 
             bool destinationIsRegister = (opCode & 0b00000010) == 0b00000010;
@@ -964,8 +962,6 @@ namespace Final.CPU8086
                 return new Error(ErrorCode.InstructionLengthTooSmall, $"Expect instruction length to be at least '{entry.MinLength}' bytes, but got '{length}' bytes for instruction '{entry}'", position);
             if (length > entry.MaxLength)
                 return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes", position);
-
-            InstructionFlags flags = InstructionFlags.None;
 
             Span<InstructionOperand> actualOps = targetOps.Slice(0, opCount);
             return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, flags, actualOps);

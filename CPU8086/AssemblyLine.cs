@@ -7,7 +7,7 @@
         TargetLabel
     }
 
-    public readonly struct AssemblyLine
+    public class AssemblyLine
     {
         public uint Position { get; }
         public AssemblyLineType Type { get; }
@@ -31,7 +31,7 @@
             else if (Type == AssemblyLineType.TargetLabel)
                 return $"{Mnemonic} {Label}";
             else
-                return $"{Mnemonic} {Assembly}";
+                return Assembly; // Assembly includes mnemonic
         }
     }
 }

@@ -1002,27 +1002,8 @@ namespace Final.CPU8086
             }
         }
 
-        public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode, string hexPrefix = "0x")
+        public static OneOf<AssemblyLine[], Error> GetAssemblyLines(IEnumerable<Instruction> instructions, OutputValueMode outputMode, string hexPrefix = "0x")
         {
-            //
-            // First we decode all instructions and store it in a list
-            //
-            List<Instruction> instructions = new List<Instruction>();
-            ReadOnlySpan<byte> cur = stream;
-            uint position = 0;
-            while (cur.Length > 0)
-            {
-                OneOf<Instruction, Error> decodeRes = TryDecodeNext(cur, streamName, position);
-                if (decodeRes.IsT1)
-                    return decodeRes.AsT1;
-
-                Instruction instruction = decodeRes.AsT0;
-                instructions.Add(instruction);
-
-                cur = cur.Slice(instruction.Length);
-                position += instruction.Length;
-            }
-
             //
             // Second we convert the instructions into a hashtable, mapped by its position
             //
@@ -1097,9 +1078,55 @@ namespace Final.CPU8086
                         }
                         break;
                 }
-
-
             }
+
+            List<AssemblyLine> result = new List<AssemblyLine>();
+            foreach (Instruction instruction in instructions)
+            {
+                if (instructionToSourceLabelMap.TryGetValue(instruction, out string sourceLabel))
+                    result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.SourceLabel, instruction.Mnemonic, null, sourceLabel));
+
+                if (instructionToTargetLabelMap.TryGetValue(instruction, out string targetLabel))
+                {
+                    result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.TargetLabel, instruction.Mnemonic, null, targetLabel));
+                    continue;
+                }
+
+                string asm = instruction.Asm(outputMode, hexPrefix);
+                result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.Default, instruction.Mnemonic, asm, null));
+            }
+            return result.ToArray();
+        }
+
+        public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode, string hexPrefix = "0x")
+        {
+            //
+            // First we decode all instructions and store it in a list
+            //
+            List<Instruction> instructions = new List<Instruction>();
+            ReadOnlySpan<byte> cur = stream;
+            uint position = 0;
+            while (cur.Length > 0)
+            {
+                OneOf<Instruction, Error> decodeRes = TryDecodeNext(cur, streamName, position);
+                if (decodeRes.IsT1)
+                    return decodeRes.AsT1;
+
+                Instruction instruction = decodeRes.AsT0;
+                instructions.Add(instruction);
+
+                cur = cur.Slice(instruction.Length);
+                position += instruction.Length;
+            }
+
+            //
+            // Second generate the assembly lines, that may contain additional lines for labels or swapped label jumps
+            //
+            OneOf<AssemblyLine[], Error> linesRes = GetAssemblyLines(instructions, outputMode, hexPrefix);
+            if (linesRes.IsT1)
+                return linesRes.AsT1;
+
+            var lines = linesRes.AsT0;
 
             //
             // Lastly we generate the assembly for each instruction and insert source labels before or replace the entire instruction with a label jump
@@ -1116,21 +1143,8 @@ namespace Final.CPU8086
             s.AppendLine("bits 16");
             s.AppendLine();
 
-            foreach (Instruction instruction in instructions)
-            {
-                if (instructionToSourceLabelMap.TryGetValue(instruction, out string sourceLabel))
-                    s.AppendLine($"{sourceLabel}:");
-
-                if (instructionToTargetLabelMap.TryGetValue(instruction, out string targetLabel))
-                {
-                    s.AppendLine($"{instruction.Mnemonic} {targetLabel}");
-                    continue;
-                }
-
-                string asm = instruction.Asm(outputMode, hexPrefix);
-                Debug.WriteLine($"\t{asm}");
-                s.AppendLine(asm);
-            }
+            foreach (AssemblyLine line in lines)
+                s.AppendLine(line.ToString());
 
             return s.ToString();
         }

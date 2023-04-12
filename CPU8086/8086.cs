@@ -1007,19 +1007,6 @@ namespace Final.CPU8086
 
         public OneOf<string, Error> GetAssembly(ReadOnlySpan<byte> stream, string streamName, OutputValueMode outputMode, string hexPrefix = "0x")
         {
-            StringBuilder s = new StringBuilder();
-
-            s.AppendLine("; ========================================================================");
-            s.AppendLine("; 8086 CPU Simulator");
-            s.AppendLine("; © 2023 by Torsten Spaete");
-            s.AppendLine("; ========================================================================");
-            s.AppendLine(";");
-            s.Append("; ");
-            s.AppendLine(streamName);
-            s.AppendLine();
-            s.AppendLine("bits 16");
-            s.AppendLine();
-
             //
             // First we decode all instructions and store it in a list
             //
@@ -1120,6 +1107,18 @@ namespace Final.CPU8086
             //
             // Lastly we generate the assembly for each instruction and insert source labels before or replace the entire instruction with a label jump
             //
+            StringBuilder s = new StringBuilder();
+            s.AppendLine("; ========================================================================");
+            s.AppendLine("; 8086 CPU Simulator");
+            s.AppendLine("; © 2023 by Torsten Spaete");
+            s.AppendLine("; ========================================================================");
+            s.AppendLine(";");
+            s.Append("; ");
+            s.AppendLine(streamName);
+            s.AppendLine();
+            s.AppendLine("bits 16");
+            s.AppendLine();
+
             foreach (Instruction instruction in instructions)
             {
                 if (instructionToSourceLabelMap.TryGetValue(instruction, out string sourceLabel))

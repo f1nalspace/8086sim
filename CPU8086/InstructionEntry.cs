@@ -8,7 +8,7 @@ namespace Final.CPU8086
         public Mnemonic Mnemonic { get; }
         public DataWidth DataWidth { get; }
         public DataFlags DataFlags { get; }
-        public InstructionFlags Flags { get; }
+        public States States { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
         public int MaxLength { get; }
@@ -17,12 +17,12 @@ namespace Final.CPU8086
 
         public InstructionType Type => Mnemonic.Type;
 
-        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, DataFlags dataFlags, InstructionFlags flags, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
+        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, DataFlags dataFlags, States states, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
         {
             Op = op;
             DataWidth = dataWidth;
             DataFlags = dataFlags;
-            Flags = flags;
+            States = states;
             Mnemonic = mnemonic;
             Platform = platform;
             MinLength = minLength;
@@ -74,7 +74,7 @@ namespace Final.CPU8086
                 }
             }
             s.Append('|');
-            s.Append(Flags.ToString());
+            s.Append(States.ToString());
             s.Append('|');
             s.Append(Platform);
             return s.ToString();

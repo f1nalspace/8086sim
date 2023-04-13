@@ -37,8 +37,8 @@ namespace Final.CPU8086
             // | 1 1 1 |  BH   | DI    |
 
             _opToList[0] = new IL(0b00000000,
-            new IE(0x00, "ADD", "B", IF.None, "o---szap", "8086", 2, 4, new Field[] { "mr", "d0", "d1" }, new Operand[] { "rmb", "rb" })
-        );
+                new IE(0x00, "ADD", "B", IF.None, "o---szap", "8086", 2, 4, new Field[] { "mr", "d0", "d1" }, new Operand[] { "rmb", "rb" })
+            );
             _opToList[1] = new IL(0b00000001,
                 new IE(0x01, "ADD", "W", IF.None, "o---szap", "8086", 2, 4, new Field[] { "mr", "d0", "d1" }, new Operand[] { "rmw", "rw" })
             );
@@ -624,6 +624,7 @@ namespace Final.CPU8086
                 new IE(0xD0, "ROR", "B", IF.None, "o-------", "8086", 2, 4, new Field[] { "/1", "d0", "d1" }, new Operand[] { "rmb", "1" }),
                 new IE(0xD0, "SAL", "B", IF.None, "o-------", "8086", 2, 4, new Field[] { "/4", "d0", "d1" }, new Operand[] { "rmb", "1" }),
                 new IE(0xD0, "SHL", "B", IF.None, "o-------", "8086", 2, 4, new Field[] { "/4", "d0", "d1" }, new Operand[] { "rmb", "1" }),
+                new IE(0xD0, "SAR", "W", IF.None, "o-------", "8086", 3, 5, new Field[] { "/7", "d0", "d1" }, new Operand[] { "rmb" }),
                 new IE(0xD0, "SHR", "B", IF.None, "o-------", "8086", 2, 4, new Field[] { "/5", "d0", "d1" }, new Operand[] { "rmb", "1" })
             );
             _opToList[209] = new IL(0b11010001,

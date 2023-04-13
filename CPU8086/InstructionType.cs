@@ -219,10 +219,6 @@
         /// </summary>
         LES,
         /// <summary>
-        /// Lock Bus
-        /// </summary>
-        LOCK,
-        /// <summary>
         /// Load String (Byte, Word or Double)
         /// </summary>
         LODSB,
@@ -303,17 +299,9 @@
         /// </summary>
         RCR,
         /// <summary>
-        /// Repeat String Operation
-        /// </summary>
-        REP,
-        /// <summary>
         /// Repeat Equal / Repeat Zero
         /// </summary>
         REPE,
-        /// <summary>
-        /// Repeat Not Equal / Repeat Not Zero
-        /// </summary>
-        REPNE,
         /// <summary>
         /// Return From Procedure
         /// </summary>
@@ -406,5 +394,57 @@
         /// Exclusive OR
         /// </summary>
         XOR,
+        /// <summary>
+        /// Lock Prefix
+        /// </summary>
+        LOCK,
+        /// <summary>
+        /// Repeat Not Equal Prefix
+        /// </summary>
+        REPNE,
+        /// <summary>
+        /// Repeat Prefix
+        /// </summary>
+        REP,
+        /// <summary>
+        /// CS Segment Override Prefix
+        /// </summary>
+        CS,
+        /// <summary>
+        /// SS Segment Override Prefix
+        /// </summary>
+        SS,
+        /// <summary>
+        /// DS Segment Override Prefix
+        /// </summary>
+        DS,
+        /// <summary>
+        /// ES Segment Override Prefix
+        /// </summary>
+        ES,
+        /// <summary>
+        /// FS Segment Override Prefix
+        /// </summary>
+        FS,
+        /// <summary>
+        /// GS Segment Override Prefix
+        /// </summary>
+        GS,
+        /// <summary>
+        /// Data to 8-bit Override Prefix
+        /// </summary>
+        DATA8,
+        /// <summary>
+        /// Data to 16-bit Override Prefix
+        /// </summary>
+        DATA16,
+        /// <summary>
+        /// Address to 8-bit Override Prefix
+        /// </summary>
+        ADDR8,
+        /// <summary>
+        /// Address to 16-bit Override Prefix
+        /// </summary>
+        ADDR16,
     }
 }

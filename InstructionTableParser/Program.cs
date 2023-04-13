@@ -32,27 +32,34 @@ namespace Final.ITP
 
     static class AdditionalInstructions
     {
+        // See: https://wiki.osdev.org/X86-64_Instruction_Encoding#Legacy_Prefixes
         public static readonly InstructionEntry[] PrefixInstructions = new InstructionEntry[] {
-            // Lock
-            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
-
-            // String manipulation
-            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
-            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            // Lock/Repeat
+            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Lock Prefix" },
+            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Not Equal Prefix" },
+            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Prefix" },
 
             // Segment override
-            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}),
-            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}),
-            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}),
-            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}),
-            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}),
-            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
+            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
+            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
+            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}) { Description = "ES Segment Override Prefix" },
+            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
+            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
 
-            // Operand override (Changes size of data expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
-            new InstructionEntry(0x66, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+#if false
+            // Branch not taken/taken
+            new InstructionEntry(0x2E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+            new InstructionEntry(0x3E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+#endif
 
-            // Address override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
-            new InstructionEntry(0x67, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()),
+            // Operand size override (Changes size of operand size expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
+            new InstructionEntry(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 8-bit Override Prefix" },
+            new InstructionEntry(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 16-bit Override Prefix" },
+
+            // Address size override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
+            new InstructionEntry(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 8-bit Override Prefix" },
+            new InstructionEntry(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 16-bit Override Prefix" },
         };
     }
 
@@ -136,8 +143,10 @@ namespace Final.ITP
 #endif
 
 #if GENERATE_CS
-            List<InstructionEntry> allInstructions = new List<InstructionEntry>();
 
+#if !GENERATE_INSTRUCTION_CLASSES
+            List<InstructionEntry> allInstructions = new List<InstructionEntry>();
+#endif
             Dictionary<InstructionFamily, List<string>> familyOpTypeListMap = new Dictionary<InstructionFamily, List<string>>();
             List<InstructionFamily> orderedFamilies = new List<InstructionFamily>();
 #endif
@@ -409,8 +418,8 @@ namespace Final.ITP
                         InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, flags, states, platform, minLen, maxLen, fields, leftOperands.ToArray());
                         allInstructions.Add(instruction);
                     }
-                    //else
-                    //    Debug.WriteLine($"WARNING: Family '{family}' has no enum value for '{nameof(InstructionType)}'");
+
+                    
 #endif // !GENERATE_INSTRUCTION_CLASSES
 
 #endif // GENERATE_CS
@@ -450,6 +459,26 @@ namespace Final.ITP
 #if GENERATE_CS
 
 #if GENERATE_INSTRUCTION_CLASSES
+            // Replace/Add prefix instructions
+            InstructionEntry[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
+            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+            {
+                string name = prefixInstruction.Mnemonic.Name;
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+                InstructionFamily family = orderedFamilies.FirstOrDefault(i => string.Equals(i.Name, name, StringComparison.InvariantCultureIgnoreCase));
+                if (family != null)
+                    orderedFamilies.Remove(family);
+            }
+            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+            {
+                string name = prefixInstruction.Mnemonic.Name;
+                if (string.IsNullOrWhiteSpace(name))
+                    continue;
+                InstructionFamily family = new InstructionFamily(name, prefixInstruction.Description, prefixInstruction.Platform);
+                orderedFamilies.Add(family);
+            }
+
             // Generate instruction types enum
             // Generate instruction names ToString() and TryParse() method
             StringBuilder instructionTypesText = new StringBuilder();
@@ -459,14 +488,16 @@ namespace Final.ITP
             instructionTypesText.AppendLine("\t/// </summary>");
             instructionTypesText.AppendLine("\tNone = 0,");
 
-            StringBuilder parseNamesMethodText = new StringBuilder();
-            parseNamesMethodText.AppendLine($"public static bool TryParse(string name, out {nameof(Mnemonic)} result) {{");
-            parseNamesMethodText.AppendLine($"\t{nameof(InstructionType)} type = (name ?? string.Empty) switch {{");
+            StringBuilder stringToTypeMethodText = new StringBuilder();
 
-            StringBuilder nameToStringMethodText = new StringBuilder();
-            nameToStringMethodText.AppendLine($"public override string {nameof(object.ToString)}()");
-            nameToStringMethodText.AppendLine("{");
-            nameToStringMethodText.AppendLine($"\treturn {nameof(Mnemonic.Type)} switch {{");
+            stringToTypeMethodText.AppendLine($"public static {nameof(InstructionType)} NameToType(string name) {{");
+            stringToTypeMethodText.AppendLine($"\treturn (name ?? string.Empty) switch {{");
+
+            StringBuilder typeToNameMethodText = new StringBuilder();
+
+            // private static string TypeToName(InstructionType type)
+            typeToNameMethodText.AppendLine($"public static string TypeToName({nameof(InstructionType)} type) {{");
+            typeToNameMethodText.AppendLine($"\treturn type switch {{");
 
             foreach (InstructionFamily family in orderedFamilies)
             {
@@ -479,29 +510,35 @@ namespace Final.ITP
                 instructionTypesText.AppendLine("\t/// </summary>");
                 instructionTypesText.AppendLine($"\t{iname},");
 
-                parseNamesMethodText.AppendLine($"\t\t\"{iname}\" => {nameof(InstructionType)}.{iname},");
+                stringToTypeMethodText.AppendLine($"\t\t\"{iname}\" => {nameof(InstructionType)}.{iname},");
 
-                nameToStringMethodText.AppendLine($"\t\t{nameof(InstructionType)}.{iname} => \"{iname}\",");
+                typeToNameMethodText.AppendLine($"\t\t{nameof(InstructionType)}.{iname} => \"{iname}\",");
             }
             instructionTypesText.AppendLine("}");
 
-            parseNamesMethodText.AppendLine($"\t\t_ => {nameof(InstructionType)}.{nameof(InstructionType.None)},");
-            parseNamesMethodText.AppendLine($"\t}};");
-            parseNamesMethodText.AppendLine($"\tresult = new {nameof(Mnemonic)}(type);");
-            parseNamesMethodText.AppendLine($"\treturn result.{nameof(Mnemonic.Type)} != {nameof(InstructionType)}.{nameof(InstructionType.None)};");
-            parseNamesMethodText.AppendLine("}");
+            stringToTypeMethodText.AppendLine($"\t\t_ => {nameof(InstructionType)}.{nameof(InstructionType.None)},");
+            stringToTypeMethodText.AppendLine($"\t}};");
+            stringToTypeMethodText.AppendLine("}");
 
-            nameToStringMethodText.AppendLine("\t\t_ => string.Empty,");
-            nameToStringMethodText.AppendLine("\t};");
-            nameToStringMethodText.AppendLine("}");
+            typeToNameMethodText.AppendLine("\t\t_ => string.Empty,");
+            typeToNameMethodText.AppendLine("\t};");
+            typeToNameMethodText.AppendLine("}");
 
             Debug.WriteLine(instructionTypesText.ToString());
             Debug.WriteLine(string.Empty);
-            Debug.WriteLine(parseNamesMethodText.ToString());
+            Debug.WriteLine(stringToTypeMethodText.ToString());
             Debug.WriteLine(string.Empty);
-            Debug.WriteLine(nameToStringMethodText.ToString());
+            Debug.WriteLine(typeToNameMethodText.ToString());
             Debug.WriteLine(string.Empty);
 #else
+            // Replace/Add prefix instructions
+            InstructionEntry[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
+            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+                allInstructions.RemoveAll(i => i.Op == prefixInstruction.Op);
+
+            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+                allInstructions.Add(prefixInstruction);
+
             // Fill instruction table, but skip all non 8086 platforms
             InstructionTable newTable = new InstructionTable();
             InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
@@ -516,6 +553,8 @@ namespace Final.ITP
 
             // Generate instructions table class
             string entryName = "IE";
+            string mnemonicName = "MNE";
+            string instructionTypeName = "IT";
             string listName = "IL";
             string dataWidthName = "DW";
             string flagsName = "IF";
@@ -525,8 +564,10 @@ namespace Final.ITP
             StringBuilder instructionsTableText = new StringBuilder();
             instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName};");
             instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName};");
+            instructionsTableText.AppendLine($"using {instructionTypeName} = {typeof(InstructionType).FullName};");
             instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
             instructionsTableText.AppendLine($"using {flagsName} = {typeof(InstructionFlags).FullName};");
+            instructionsTableText.AppendLine($"using {mnemonicName} = {typeof(Mnemonic).FullName};");
             instructionsTableText.AppendLine();
             instructionsTableText.AppendLine($"public class {tableName}");
             instructionsTableText.AppendLine("{");
@@ -564,11 +605,19 @@ namespace Final.ITP
                         entryText.Append("0x");
                         entryText.Append(entryOpHex);
 
-                        // Name
+                        // Mnemonic
                         entryText.Append(", ");
+                        entryText.Append("new ");
+                        entryText.Append(mnemonicName);
+                        entryText.Append('(');
+                        entryText.Append(instructionTypeName);
+                        entryText.Append('.');
+                        entryText.Append(entry.Mnemonic.Type.ToString());
+                        entryText.Append(',');
                         entryText.Append('"');
-                        entryText.Append(entry.Mnemonic.ToString());
+                        entryText.Append(entry.Mnemonic.Name);
                         entryText.Append('"');
+                        entryText.Append(')');
 
                         // DataWidth
                         entryText.Append(", ");

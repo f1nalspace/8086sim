@@ -7,13 +7,14 @@ namespace Final.CPU8086
         public byte Op { get; }
         public Mnemonic Mnemonic { get; }
         public DataWidth DataWidth { get; }
-        public InstructionFlags Flags { get; }
+        public InstructionFlags Flags { get; set; }
         public States States { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
         public int MaxLength { get; }
         public Field[] Fields { get; }
         public Operand[] Operands { get; }
+        public string Description { get; set; }
 
         public InstructionType Type => Mnemonic.Type;
 

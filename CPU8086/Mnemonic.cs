@@ -5,29 +5,32 @@ namespace Final.CPU8086
     public readonly struct Mnemonic
     {
         public InstructionType Type { get; }
+        public string Name { get; }
 
-        public Mnemonic(InstructionType type)
+        public Mnemonic(InstructionType type, string name)
         {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentNullException(nameof(name));
             Type = type;
+            Name = name;
         }
 
-        public Mnemonic(string name)
-        {
-            Type = NameToType(name);
-        }
+        public Mnemonic(InstructionType type) : this(type, TypeToName(type)) { }
+
+        public Mnemonic(string name) : this(NameToType(name), name) { }
 
         public static Mnemonic Parse(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentNullException(nameof(name));
-            if (!TryParse(name, out Mnemonic result))
-                throw new NotSupportedException($"The mnemonic '{name}' is not supported!");
-            return result;
+            if (TryParse(name, out Mnemonic result))
+                return result;
+            return new Mnemonic(name);
         }
 
-        private static InstructionType NameToType(string name)
+        public static InstructionType NameToType(string name)
         {
-            InstructionType result = (name ?? string.Empty) switch
+            return (name ?? string.Empty) switch
             {
                 "AAA" => InstructionType.AAA,
                 "AAD" => InstructionType.AAD,
@@ -82,7 +85,6 @@ namespace Final.CPU8086
                 "LDS" => InstructionType.LDS,
                 "LEA" => InstructionType.LEA,
                 "LES" => InstructionType.LES,
-                "LOCK" => InstructionType.LOCK,
                 "LODSB" => InstructionType.LODSB,
                 "LODSW" => InstructionType.LODSW,
                 "LOOP" => InstructionType.LOOP,
@@ -103,9 +105,7 @@ namespace Final.CPU8086
                 "PUSHF" => InstructionType.PUSHF,
                 "RCL" => InstructionType.RCL,
                 "RCR" => InstructionType.RCR,
-                "REP" => InstructionType.REP,
                 "REPE" => InstructionType.REPE,
-                "REPNE" => InstructionType.REPNE,
                 "RET" => InstructionType.RET,
                 "RETF" => InstructionType.RETF,
                 "ROL" => InstructionType.ROL,
@@ -129,25 +129,26 @@ namespace Final.CPU8086
                 "XCHG" => InstructionType.XCHG,
                 "XLAT" => InstructionType.XLAT,
                 "XOR" => InstructionType.XOR,
+                "LOCK" => InstructionType.LOCK,
+                "REPNE" => InstructionType.REPNE,
+                "REP" => InstructionType.REP,
+                "CS" => InstructionType.CS,
+                "SS" => InstructionType.SS,
+                "DS" => InstructionType.DS,
+                "ES" => InstructionType.ES,
+                "FS" => InstructionType.FS,
+                "GS" => InstructionType.GS,
+                "DATA8" => InstructionType.DATA8,
+                "DATA16" => InstructionType.DATA16,
+                "ADDR8" => InstructionType.ADDR8,
+                "ADDR16" => InstructionType.ADDR16,
                 _ => InstructionType.None,
             };
-            return result;
         }
 
-        public static bool TryParse(string name, out Mnemonic result)
+        public static string TypeToName(InstructionType type)
         {
-            InstructionType type = NameToType(name);
-            result = new Mnemonic(type);
-            return result.Type != InstructionType.None;
-        }
-
-        public static implicit operator Mnemonic(InstructionType type) => new Mnemonic(type);
-        public static implicit operator Mnemonic(string value) => Parse(value);
-        public static explicit operator string(Mnemonic name) => name.ToString();
-
-        public override string ToString()
-        {
-            return Type switch
+            return type switch
             {
                 InstructionType.AAA => "AAA",
                 InstructionType.AAD => "AAD",
@@ -202,7 +203,6 @@ namespace Final.CPU8086
                 InstructionType.LDS => "LDS",
                 InstructionType.LEA => "LEA",
                 InstructionType.LES => "LES",
-                InstructionType.LOCK => "LOCK",
                 InstructionType.LODSB => "LODSB",
                 InstructionType.LODSW => "LODSW",
                 InstructionType.LOOP => "LOOP",
@@ -223,9 +223,7 @@ namespace Final.CPU8086
                 InstructionType.PUSHF => "PUSHF",
                 InstructionType.RCL => "RCL",
                 InstructionType.RCR => "RCR",
-                InstructionType.REP => "REP",
                 InstructionType.REPE => "REPE",
-                InstructionType.REPNE => "REPNE",
                 InstructionType.RET => "RET",
                 InstructionType.RETF => "RETF",
                 InstructionType.ROL => "ROL",
@@ -249,8 +247,34 @@ namespace Final.CPU8086
                 InstructionType.XCHG => "XCHG",
                 InstructionType.XLAT => "XLAT",
                 InstructionType.XOR => "XOR",
+                InstructionType.LOCK => "LOCK",
+                InstructionType.REPNE => "REPNE",
+                InstructionType.REP => "REP",
+                InstructionType.CS => "CS",
+                InstructionType.SS => "SS",
+                InstructionType.DS => "DS",
+                InstructionType.ES => "ES",
+                InstructionType.FS => "FS",
+                InstructionType.GS => "GS",
+                InstructionType.DATA8 => "DATA8",
+                InstructionType.DATA16 => "DATA16",
+                InstructionType.ADDR8 => "ADDR8",
+                InstructionType.ADDR16 => "ADDR16",
                 _ => string.Empty,
             };
         }
+
+        public static bool TryParse(string name, out Mnemonic result)
+        {
+            InstructionType type = NameToType(name);
+            result = new Mnemonic(type);
+            return result.Type != InstructionType.None;
+        }
+
+        public static implicit operator Mnemonic(InstructionType type) => new Mnemonic(type);
+        public static implicit operator Mnemonic(string value) => Parse(value);
+        public static explicit operator string(Mnemonic name) => name.ToString();
+
+        public override string ToString() => Name;
     }
 }

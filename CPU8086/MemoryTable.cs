@@ -7,7 +7,6 @@ namespace Final.CPU8086
     public class MemoryTable
     {
         private readonly byte[] _raw = new byte[0xFFFFF];
-        private Memory<byte> _mem;
 
         public const int PageSize = 0xFF;
 
@@ -22,7 +21,6 @@ namespace Final.CPU8086
 
         public MemoryTable()
         {
-            _mem = new Memory<byte>(_raw);
             Array.Clear(_raw, 0, _raw.Length);
         }
 

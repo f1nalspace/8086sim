@@ -1123,9 +1123,6 @@ namespace Final.CPU8086
                 {
                     case InstructionType.CALL:
                     case InstructionType.JMP:
-                        // Call is handled specially
-                        break;
-
                     case InstructionType.JA:
                     case InstructionType.JAE:
                     case InstructionType.JB:
@@ -1162,31 +1159,13 @@ namespace Final.CPU8086
                                 int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
                                 absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
                             }
-                            else if (firstOp.Op == OperandType.Register)
-                            {
-                                OneOf<Immediate, Error> rimm = LoadRegister(firstOp.Register);
-                                if (rimm.IsT1)
-                                    return new Error(ErrorCode.FailedToLoadRegister, $"Failed to load jump displacement from register '{firstOp.Register}' for jump instruction '{instruction}'", instruction.Position);
-                                int relativeAddressAfterThisInstruction = rimm.AsT0.Value;
-                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
-                            }
-                            else if (firstOp.Op == OperandType.Address)
-                            {
-                                DataType dt = firstOp.DataType;
-                                if (dt == DataType.None)
-                                    dt = DataType.Word;
-                                OneOf<Immediate, Error> mem = LoadMemory(firstOp.Memory, dt);
-                                if (mem.IsT1)
-                                    return new Error(mem.AsT1, $"Failed to load jump displacement from memory '{firstOp.Memory}' for jump instruction '{instruction}'", instruction.Position);
-                                absoluteAddress = (uint)mem.AsT0.Value;
-                            }
                             else if (firstOp.Op == OperandType.Value)
                             {
                                 int relativeAddressAfterThisInstruction = firstOp.Value;
                                 absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
                             }
                             else
-                                return new Error(ErrorCode.UnsupportedOperandType, $"The operand type '{firstOp.Op}' is not supported for jump instruction '{instruction}'", instruction.Position);
+                                break;
 
                             if (!positionToInstructionMap.TryGetValue(absoluteAddress, out Instruction instructionToJumpTo))
                                 return new Error(ErrorCode.JumpInstructionNotFound, $"No instruction for absolute address '{absoluteAddress}' found for jump instruction '{instruction}'", instruction.Position);

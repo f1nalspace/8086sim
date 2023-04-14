@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.Contracts;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -316,6 +317,7 @@ namespace Final.CPU8086
             {
                 case DataType.Byte:
                     return new Immediate(Memory[absoluteAddress], ImmediateFlag.None);
+
                 case DataType.Word:
                     {
                         byte low = Memory[absoluteAddress + 0];
@@ -323,9 +325,43 @@ namespace Final.CPU8086
                         ushort u16 = (ushort)(low | (high << 8));
                         return new Immediate(u16, ImmediateFlag.None);
                     }
+
+                case DataType.Pointer:
+                    {
+
+                        byte low = Memory[absoluteAddress + 0];
+                        byte high = Memory[absoluteAddress + 1];
+                        ushort u16 = (ushort)(low | (high << 8));
+                        return new Immediate(u16, ImmediateFlag.None);
+                    }
+
                 default:
-                    return new Error(ErrorCode.UnsupportedDataWidth, $"The source memory type '{type}' is not supported!", 0);
+                    {
+                        if (type.HasFlag(DataType.Pointer))
+                        {
+                            DataType pointerDataType;
+                            if (type.HasFlag(DataType.Byte))
+                                pointerDataType = DataType.Byte;
+                            else if (type.HasFlag(DataType.Word))
+                                pointerDataType = DataType.Word;
+                            else if (type == DataType.Pointer)
+                                pointerDataType = DataType.Word; // In 8086 a pointer is just a word
+                            else
+                                return new Error(ErrorCode.UnsupportedDataType, $"The source pointer memory type '{type}' is not supported!", 0);
+                            return LoadMemory(absoluteAddress, pointerDataType);
+                        }
+                        else
+                            return new Error(ErrorCode.UnsupportedDataType, $"The source memory type '{type}' is not supported!", 0);
+                    }
             }
+        }
+
+        public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
+        {
+            int absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == int.MinValue)
+                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
+            return LoadMemory(absoluteAddress, type);
         }
 
         private OneOf<byte, Error> StoreMemory(int absoluteAddress, DataType type, Immediate value)
@@ -358,14 +394,6 @@ namespace Final.CPU8086
             return StoreMemory(absoluteAddress, type, value);
         }
 
-        public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
-        {
-            int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == int.MinValue)
-                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
-            return LoadMemory(absoluteAddress, type);
-        }
-
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, uint position)
         {
             if (stream.Length < 1)
@@ -391,7 +419,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, DataType sourceType, DataType explicitType)
+        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType sourceType, DataType explicitType)
         {
             switch (sourceOp.Kind)
             {
@@ -455,10 +483,6 @@ namespace Final.CPU8086
                         return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
                     else
                         return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
-                case OperandKind.KeywordFar:
-                    break;
-                case OperandKind.KeywordPointer:
-                    break;
 
                 case OperandKind.TypeDoubleWord:
                     break;
@@ -466,22 +490,38 @@ namespace Final.CPU8086
                     break;
                 case OperandKind.TypeInt:
                     break;
-
-                case OperandKind.NearPointer:
-                    break;
-                case OperandKind.FarPointer:
+                case OperandKind.TypePointer:
                     break;
 
                 case OperandKind.ShortLabel:
-                    if ((sbyte)immediate < 0)
-                        return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                    if ((sbyte)displacement < 0)
+                        return new InstructionOperand((sbyte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
                     else
-                        return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((byte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
                 case OperandKind.LongLabel:
-                    if ((short)immediate < 0)
-                        return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                    if ((short)displacement < 0)
+                        return new InstructionOperand((short)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
                     else
-                        return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+
+                case OperandKind.FarPointer:
+                    {
+                        int address = offset + segment;
+                        if ((short)segment < 0)
+                            return new InstructionOperand(new MemoryAddress((short)(address & 0xFFFF)), explicitType);
+                        else
+                            return new InstructionOperand(new MemoryAddress((ushort)(address & 0xFFFF)), explicitType);
+                    }
+
+                case OperandKind.NearPointer:
+                    {
+                        int address = offset + segment;
+                        if ((sbyte)address < 0)
+                            return new InstructionOperand(new MemoryAddress((sbyte)(address & 0xFF)), explicitType);
+                        else
+                            return new InstructionOperand(new MemoryAddress((byte)(address & 0xFF)), explicitType);
+                    }
+
                 case OperandKind.ST:
                     break;
                 case OperandKind.ST_I:
@@ -573,13 +613,18 @@ namespace Final.CPU8086
                     return new InstructionOperand(RegisterType.ES);
 
                 case OperandKind.CR:
+                    return new InstructionOperand(RegisterType.CR);
                 case OperandKind.DR:
+                    return new InstructionOperand(RegisterType.DR);
                 case OperandKind.TR:
+                    return new InstructionOperand(RegisterType.TR);
                 case OperandKind.FS:
+                    return new InstructionOperand(RegisterType.FS);
                 case OperandKind.GS:
-                    break;
+                    return new InstructionOperand(RegisterType.GS);
+
                 default:
-                    return new InstructionOperand();
+                    break;
             }
 
             throw new NotSupportedException($"The source operand '{sourceOp}' is not supported");
@@ -626,10 +671,15 @@ namespace Final.CPU8086
 
             int displacement = 0;
             int immediate = 0;
+            int offset = 0;
+            int segment = 0;
+
             Mode mode = Mode.Unknown;
+
             EffectiveAddressCalculation eac = EffectiveAddressCalculation.None;
+
             int displacementLength = 0;
-            bool useExplicitType = false;
+
             bool hasRegField = false;
 
             foreach (Field field in entry.Fields)
@@ -681,33 +731,6 @@ namespace Final.CPU8086
                                 displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
                             else
                                 displacementLength = 0;
-                            useExplicitType = eac switch
-                            {
-                                EffectiveAddressCalculation.BX_SI or
-                                EffectiveAddressCalculation.BX_DI or
-                                EffectiveAddressCalculation.BP_SI or
-                                EffectiveAddressCalculation.BP_DI or
-                                EffectiveAddressCalculation.SI or
-                                EffectiveAddressCalculation.DI or
-                                EffectiveAddressCalculation.BX or
-                                EffectiveAddressCalculation.BX_SI_D8 or
-                                EffectiveAddressCalculation.BX_DI_D8 or
-                                EffectiveAddressCalculation.BP_SI_D8 or
-                                EffectiveAddressCalculation.BP_DI_D8 or
-                                EffectiveAddressCalculation.SI_D8 or
-                                EffectiveAddressCalculation.DI_D8 or
-                                EffectiveAddressCalculation.BP_D8 or
-                                EffectiveAddressCalculation.BX_D8 or
-                                EffectiveAddressCalculation.BX_SI_D16 or
-                                EffectiveAddressCalculation.BX_DI_D16 or
-                                EffectiveAddressCalculation.BP_SI_D16 or
-                                EffectiveAddressCalculation.BP_DI_D16 or
-                                EffectiveAddressCalculation.SI_D16 or
-                                EffectiveAddressCalculation.DI_D16 or
-                                EffectiveAddressCalculation.BP_D16 or
-                                EffectiveAddressCalculation.BX_D16 => true,
-                                _ => false,
-                            };
                         }
                         break;
                     case FieldType.Displacement0:
@@ -749,14 +772,13 @@ namespace Final.CPU8086
                                 return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'", position);
                             byte d8 = value.AsT0;
                             int shift = t * 8;
-                            immediate |= ((int)d8 << shift);
+                            displacement |= ((int)d8 << shift);
                         }
                         break;
 
                     case FieldType.Immediate0to3:
                         {
-                            immediate = 0;
-                            for (int t = 0; t < 3; t++)
+                            for (int t = 0; t < 4; t++)
                             {
                                 OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                                 if (value.IsT1)
@@ -768,21 +790,53 @@ namespace Final.CPU8086
                         }
                         break;
 
-#if false
-                        case FieldType.Offset0:
-                        case FieldType.Offset1:
-                            break;
-                        case FieldType.Segment0:
-                        case FieldType.Segment1:
-                            break;
-                        case FieldType.RelativeLabelDisplacement0:
-                        case FieldType.RelativeLabelDisplacement1:
-                            break;
-                        case FieldType.ShortLabelOrShortLow:
-                        case FieldType.LongLabel:
-                        case FieldType.ShortHigh:
-                            break;
-#endif
+                    case FieldType.Offset0:
+                    case FieldType.Offset1:
+                        {
+                            int t = (int)(field.Type - FieldType.Offset0);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                            if (value.IsT1)
+                                return new Error(value.AsT1, $"No more bytes left for reading the offset-{t} in field '{field}'", position);
+                            byte offset8 = value.AsT0;
+                            int shift = t * 8;
+                            offset |= ((int)offset8 << shift);
+                        }
+                        break;
+
+                    case FieldType.Segment0:
+                    case FieldType.Segment1:
+                        {
+                            int t = (int)(field.Type - FieldType.Segment0);
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                            if (value.IsT1)
+                                return new Error(value.AsT1, $"No more bytes left for reading the segment-{t} in field '{field}'", position);
+                            byte seg8 = value.AsT0;
+                            int shift = t * 8;
+                            segment |= ((int)seg8 << shift);
+                        }
+                        break;
+
+                    case FieldType.ShortLabelOrShortLow:
+                        {
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                            if (value.IsT1)
+                                return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
+                            byte low = value.AsT0;
+                            displacement |= ((int)low << 0);
+                        }
+                        break;
+
+                    case FieldType.LongLabel:
+                    case FieldType.ShortHigh:
+                        {
+                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                            if (value.IsT1)
+                                return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
+                            byte high = value.AsT0;
+                            displacement |= ((int)high << 8);
+                        }
+                        break;
+
                     default:
                         return new Error(ErrorCode.UnsupportedFieldType, $"The field type '{field.Type}' is not supported!", position);
                 }
@@ -823,7 +877,7 @@ namespace Final.CPU8086
                         OperandKind.ImmediateWord => DataType.Word,
                         OperandKind.ImmediateDoubleWord => DataType.DoubleWord,
 
-                        OperandKind.KeywordPointer => DataType.Pointer,
+                        OperandKind.TypePointer => DataType.Pointer,
 
                         OperandKind.TypeShort => DataType.Word,
                         OperandKind.TypeDoubleWord => DataType.DoubleWord,
@@ -888,7 +942,7 @@ namespace Final.CPU8086
 
                         _ => DataType.None,
                     };
-                    if (bestInferredType == DataType.None || inferredType > bestInferredType)
+                    if (inferredType > bestInferredType)
                         bestInferredType = inferredType;
                 }
             }
@@ -908,6 +962,50 @@ namespace Final.CPU8086
             foreach (Operand sourceOp in entry.Operands)
             {
                 Debug.Assert(opCount < targetOps.Length);
+
+                DataType explicitType = DataType.None;
+
+                // Operands to skip or to validate
+                switch (sourceOp.Kind)
+                {
+                    case OperandKind.KeywordFar:
+                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far));
+                        explicitType |= bestInferredType;
+                        continue;
+
+                    case OperandKind.TypePointer:
+                        Contract.Assert(entry.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= entry.DataType;
+                        continue;
+
+                    case OperandKind.TypeDoubleWord:
+                        Contract.Assert(entry.DataType.HasFlag(DataType.DoubleWord));
+                        explicitType |= entry.DataType;
+                        continue;
+
+                    case OperandKind.TypeInt:
+                        Contract.Assert(entry.DataType.HasFlag(DataType.Int));
+                        explicitType |= entry.DataType;
+                        continue;
+
+                    case OperandKind.TypeShort:
+                        Contract.Assert(entry.DataType.HasFlag(DataType.Word));
+                        explicitType |= entry.DataType;
+                        continue;
+
+                    case OperandKind.NearPointer:
+                        Contract.Assert(!entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= entry.DataType;
+                        break; // We want to create an operand for this
+
+                    case OperandKind.FarPointer:
+                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= entry.DataType;
+                        break; // We want to create an operand for this
+
+                    default:
+                        break;
+                }
 
                 byte register = 0;
                 if (mode == Mode.RegisterMode)
@@ -938,16 +1036,15 @@ namespace Final.CPU8086
                     }
                 }
 
-                DataType explicitType = DataType.None;
-                if (useExplicitType)
-                    explicitType = bestInferredType;
+
 
                 DataType sourceType;
                 if (sourceOp.DataType != DataType.None)
                     sourceType = sourceOp.DataType;
                 else
                     sourceType = bestInferredType;
-                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, sourceType, explicitType);
+
+                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segment, sourceType, explicitType);
 
                 targetOps[opCount++] = targetOp;
 
@@ -1025,8 +1122,10 @@ namespace Final.CPU8086
                 switch (instruction.Mnemonic.Type)
                 {
                     case InstructionType.CALL:
+                    case InstructionType.JMP:
                         // Call is handled specially
                         break;
+
                     case InstructionType.JA:
                     case InstructionType.JAE:
                     case InstructionType.JB:
@@ -1038,7 +1137,6 @@ namespace Final.CPU8086
                     case InstructionType.JGE:
                     case InstructionType.JL:
                     case InstructionType.JLE:
-                    case InstructionType.JMP:
                     case InstructionType.JNC:
                     case InstructionType.JNE:
                     case InstructionType.JNO:
@@ -1055,15 +1153,40 @@ namespace Final.CPU8086
                                 return new Error(ErrorCode.InvalidOperandsLength, $"Expect number of operands to be 1, but got '{instruction.Operands.Length}' for jump instruction '{instruction}'", instruction.Position);
 
                             InstructionOperand firstOp = instruction.Operands[0];
-                            if (firstOp.Op != OperandType.Immediate)
+
+                            uint absoluteAddress = 0;
+                            if (firstOp.Op == OperandType.Immediate)
+                            {
+                                if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
+                                    return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
+                                int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
+                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
+                            }
+                            else if (firstOp.Op == OperandType.Register)
+                            {
+                                OneOf<Immediate, Error> rimm = LoadRegister(firstOp.Register);
+                                if (rimm.IsT1)
+                                    return new Error(ErrorCode.FailedToLoadRegister, $"Failed to load jump displacement from register '{firstOp.Register}' for jump instruction '{instruction}'", instruction.Position);
+                                int relativeAddressAfterThisInstruction = rimm.AsT0.Value;
+                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
+                            }
+                            else if (firstOp.Op == OperandType.Address)
+                            {
+                                DataType dt = firstOp.DataType;
+                                if (dt == DataType.None)
+                                    dt = DataType.Word;
+                                OneOf<Immediate, Error> mem = LoadMemory(firstOp.Memory, dt);
+                                if (mem.IsT1)
+                                    return new Error(mem.AsT1, $"Failed to load jump displacement from memory '{firstOp.Memory}' for jump instruction '{instruction}'", instruction.Position);
+                                absoluteAddress = (uint)mem.AsT0.Value;
+                            }
+                            else if (firstOp.Op == OperandType.Value)
+                            {
+                                int relativeAddressAfterThisInstruction = firstOp.Value;
+                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
+                            }
+                            else
                                 return new Error(ErrorCode.UnsupportedOperandType, $"The operand type '{firstOp.Op}' is not supported for jump instruction '{instruction}'", instruction.Position);
-
-                            if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
-                                return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
-
-                            int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
-
-                            uint absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
 
                             if (!positionToInstructionMap.TryGetValue(absoluteAddress, out Instruction instructionToJumpTo))
                                 return new Error(ErrorCode.JumpInstructionNotFound, $"No instruction for absolute address '{absoluteAddress}' found for jump instruction '{instruction}'", instruction.Position);

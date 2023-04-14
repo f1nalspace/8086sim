@@ -3,19 +3,6 @@ using System.Text;
 
 namespace Final.CPU8086
 {
-    [Flags]
-    public enum InstructionFlags : uint
-    {
-        None = 0,
-        Lock = 1 << 0,
-        Rep = 1 << 1,
-        Segment = 1 << 2,
-        Far = 1 << 3,
-        SignExtendedImm8 = 1 << 4,
-        Prefix = 1 << 5,
-        Override = 1 << 6,
-    }
-
     public class Instruction : IEquatable<Instruction>
     {
         public uint Position { get; }
@@ -74,20 +61,63 @@ namespace Final.CPU8086
         }
 
         public override bool Equals(object obj) => obj is Instruction instruction && Equals(instruction);
-        public override int GetHashCode() => HashCode.Combine(Position, OpCode, Length,  Mnemonic, Width, Flags);
+        public override int GetHashCode() => HashCode.Combine(Position, OpCode, Length, Mnemonic, Width, Flags);
 
         public string Asm(OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
         {
             StringBuilder s = new StringBuilder();
             s.Append(Mnemonic.ToString());
-            int count = 0;
+
+            string separator = string.Empty;
             foreach (InstructionOperand op in Operands)
             {
-                if (count == 1)
-                    s.Append(',');
-                s.Append(' ');
-                s.Append(op.Asm(Width.Type, outputMode, hexPrefix));
-                ++count;
+                if (op.Op == OperandType.None)
+                    continue;
+
+                s.Append(separator);
+                separator = ",";
+
+                switch (op.Op)
+                {
+                    case OperandType.Register:
+                        {
+                            s.Append(' ');
+                            s.Append(Register.GetName(op.Register));
+                        }
+                        break;
+                    case OperandType.Address:
+                        {
+                            MemoryAddress mem = op.Memory;
+                            if (Flags.HasFlag(InstructionFlags.Far))
+                                s.Append(" FAR");
+
+                            if (Operands[0].Op != OperandType.Register)
+                            {
+                                if (Width.Type == DataWidthType.Word)
+                                    s.Append(" WORD");
+                                else
+                                    s.Append(" BYTE");
+                            }
+
+                            s.Append(' ');
+                            s.Append(mem.Asm(Width.Type, outputMode, hexPrefix));
+                        }
+                        break;
+                    case OperandType.Immediate:
+                        {
+                            Immediate imm = op.Immediate;
+                            s.Append(' ');
+                            s.Append(imm.Asm(Width.Type, outputMode, hexPrefix));
+                        }
+                        break;
+                    case OperandType.Value:
+                        {
+
+                        }
+                        break;
+                    default:
+                        break;
+                }
             }
             return s.ToString();
         }

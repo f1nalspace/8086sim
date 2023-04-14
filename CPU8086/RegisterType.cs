@@ -159,5 +159,26 @@
         /// 16-bit extra segment (ES)
         /// </summary>
         ES,
+
+        /// <summary>
+        /// Control Register (CR)
+        /// </summary>
+        CR,
+        /// <summary>
+        /// Debug Register (DR)
+        /// </summary>
+        DR,
+        /// <summary>
+        /// Task Register (TR)
+        /// </summary>
+        TR,
+        /// <summary>
+        /// Extra Segment 2 (FS)
+        /// </summary>
+        FS,
+        /// <summary>
+        /// Extra Segment 3 (GS)
+        /// </summary>
+        GS,
     }
 }

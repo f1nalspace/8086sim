@@ -15,6 +15,12 @@ namespace Final.CPU8086
             Displacement = displacement;
         }
 
+        public MemoryAddress(int displacement)
+        {
+            EAC = EffectiveAddressCalculation.DirectAddress;
+            Displacement = displacement;
+        }
+
         public bool Equals(MemoryAddress other)
         {
             if (EAC != other.EAC)

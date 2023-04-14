@@ -115,29 +115,7 @@ namespace Final.CPU8086
             };
         }
 
-        public string Asm(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.Auto, string hexPrefix = "0x")
-        {
-            string prefix = DataType switch
-            {
-                DataType.Byte => "byte ",
-                DataType.Byte | DataType.Pointer => "byte ptr ",
-                DataType.Word => "word ",
-                DataType.Word | DataType.Pointer => "short ptr ",
-                DataType.Int => "int ",
-                DataType.Int | DataType.Pointer => "int ptr ",
-                DataType.DoubleWord => "dword ",
-                DataType.DoubleWord | DataType.Pointer => "dword ptr ",
-                _ => string.Empty
-            };
-            string value = Op switch
-            {
-                OperandType.Register => CPU8086.Register.GetName(Register),
-                OperandType.Immediate => Immediate.Asm(dataWidth, outputMode, hexPrefix),
-                OperandType.Address => Memory.Asm(dataWidth, outputMode, hexPrefix),
-                _ => string.Empty
-            };
-            return $"{prefix}{value}";
-        }
+        
 
         public override string ToString()
         {

@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using OneOf.Types;
+using System.Text;
 
 namespace Final.CPU8086
 {
@@ -8,6 +9,7 @@ namespace Final.CPU8086
         public Mnemonic Mnemonic { get; }
         public DataWidth DataWidth { get; }
         public InstructionFlags Flags { get; set; }
+        public DataType DataType { get; }
         public States States { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
@@ -18,11 +20,12 @@ namespace Final.CPU8086
 
         public InstructionType Type => Mnemonic.Type;
 
-        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, States states, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
+        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, DataType dataType, States states, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
         {
             Op = op;
             DataWidth = dataWidth;
             Flags = flags;
+            DataType = dataType;
             States = states;
             Mnemonic = mnemonic;
             Platform = platform;
@@ -31,6 +34,16 @@ namespace Final.CPU8086
             Fields = fields;
             Operands = operands;
         }
+
+        static readonly InstructionFlags[] PossibleFlags = new[] {
+            InstructionFlags.Lock,
+            InstructionFlags.Rep,
+            InstructionFlags.Segment,
+            InstructionFlags.Far,
+            InstructionFlags.SignExtendedImm8,
+            InstructionFlags.Prefix,
+            InstructionFlags.Override,
+        };
 
         public override string ToString()
         {
@@ -43,18 +56,23 @@ namespace Final.CPU8086
             s.Append(DataWidth);
             if (Flags != InstructionFlags.None)
             {
-                s.Append(' ');
                 s.Append('[');
                 int c = 0;
-                if (Flags.HasFlag(InstructionFlags.SignExtendedImm8))
+                foreach (var flag in PossibleFlags)
                 {
-                    if (c > 0)
-                        s.Append(", ");
-                    s.Append("SignExtended");
-                    ++c;
+                    if (Flags.HasFlag(flag))
+                    {
+                        if (c > 0)
+                            s.Append(", ");
+                        s.Append(flag.ToString());
+                        ++c;
+                    }
                 }
                 s.Append(']');
             }
+            s.Append('|');
+            s.Append(DataType);
+            s.Append('|');
             foreach (Operand operand in Operands)
             {
                 s.Append(' ');

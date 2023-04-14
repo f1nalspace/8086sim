@@ -60,60 +60,13 @@
                 RegisterType.SS => 2,
                 RegisterType.ES => 2,
 
+                RegisterType.CR => 2,
+                RegisterType.DR => 2,
+                RegisterType.TR => 2,
+                RegisterType.FS => 2,
+                RegisterType.GS => 2,
+
                 _ => 0
-            };
-        }
-
-        public static string GetLowerName(RegisterType name)
-        {
-            return name switch
-            {
-                RegisterType.RAX => "rax",
-                RegisterType.EAX => "eax",
-                RegisterType.AX => "ax",
-                RegisterType.AL => "al",
-                RegisterType.AH => "ah",
-
-                RegisterType.RBX => "rbx",
-                RegisterType.EBX => "ebx",
-                RegisterType.BX => "bx",
-                RegisterType.BL => "bl",
-                RegisterType.BH => "bh",
-
-                RegisterType.RCX => "rcx",
-                RegisterType.ECX => "ecx",
-                RegisterType.CX => "cx",
-                RegisterType.CL => "cl",
-                RegisterType.CH => "ch",
-
-                RegisterType.RDX => "rdx",
-                RegisterType.EDX => "edx",
-                RegisterType.DX => "dx",
-                RegisterType.DL => "dl",
-                RegisterType.DH => "dh",
-
-                RegisterType.RSP => "rsp",
-                RegisterType.ESP => "esp",
-                RegisterType.SP => "sp",
-
-                RegisterType.RBP => "rbp",
-                RegisterType.EBP => "ebp",
-                RegisterType.BP => "bp",
-
-                RegisterType.RSI => "rsi",
-                RegisterType.ESI => "esi",
-                RegisterType.SI => "si",
-
-                RegisterType.RDI => "rdi",
-                RegisterType.EDI => "edi",
-                RegisterType.DI => "di",
-
-                RegisterType.CS => "cs",
-                RegisterType.DS => "ds",
-                RegisterType.SS => "ss",
-                RegisterType.ES => "es",
-
-                _ => null
             };
         }
 
@@ -165,6 +118,12 @@
                 RegisterType.DS => nameof(RegisterType.DS),
                 RegisterType.SS => nameof(RegisterType.SS),
                 RegisterType.ES => nameof(RegisterType.ES),
+
+                RegisterType.CR => nameof(RegisterType.CR),
+                RegisterType.DR => nameof(RegisterType.DR),
+                RegisterType.TR => nameof(RegisterType.TR),
+                RegisterType.FS => nameof(RegisterType.FS),
+                RegisterType.GS => nameof(RegisterType.GS),
 
                 _ => null
             };

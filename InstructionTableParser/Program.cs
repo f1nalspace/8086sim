@@ -35,31 +35,31 @@ namespace Final.ITP
         // See: https://wiki.osdev.org/X86-64_Instruction_Encoding#Legacy_Prefixes
         public static readonly InstructionEntry[] PrefixInstructions = new InstructionEntry[] {
             // Lock/Repeat
-            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Lock Prefix" },
-            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Not Equal Prefix" },
-            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Prefix" },
+            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Lock Prefix" },
+            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Not Equal Prefix" },
+            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Repeat Prefix" },
 
             // Segment override
-            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
-            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
-            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
-            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}) { Description = "ES Segment Override Prefix" },
-            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
-            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
+            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
+            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
+            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
+            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.ES, DataType.None)}) { Description = "ES Segment Override Prefix" },
+            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
+            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
 
 #if false
             // Branch not taken/taken
-            new InstructionEntry(0x2E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
-            new InstructionEntry(0x3E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+            new InstructionEntry(0x2E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
+            new InstructionEntry(0x3E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
 #endif
 
             // Operand size override (Changes size of operand size expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
-            new InstructionEntry(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 8-bit Override Prefix" },
-            new InstructionEntry(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 16-bit Override Prefix" },
+            new InstructionEntry(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 8-bit Override Prefix" },
+            new InstructionEntry(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Data to 16-bit Override Prefix" },
 
             // Address size override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
-            new InstructionEntry(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 8-bit Override Prefix" },
-            new InstructionEntry(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 16-bit Override Prefix" },
+            new InstructionEntry(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 8-bit Override Prefix" },
+            new InstructionEntry(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), Array.Empty<Operand>()) { Description = "Address to 16-bit Override Prefix" },
         };
     }
 
@@ -385,41 +385,46 @@ namespace Final.ITP
                             flags |= InstructionFlags.SignExtendedImm8;
 
                         // We dont want to create any Operand´s for Keywords or Type-Casts, so we convert them into data-types
-                        DataType opDataType = DataType.None;
-                        List<Operand> leftOperands = new List<Operand>(2);
+                        DataType dataType = DataType.None;
                         foreach (Operand operand in operands)
                         {
                             switch (operand.Kind)
                             {
                                 case OperandKind.FarPointer:
+                                    dataType |= DataType.Pointer;
+                                    flags |= InstructionFlags.Far;
+                                    break;
+
                                 case OperandKind.NearPointer:
-                                case OperandKind.KeywordPointer:
-                                    opDataType |= DataType.Pointer;
+                                    dataType |= DataType.Pointer;
+                                    break;
+
+                                case OperandKind.TypePointer:
+                                    dataType |= DataType.Pointer;
                                     break;
                                 case OperandKind.TypeDoubleWord:
-                                    opDataType |= DataType.DoubleWord;
+                                    dataType |= DataType.DoubleWord;
                                     break;
                                 case OperandKind.TypeShort:
-                                    opDataType |= DataType.Word;
+                                    dataType |= DataType.Word;
                                     break;
                                 case OperandKind.TypeInt:
-                                    opDataType |= DataType.Int;
+                                    dataType |= DataType.Int;
                                     break;
                                 case OperandKind.KeywordFar:
                                     flags |= InstructionFlags.Far;
                                     break;
                                 default:
-                                    leftOperands.Add(operand.WithDataType(opDataType));
-                                    opDataType = DataType.None;
+                                    dataType |= operand.DataType;
                                     break;
                             }
                         }
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, flags, states, platform, minLen, maxLen, fields, leftOperands.ToArray());
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
                         allInstructions.Add(instruction);
                     }
 
-                    
+
 #endif // !GENERATE_INSTRUCTION_CLASSES
 
 #endif // GENERATE_CS
@@ -557,6 +562,7 @@ namespace Final.ITP
             string instructionTypeName = "IT";
             string listName = "IL";
             string dataWidthName = "DW";
+            string dataTypeName = "DT";
             string flagsName = "IF";
             string tableName = nameof(InstructionTable);
             string varName = "_opToList";
@@ -566,6 +572,7 @@ namespace Final.ITP
             instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName};");
             instructionsTableText.AppendLine($"using {instructionTypeName} = {typeof(InstructionType).FullName};");
             instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
+            instructionsTableText.AppendLine($"using {dataTypeName} = {typeof(DataType).FullName};");
             instructionsTableText.AppendLine($"using {flagsName} = {typeof(InstructionFlags).FullName};");
             instructionsTableText.AppendLine($"using {mnemonicName} = {typeof(Mnemonic).FullName};");
             instructionsTableText.AppendLine();
@@ -576,7 +583,8 @@ namespace Final.ITP
             instructionsTableText.AppendLine($"\tpublic {tableName}()");
             instructionsTableText.AppendLine("\t{");
 
-            InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>();
+            InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>().Where(d => d != InstructionFlags.None).ToArray();
+            DataType[] allDataTypes = Enum.GetValues<DataType>().Where(d => d != DataType.None).ToArray();
 
             foreach (InstructionList list in newTable)
             {
@@ -632,8 +640,6 @@ namespace Final.ITP
                             int flagCount = 0;
                             foreach (InstructionFlags flag in allFlags)
                             {
-                                if (flag == InstructionFlags.None)
-                                    continue;
                                 if (entry.Flags.HasFlag(flag))
                                 {
                                     if (flagCount > 0)
@@ -650,6 +656,31 @@ namespace Final.ITP
                             entryText.Append(flagsName);
                             entryText.Append('.');
                             entryText.Append(nameof(InstructionFlags.None));
+                        }
+
+                        // DataType
+                        entryText.Append(", ");
+                        if (entry.DataType != DataType.None)
+                        {
+                            int dataTypeCount = 0;
+                            foreach (DataType dataType in allDataTypes)
+                            {
+                                if (entry.DataType.HasFlag(dataType))
+                                {
+                                    if (dataTypeCount > 0)
+                                        entryText.Append(" | ");
+                                    entryText.Append(dataTypeName);
+                                    entryText.Append('.');
+                                    entryText.Append(dataType.ToString());
+                                    ++dataTypeCount;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            entryText.Append(dataTypeName);
+                            entryText.Append('.');
+                            entryText.Append(nameof(DataType.None));
                         }
 
                         // States

@@ -36,14 +36,13 @@ namespace Final.CPU8086
         ImmediateDoubleWord,
 
         KeywordFar,
-        KeywordPointer,
+        NearPointer,
+        FarPointer,
 
         TypeDoubleWord,
         TypeShort,
         TypeInt,
-
-        NearPointer,
-        FarPointer,
+        TypePointer,
 
         SourceRegister,
 
@@ -103,13 +102,12 @@ namespace Final.CPU8086
         CR,
         DR,
         TR,
-
         FS,
         GS,
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Operand
+    public class Operand
     {
         private static readonly Regex _rexMNumber = new Regex("(?<prefix>[m])(?<num>[0-9]{1,2})", RegexOptions.Compiled);
         private static readonly Regex _regFull = new Regex("(?<type>\\(.*\\))?\\s*(?<remaining>.*)", RegexOptions.Compiled);
@@ -184,14 +182,14 @@ namespace Final.CPU8086
                 "id" => OperandKind.ImmediateDoubleWord,
 
                 "far" => OperandKind.KeywordFar,
-                "ptr" => OperandKind.KeywordPointer,
+                "np" => OperandKind.NearPointer,
+                "fp" => OperandKind.FarPointer,
 
                 "dword" => OperandKind.TypeDoubleWord,
                 "short" => OperandKind.TypeShort,
                 "int" => OperandKind.TypeInt,
+                "ptr" => OperandKind.TypePointer,
 
-                "np" => OperandKind.NearPointer,
-                "fp" => OperandKind.FarPointer,
                 "sr" => OperandKind.SourceRegister,
 
                 "sl" => OperandKind.ShortLabel,
@@ -296,14 +294,15 @@ namespace Final.CPU8086
                 OperandKind.ImmediateDoubleWord => "id",
 
                 OperandKind.KeywordFar => "far",
-                OperandKind.KeywordPointer => "ptr",
+                OperandKind.NearPointer => "np",
+                OperandKind.FarPointer => "fp",
+
                 OperandKind.TypeDoubleWord => "dword",
                 OperandKind.TypeShort => "short",
                 OperandKind.TypeInt => "int",
+                OperandKind.TypePointer => "ptr",
 
                 OperandKind.SourceRegister => "sr",
-                OperandKind.NearPointer => "np",
-                OperandKind.FarPointer => "fp",
 
                 OperandKind.ShortLabel => "sl",
                 OperandKind.LongLabel => "ll",

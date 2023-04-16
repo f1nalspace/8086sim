@@ -123,7 +123,7 @@ namespace Final.CPU8086
                 Span<byte> push_ES = stackalloc byte[] { 0x06 };
                 IS actual;
                 Assert.AreEqual(
-                    new IS(0, push_ES[0], 1, IT.PUSH, DWT.None, IF.None, new IO(RT.ES)),
+                    new IS(0, push_ES[0], 1, IT.PUSH, DWT.Word, IF.None, new IO(RT.ES)),
                     actual = _cpu.DecodeNext(push_ES, nameof(push_ES)));
                 Assert.AreEqual("PUSH ES", actual.Asm());
             }
@@ -242,7 +242,7 @@ namespace Final.CPU8086
                 Span<byte> add_JNL_FFEE = stackalloc byte[] { 0x7D, 0xEC };
                 IS actual;
                 Assert.AreEqual(
-                    new IS(0, add_JNL_FFEE[0], 2, IT.JGE, DWT.None, IF.None, new IO(unchecked((sbyte)0xEC), ImmediateFlag.RelativeJumpDisplacement)),
+                    new IS(0, add_JNL_FFEE[0], 2, IT.JGE, DWT.Byte, IF.None, new IO(unchecked((sbyte)0xEC), ImmediateFlag.RelativeJumpDisplacement)),
                     actual = _cpu.DecodeNext(add_JNL_FFEE, nameof(add_JNL_FFEE)));
                 Assert.AreEqual("JGE -20", actual.Asm());
                 Assert.AreEqual("JGE -20", actual.Asm(OutputValueMode.AsInteger));

@@ -592,12 +592,13 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
-                                    <DataGridTextColumn Header="Op" Binding="{Binding OpCode, Converter={local:HexCellValueConverter}}" />
+                                    <DataGridTextColumn Header="Op" Binding="{Binding OpCode, Converter={StaticResource streamPosValueConverter}}" />
                                     <DataGridTextColumn Header="Mnemonic" Binding="{Binding Mnemonic}" />
                                     <DataGridTextColumn Header="Length" Binding="{Binding Length}" />
-                                    <DataGridTextColumn Header="DW" Binding="{Binding Width}" />
-                                    <DataGridTextColumn Header="Op-0" Binding="{Binding Operands[0]}" />
-                                    <DataGridTextColumn Header="Op-1" Binding="{Binding Operands[1]}" />
+                                    <DataGridTextColumn Header="Flags" Binding="{Binding Flags}" />
+                                    <DataGridTextColumn Header="Width" Binding="{Binding Width.Type}" />
+                                    <DataGridTextColumn Header="Op-0" Binding="{Binding FirstOperand}" />
+                                    <DataGridTextColumn Header="Op-1" Binding="{Binding SecondOperand}" />
                                 </DataGrid.Columns>
                                 <DataGrid.RowStyle>
                                     <Style TargetType="DataGridRow">

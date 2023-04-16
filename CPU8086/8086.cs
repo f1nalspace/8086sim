@@ -23,6 +23,9 @@ namespace Final.CPU8086
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private static readonly DataWidth PointerDataWidth = new DataWidth(DataWidthType.Word);
+        private static readonly DataType PointerDataType = DataType.Word;
+
         private void RaisePropertyChanged(string propertyName)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
@@ -256,8 +259,10 @@ namespace Final.CPU8086
         private const int EndDataSegmentStart = 0x2FFFF;
         private const int StartDataSegmentStart = 0x20000;
 
-        private static int GetDataTypeSize(DataType type)
+        private int GetDataTypeSize(DataType type)
         {
+            if (type == DataType.Pointer)
+                type = PointerDataType;
             return type switch
             {
                 DataType.Byte => 1,
@@ -328,11 +333,14 @@ namespace Final.CPU8086
 
                 case DataType.Pointer:
                     {
-
-                        byte low = Memory[absoluteAddress + 0];
-                        byte high = Memory[absoluteAddress + 1];
-                        ushort u16 = (ushort)(low | (high << 8));
-                        return new Immediate(u16, ImmediateFlag.None);
+                        if (PointerDataType == DataType.Word)
+                        {
+                            byte low = Memory[absoluteAddress + 0];
+                            byte high = Memory[absoluteAddress + 1];
+                            ushort u16 = (ushort)(low | (high << 8));
+                            return new Immediate(u16, ImmediateFlag.None);
+                        } else 
+                            return new Error(ErrorCode.UnsupportedDataType, $"The pointer data type '{PointerDataType}' is not supported", 0);
                     }
 
                 default:
@@ -345,7 +353,7 @@ namespace Final.CPU8086
                             else if (type.HasFlag(DataType.Word))
                                 pointerDataType = DataType.Word;
                             else if (type == DataType.Pointer)
-                                pointerDataType = DataType.Word; // In 8086 a pointer is just a word
+                                pointerDataType = PointerDataType;
                             else
                                 return new Error(ErrorCode.UnsupportedDataType, $"The source pointer memory type '{type}' is not supported!", 0);
                             return LoadMemory(absoluteAddress, pointerDataType);
@@ -419,7 +427,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType sourceType, DataType explicitType)
+        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType type)
         {
             switch (sourceOp.Kind)
             {
@@ -427,8 +435,14 @@ namespace Final.CPU8086
                     return new InstructionOperand(s32: sourceOp.Value);
 
                 case OperandKind.MemoryByte:
+                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+
                 case OperandKind.MemoryWord:
+                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+
                 case OperandKind.MemoryDoubleWord:
+                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+
                 case OperandKind.MemoryQuadWord:
                     return new InstructionOperand(new MemoryAddress(eac, displacement));
 
@@ -440,12 +454,12 @@ namespace Final.CPU8086
 
                 case OperandKind.SourceRegister:
                     {
-                        if (sourceType == DataType.Byte)
+                        if (type == DataType.Byte)
                             return new InstructionOperand(_regTable.GetByte(registerBits));
-                        else if (sourceType == DataType.Word)
+                        else if (type == DataType.Word)
                             return new InstructionOperand(_regTable.GetWord(registerBits));
                         else
-                            throw new NotSupportedException($"Unsupported type of '{sourceType}' for source register");
+                            throw new NotSupportedException($"Unsupported type of '{type}' for source register");
                     }
 
                 case OperandKind.RegisterByte:
@@ -468,21 +482,22 @@ namespace Final.CPU8086
                 case OperandKind.RegisterOrMemoryDoubleWord:
                 case OperandKind.RegisterOrMemoryQuadWord:
                     break;
+
                 case OperandKind.ImmediateByte:
                     if ((sbyte)immediate < 0)
-                        return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.None);
                     else
-                        return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.None);
                 case OperandKind.ImmediateWord:
                     if ((short)immediate < 0)
-                        return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.None);
                     else
-                        return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.None);
                 case OperandKind.ImmediateDoubleWord:
                     if ((int)immediate < 0)
-                        return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
                     else
-                        return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None, explicitType);
+                        return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
 
                 case OperandKind.TypeDoubleWord:
                     break;
@@ -495,31 +510,31 @@ namespace Final.CPU8086
 
                 case OperandKind.ShortLabel:
                     if ((sbyte)displacement < 0)
-                        return new InstructionOperand((sbyte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((sbyte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
                     else
-                        return new InstructionOperand((byte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((byte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
                 case OperandKind.LongLabel:
                     if ((short)displacement < 0)
-                        return new InstructionOperand((short)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((short)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
                     else
-                        return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement, explicitType);
+                        return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
 
                 case OperandKind.FarPointer:
                     {
                         int address = offset + segment;
                         if ((short)segment < 0)
-                            return new InstructionOperand(new MemoryAddress((short)(address & 0xFFFF)), explicitType);
+                            return new InstructionOperand(new MemoryAddress((short)(address & 0xFFFF)));
                         else
-                            return new InstructionOperand(new MemoryAddress((ushort)(address & 0xFFFF)), explicitType);
+                            return new InstructionOperand(new MemoryAddress((ushort)(address & 0xFFFF)));
                     }
 
                 case OperandKind.NearPointer:
                     {
                         int address = offset + segment;
                         if ((sbyte)address < 0)
-                            return new InstructionOperand(new MemoryAddress((sbyte)(address & 0xFF)), explicitType);
+                            return new InstructionOperand(new MemoryAddress((sbyte)(address & 0xFF)));
                         else
-                            return new InstructionOperand(new MemoryAddress((byte)(address & 0xFF)), explicitType);
+                            return new InstructionOperand(new MemoryAddress((byte)(address & 0xFF)));
                     }
 
                 case OperandKind.ST:
@@ -630,7 +645,33 @@ namespace Final.CPU8086
             throw new NotSupportedException($"The source operand '{sourceOp}' is not supported");
         }
 
-        static OneOf<Instruction, Error> LoadInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionEntry entry)
+        static DataWidth DataTypeToDataWidth(DataType type)
+        {
+            return type switch
+            {
+                DataType.Byte => new DataWidth(DataWidthType.Byte),
+                DataType.Word => new DataWidth(DataWidthType.Word),
+                DataType.DoubleWord => new DataWidth(DataWidthType.DoubleWord),
+                DataType.Int => new DataWidth(DataWidthType.DoubleWord),
+                DataType.QuadWord => new DataWidth(DataWidthType.QuadWord),
+                DataType.Pointer => PointerDataWidth,
+                _ => new DataWidth()
+            };
+        }
+
+        static DataType DataWidthToDataType(DataWidth width)
+        {
+            return width.Type switch
+            {
+                DataWidthType.Byte => DataType.Byte,
+                DataWidthType.Word => DataType.Word,
+                DataWidthType.DoubleWord => DataType.DoubleWord,
+                DataWidthType.QuadWord => DataType.QuadWord,
+                _ => DataType.None
+            };
+        }
+
+        static OneOf<Instruction, Error> DecodeInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionEntry entry)
         {
             if (stream.Length == 0)
                 return new Error(ErrorCode.EndOfStream, $"Expect at least one byte of stream length!", position);
@@ -947,16 +988,7 @@ namespace Final.CPU8086
                 }
             }
             else
-            {
-                if (entry.DataWidth.Type == DataWidthType.Byte)
-                    bestInferredType = DataType.Byte;
-                else if (entry.DataWidth.Type == DataWidthType.Word)
-                    bestInferredType = DataType.Word;
-                else if (entry.DataWidth.Type == DataWidthType.DoubleWord)
-                    bestInferredType = DataType.DoubleWord;
-                else if (entry.DataWidth.Type == DataWidthType.QuadWord)
-                    bestInferredType = DataType.QuadWord;
-            }
+                bestInferredType = DataWidthToDataType(entry.DataWidth);
 
             bool isDest = true;
             foreach (Operand sourceOp in entry.Operands)
@@ -1044,13 +1076,17 @@ namespace Final.CPU8086
                 else
                     sourceType = bestInferredType;
 
-                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segment, sourceType, explicitType);
+                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segment, sourceType);
 
                 targetOps[opCount++] = targetOp;
 
                 if (isDest)
                     isDest = false;
             }
+
+            DataWidth dataWidth = entry.DataWidth;
+            if (dataWidth.Type == DataWidthType.None)
+                dataWidth = DataTypeToDataWidth(bestInferredType);
 
             int length = stream.Length - cur.Length;
             if (length > MaxInstructionLength)
@@ -1061,7 +1097,7 @@ namespace Final.CPU8086
                 return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes", position);
 
             Span<InstructionOperand> actualOps = targetOps.Slice(0, opCount);
-            return new Instruction(position, entry.Op, (byte)length, entry.Type, entry.DataWidth, flags, actualOps);
+            return new Instruction(position, entry.Op, (byte)length, entry.Type, dataWidth, flags, actualOps);
         }
 
         public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, uint position = 0)
@@ -1081,7 +1117,7 @@ namespace Final.CPU8086
             if (instructionList.Count == 1)
             {
                 InstructionEntry entry = instructionList.First();
-                OneOf<Instruction, Error> loadRes = LoadInstruction(stream, streamName, position, entry);
+                OneOf<Instruction, Error> loadRes = DecodeInstruction(stream, streamName, position, entry);
                 if (loadRes.TryPickT1(out Error error, out _))
                     return new Error(error, $"Failed to decode instruction '{entry}'", position);
                 return loadRes.AsT0;
@@ -1091,7 +1127,7 @@ namespace Final.CPU8086
                 // Expect that there is at least one more byte
                 foreach (InstructionEntry instructionEntry in instructionList)
                 {
-                    OneOf<Instruction, Error> loadRes = LoadInstruction(stream, streamName, position, instructionEntry);
+                    OneOf<Instruction, Error> loadRes = DecodeInstruction(stream, streamName, position, instructionEntry);
                     if (loadRes.TryPickT0(out Instruction instruction, out _))
                         return instruction;
                 }

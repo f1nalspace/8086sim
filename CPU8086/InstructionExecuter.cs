@@ -53,14 +53,8 @@ namespace Final.CPU8086
                 return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
 
             InstructionOperand destOperand = instruction.Operands[0];
-            DataType destDataType = destOperand.DataType;
-            if (destDataType == DataType.None)
-                destDataType = WidthToType(instruction.Width);
 
             InstructionOperand sourceOperand = instruction.Operands[1];
-            DataType sourceDataType = sourceOperand.DataType;
-            if (sourceDataType == DataType.None)
-                sourceDataType = WidthToType(instruction.Width);
 
             Immediate source;
             switch (sourceOperand.Op)
@@ -75,9 +69,10 @@ namespace Final.CPU8086
                     break;
                 case OperandType.Address:
                     {
-                        OneOf<Immediate, Error> alr = cpu.LoadMemory(sourceOperand.Memory, sourceDataType);
+                        DataType dataType = WidthToType(instruction.Width);
+                        OneOf<Immediate, Error> alr = cpu.LoadMemory(sourceOperand.Memory, dataType);
                         if (alr.IsT1)
-                            return new Error(alr.AsT1, $"Failed to load source memory '{sourceOperand.Memory}' with type '{sourceDataType}' by instruction '{instruction}'", instruction.Position);
+                            return new Error(alr.AsT1, $"Failed to load source memory '{sourceOperand.Memory}' with type '{dataType}' by instruction '{instruction}'", instruction.Position);
                         source = alr.AsT0;
                     }
                     break;
@@ -100,9 +95,10 @@ namespace Final.CPU8086
                     break;
                 case OperandType.Address:
                     {
-                        OneOf<byte, Error> asr = cpu.StoreMemory(destOperand.Memory, destDataType, source);
+                        DataType dataType = WidthToType(instruction.Width);
+                        OneOf<byte, Error> asr = cpu.StoreMemory(destOperand.Memory, dataType, source);
                         if (asr.IsT1)
-                            return new Error(asr.AsT1, $"Failed to store '{source}' into destination memory '{destOperand.Memory}' with type '{destDataType}' by instruction '{instruction}'", instruction.Position);
+                            return new Error(asr.AsT1, $"Failed to store '{source}' into destination memory '{destOperand.Memory}' with type '{dataType}' by instruction '{instruction}'", instruction.Position);
                     }
                     break;
                 default:

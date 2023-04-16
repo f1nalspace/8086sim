@@ -97,6 +97,6 @@ namespace Final.CPU8086
             };
         }
 
-        public override string ToString() => $"{EAC}: {Displacement:X}";
+        public override string ToString() => $"{EAC}: 0x{Displacement:X}";
     }
 }

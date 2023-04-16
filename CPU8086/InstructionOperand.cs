@@ -9,84 +9,77 @@ namespace Final.CPU8086
         [FieldOffset(0)]
         public readonly OperandType Op;
         [FieldOffset(1)]
-        public readonly DataType DataType;
-        [FieldOffset(2)]
         public readonly MemoryAddress Memory;
-        [FieldOffset(2)]
+        [FieldOffset(1)]
         public readonly RegisterType Register;
-        [FieldOffset(2)]
+        [FieldOffset(1)]
         public readonly Immediate Immediate;
-        [FieldOffset(2)]
+        [FieldOffset(1)]
         public readonly int Value;
 
-        public InstructionOperand(RegisterType register, DataType dataType = DataType.None)
+        public InstructionOperand(RegisterType register)
         {
             Op = OperandType.Register;
-            DataType = dataType;
             Memory = new MemoryAddress();
             Immediate = new Immediate();
             Value = 0;
             Register = register;
         }
 
-        public InstructionOperand(Register register, DataType dataType = DataType.None)
-            : this(register?.Type ?? RegisterType.Unknown, dataType) { }
+        public InstructionOperand(Register register)
+            : this(register?.Type ?? RegisterType.Unknown) { }
 
-        public InstructionOperand(Immediate immediate, DataType dataType = DataType.None)
+        public InstructionOperand(Immediate immediate)
         {
             Op = OperandType.Immediate;
-            DataType = dataType;
             Memory = new MemoryAddress();
             Register = RegisterType.Unknown;
             Value = 0;
             Immediate = immediate;
         }
 
-        public InstructionOperand(byte u8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(u8, flags), dataType) { }
+        public InstructionOperand(byte u8, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(u8, flags)) { }
 
-        public InstructionOperand(sbyte s8, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(s8, flags), dataType) { }
+        public InstructionOperand(sbyte s8, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(s8, flags)) { }
 
-        public InstructionOperand(short s16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(s16, flags), dataType) { }
+        public InstructionOperand(short s16, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(s16, flags)) { }
 
-        public InstructionOperand(ushort u16, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(u16, flags), dataType) { }
+        public InstructionOperand(ushort u16, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(u16, flags)) { }
 
-        public InstructionOperand(uint u32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(u32, flags), dataType) { }
+        public InstructionOperand(uint u32, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(u32, flags)) { }
 
-        public InstructionOperand(int s32, ImmediateFlag flags = ImmediateFlag.None, DataType dataType = DataType.None)
-            : this(new Immediate(s32, flags), dataType) { }
+        public InstructionOperand(int s32, ImmediateFlag flags = ImmediateFlag.None)
+            : this(new Immediate(s32, flags)) { }
 
-        public InstructionOperand(MemoryAddress address, DataType dataType = DataType.None)
+        public InstructionOperand(MemoryAddress address)
         {
             Op = OperandType.Address;
-            DataType = dataType;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Value = 0;
             Memory = address;
         }
 
-        public InstructionOperand(int value, DataType dataType = DataType.None)
+        public InstructionOperand(int value)
         {
             Op = OperandType.Address;
-            DataType = dataType;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Memory = new MemoryAddress();
             Value = value;
         }
 
-        public InstructionOperand(EffectiveAddressCalculation eac, int displacement, DataType dataType = DataType.None)
-            : this(new MemoryAddress(eac, displacement), dataType) { }
+        public InstructionOperand(EffectiveAddressCalculation eac, int displacement)
+            : this(new MemoryAddress(eac, displacement)) { }
 
         public bool Equals(InstructionOperand other)
         {
             if (Op != other.Op) return false;
-            if (DataType != other.DataType) return false;
             switch (Op)
             {
                 case OperandType.Register:
@@ -99,7 +92,12 @@ namespace Final.CPU8086
                     break;
                 case OperandType.Immediate:
                     if (!Immediate.Equals(other.Immediate))
-                        return false; break;
+                        return false;
+                    break;
+                case OperandType.Value:
+                    if (Value != other.Value)
+                        return false;
+                    break;
             }
             return true;
         }
@@ -108,10 +106,11 @@ namespace Final.CPU8086
         {
             return Op switch
             {
-                OperandType.Register => HashCode.Combine(Op, DataType, Register),
-                OperandType.Address => HashCode.Combine(Op, DataType, Memory),
-                OperandType.Immediate => HashCode.Combine(Op, DataType, Immediate),
-                _ => HashCode.Combine(DataType, Op),
+                OperandType.Register => HashCode.Combine(Op, Register),
+                OperandType.Address => HashCode.Combine(Op, Memory),
+                OperandType.Immediate => HashCode.Combine(Op, Immediate),
+                OperandType.Value => HashCode.Combine(Op, Value),
+                _ => HashCode.Combine(Op),
             };
         }
 
@@ -119,26 +118,14 @@ namespace Final.CPU8086
 
         public override string ToString()
         {
-            string prefix = DataType switch
+            return Op switch
             {
-                DataType.Byte => "byte ",
-                DataType.Byte | DataType.Pointer => "byte ptr ",
-                DataType.Word => "short ",
-                DataType.Word | DataType.Pointer => "short ptr ",
-                DataType.Int => "int ",
-                DataType.Int | DataType.Pointer => "int ptr ",
-                DataType.DoubleWord => "dword ",
-                DataType.DoubleWord | DataType.Pointer => "dword ptr ",
+                OperandType.Register => $"Reg: {CPU8086.Register.GetName(Register)}",
+                OperandType.Immediate => $"Imm: {Immediate}",
+                OperandType.Address => $"Mem: {Memory}",
+                OperandType.Value => $"Value: {Value}",
                 _ => string.Empty
             };
-            string value = Op switch
-            {
-                OperandType.Register => CPU8086.Register.GetName(Register),
-                OperandType.Immediate => Immediate.ToString(),
-                OperandType.Address => Memory.ToString(),
-                _ => string.Empty
-            };
-            return $"{prefix}{value}";
         }
     }
 }

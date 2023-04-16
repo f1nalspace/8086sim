@@ -242,12 +242,12 @@ namespace Final.CPU8086
         {
             return Type switch
             {
-                ImmediateType.Byte => U8.ToString("X2"),
+                ImmediateType.Byte => $"0x{U8:X2}",
                 ImmediateType.SignedByte => S8.ToString("G"),
-                ImmediateType.Word => U16.ToString("X4"),
+                ImmediateType.Word => $"0x{U16:X4}",
                 ImmediateType.SignedWord => S16.ToString("G"),
-                ImmediateType.DoubleWord => U16.ToString("X8"),
-                ImmediateType.Int => S16.ToString("G"),
+                ImmediateType.DoubleWord => $"0x{U32:X8}",
+                ImmediateType.Int => S32.ToString("G"),
                 _ => string.Empty,
             };
         }

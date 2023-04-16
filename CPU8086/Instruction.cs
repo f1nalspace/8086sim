@@ -13,6 +13,9 @@ namespace Final.CPU8086
         public InstructionFlags Flags { get; }
         public InstructionOperand[] Operands { get; }
 
+        public InstructionOperand FirstOperand => Operands.Length > 0 ? Operands[0] : new InstructionOperand();
+        public InstructionOperand SecondOperand => Operands.Length > 1 ? Operands[1] : new InstructionOperand();
+
         public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, InstructionOperand[] operands)
         {
             Position = position;
@@ -68,6 +71,16 @@ namespace Final.CPU8086
             StringBuilder s = new StringBuilder();
             s.Append(Mnemonic.ToString());
 
+            bool hadRegister = false;
+            bool hadImmediate = false;
+            foreach (InstructionOperand op in Operands)
+            {
+                if (op.Op == OperandType.Register)
+                    hadRegister |= true;
+                else if (op.Op == OperandType.Immediate)
+                    hadImmediate |= true;
+            }
+
             string separator = string.Empty;
             foreach (InstructionOperand op in Operands)
             {
@@ -91,7 +104,7 @@ namespace Final.CPU8086
                             if (Flags.HasFlag(InstructionFlags.Far))
                                 s.Append(" FAR");
 
-                            if (Operands[0].Op != OperandType.Register)
+                            if (!hadRegister && !hadImmediate)
                             {
                                 if (Width.Type == DataWidthType.Word)
                                     s.Append(" WORD");
@@ -142,11 +155,14 @@ namespace Final.CPU8086
             s.Append("op: ");
             s.Append(OpCode.ToString("X2"));
             s.Append(", ");
+            s.Append("position: ");
+            s.Append(Position);
+            s.Append(", ");
             s.Append("length: ");
             s.Append(Length);
             s.Append(", ");
-            s.Append("index: ");
-            s.Append(Position);
+            s.Append("width: ");
+            s.Append(Width);
             s.Append(')');
             return s.ToString();
         }

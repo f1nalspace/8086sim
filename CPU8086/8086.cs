@@ -1240,14 +1240,28 @@ namespace Final.CPU8086
                 if (prefixInstructions.Count > 0)
                 {
                     StringBuilder asm = new StringBuilder();
+                    bool hasLock = false;
                     while (prefixInstructions.TryDequeue(out Mnemonic prefix))
                     {
                         if (asm.Length > 0)
                             asm.Append(' ');
                         asm.Append(prefix.Name);
+                        if (prefix.Type == InstructionType.LOCK)
+                            hasLock |= true;
                     }
+
+                    if (hasLock && instruction.Mnemonic.Type == InstructionType.XCHG)
+                    {
+                        // NOTE(@final): LOCK XCHG requires the operands to be reversed in the assembly output
+                        InstructionOperand tmp = instruction.Operands[0];
+                        instruction.Operands[0] = instruction.Operands[1];
+                        instruction.Operands[1] = tmp;
+                    }
+
+                    string insAsm = instruction.Asm(outputMode, hexPrefix);
+
                     asm.Append(' ');
-                    asm.Append(instruction.Asm(outputMode, hexPrefix));
+                    asm.Append(insAsm);
                     result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.Default, instruction.Mnemonic, asm.ToString(), null));
                 }
                 else

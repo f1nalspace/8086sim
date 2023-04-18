@@ -1219,8 +1219,12 @@ namespace Final.CPU8086
             }
 
             List<AssemblyLine> result = new List<AssemblyLine>();
+            Queue<Mnemonic> prefixInstructions = new Queue<Mnemonic>();
             foreach (Instruction instruction in instructions)
             {
+                if (instruction.Flags.HasFlag(InstructionFlags.Prefix))
+                    prefixInstructions.Enqueue(instruction.Mnemonic);
+
                 if (instructionToSourceLabelMap.TryGetValue(instruction, out string sourceLabel))
                     result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.SourceLabel, instruction.Mnemonic, null, sourceLabel));
 
@@ -1230,8 +1234,29 @@ namespace Final.CPU8086
                     continue;
                 }
 
-                string asm = instruction.Asm(outputMode, hexPrefix);
-                result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.Default, instruction.Mnemonic, asm, null));
+                if (instruction.Flags.HasFlag(InstructionFlags.Prefix))
+                    continue;
+
+                if (prefixInstructions.Count > 0)
+                {
+                    StringBuilder asm = new StringBuilder();
+                    while (prefixInstructions.TryDequeue(out Mnemonic prefix))
+                    {
+                        if (asm.Length > 0)
+                            asm.Append(' ');
+                        asm.Append(prefix.Name);
+                    }
+                    asm.Append(' ');
+                    asm.Append(instruction.Asm(outputMode, hexPrefix));
+                    result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.Default, instruction.Mnemonic, asm.ToString(), null));
+                }
+                else
+                {
+                    string asm = instruction.Asm(outputMode, hexPrefix);
+                    result.Add(new AssemblyLine(instruction.Position, AssemblyLineType.Default, instruction.Mnemonic, asm, null));
+                }
+
+                prefixInstructions.Clear();
             }
             return result.ToArray();
         }

@@ -36,17 +36,26 @@ namespace Final.CPU8086
             }
         }
 
-        private static void AssertAssemblyLine(string expected, string actual)
+        private static void AssertAssemblyLine(int lineNum, string expected, string actual)
         {
-            string[] expectedOps = expected.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] actualOps = actual.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            Assert.AreEqual(expectedOps.Length, actualOps.Length, $"Expect assembly operands length of '{expectedOps.Length}', but got '{actualOps.Length}'");
+            static string FixSpacesForPlusMinus(string input)
+            {
+                string r = input.Trim();
+                r = r.Replace("+", " + ");
+                r = r.Replace("-", " - ");
+                return r;
+            }
+
+            var chars = new[] { ',', ' ' };
+            string[] expectedOps = FixSpacesForPlusMinus(expected).Split(chars, StringSplitOptions.RemoveEmptyEntries);
+            string[] actualOps = FixSpacesForPlusMinus(actual).Split(chars, StringSplitOptions.RemoveEmptyEntries);
+            Assert.AreEqual(expectedOps.Length, actualOps.Length, $"Expect assembly operands length of '{expectedOps.Length}', but got '{actualOps.Length}' in line {lineNum} '{actual}' vs '{expected}'");
 
             for (int i = 0; i < expectedOps.Length; ++i)
             {
                 string e = expectedOps[i].ToLower();
                 string a = actualOps[i].ToLower();
-                Assert.AreEqual(e, a, $"Expect assembly operand {i} to be '{e}' but got '{a}'");
+                Assert.AreEqual(e, a, $"Expect assembly operand {i} to be '{e}' but got '{a}' in line {lineNum} '{actual}' vs '{expected}'");
             }
         }
 
@@ -64,7 +73,7 @@ namespace Final.CPU8086
             {
                 string expectedLine = expectedLines[i];
                 string actualLine = actualLines[i];
-                AssertAssemblyLine(expectedLine, actualLine);
+                AssertAssemblyLine(i + 1, expectedLine, actualLine);
             }
         }
 

@@ -87,7 +87,7 @@ namespace Final.CPU8086
 
         public Instruction CurrentInstruction { get => GetValue<Instruction>(); private set => SetValue(value); }
 
-        public CPURegister Register => _cpu.Register;
+        public RegisterState Register => _cpu.Register;
 
         public ImmutableArray<byte> MemoryPage { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
         public int MemoryPageIndex { get => GetValue<int>(); set => SetValue(value, () => MemoryPageIndexChanged(value)); }

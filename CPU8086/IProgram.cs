@@ -6,7 +6,7 @@ namespace Final.CPU8086
     {
         string Name { get; }
         ImmutableArray<byte> Stream { get; }
-        CPURegister Register { get; }
+        RegisterState Register { get; }
         int Length { get; }
     }
 }

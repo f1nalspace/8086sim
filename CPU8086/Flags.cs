@@ -2,7 +2,7 @@
 
 namespace Final.CPU8086
 {
-    public enum StateFlag : byte
+    public enum FlagValue : byte
     {
         Ignore = 0,
         Value,
@@ -10,18 +10,18 @@ namespace Final.CPU8086
         One
     }
 
-    public readonly struct States
+    public readonly struct Flags
     {
-        public StateFlag Parity { get; }
-        public StateFlag Auxiliary { get; }
-        public StateFlag Zero { get; }
-        public StateFlag Sign { get; }
-        public StateFlag Trap { get; }
-        public StateFlag Interrupt { get; }
-        public StateFlag Direction { get; }
-        public StateFlag Overflow { get; }
+        public FlagValue Parity { get; }
+        public FlagValue Auxiliary { get; }
+        public FlagValue Zero { get; }
+        public FlagValue Sign { get; }
+        public FlagValue Trap { get; }
+        public FlagValue Interrupt { get; }
+        public FlagValue Direction { get; }
+        public FlagValue Overflow { get; }
 
-        public States(StateFlag parity, StateFlag auxiliary, StateFlag zero, StateFlag sign, StateFlag trap, StateFlag interrupt, StateFlag direction, StateFlag overflow)
+        public Flags(FlagValue parity, FlagValue auxiliary, FlagValue zero, FlagValue sign, FlagValue trap, FlagValue interrupt, FlagValue direction, FlagValue overflow)
         {
             Parity = parity;
             Auxiliary = auxiliary;
@@ -33,7 +33,7 @@ namespace Final.CPU8086
             Overflow = overflow;
         }
 
-        public States(ReadOnlySpan<char> data)
+        public Flags(ReadOnlySpan<char> data)
         {
             if (data.Length != 8)
                 throw new ArgumentException($"Expect the state flags to be a length of 8, but got {data.Length}");
@@ -47,36 +47,36 @@ namespace Final.CPU8086
             Overflow = Parse(data[0], 'o');
         }
 
-        public static implicit operator States(string value) => new States(value);
-        public static explicit operator string(States flags) => flags.ToString();
+        public static implicit operator Flags(string value) => new Flags(value);
+        public static explicit operator string(Flags flags) => flags.ToString();
 
-        private static StateFlag Parse(char c, char t)
+        private static FlagValue Parse(char c, char t)
         {
             if (c == t)
-                return StateFlag.Value;
+                return FlagValue.Value;
             return c switch
             {
-                '0' => StateFlag.Zero,
-                '1' => StateFlag.One,
+                '0' => FlagValue.Zero,
+                '1' => FlagValue.One,
                 '*' or
-                '-' => StateFlag.Ignore,
+                '-' => FlagValue.Ignore,
                 _ => throw new NotImplementedException($"The state flag char '{c}' is not implemented")
             };
         }
 
-        private static char ToChar(StateFlag flag, char t)
+        private static char ToChar(FlagValue flag, char t)
         {
             return flag switch
             {
-                StateFlag.Value => t,
-                StateFlag.Zero => '0',
-                StateFlag.One => '1',
-                StateFlag.Ignore => '-',
+                FlagValue.Value => t,
+                FlagValue.Zero => '0',
+                FlagValue.One => '1',
+                FlagValue.Ignore => '-',
                 _ => throw new NotImplementedException($"The state flag '{flag}' is not implemented")
             };
         }
 
-        public static readonly States Empty = new States();
+        public static readonly Flags Empty = new Flags();
 
         public override string ToString()
         {

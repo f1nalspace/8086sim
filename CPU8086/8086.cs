@@ -40,7 +40,7 @@ namespace Final.CPU8086
 
         public MemoryTable Memory { get; }
 
-        public CPURegister Register { get; }
+        public RegisterState Register { get; }
 
         public IProgram ActiveProgram { get => _activeProgram; private set => SetValue(ref _activeProgram, value); }
         private IProgram _activeProgram = null;
@@ -52,7 +52,7 @@ namespace Final.CPU8086
             _executer = new InstructionExecuter(this);
 
             Memory = new MemoryTable();
-            Register = new CPURegister();
+            Register = new RegisterState();
         }
 
         public void Reset()

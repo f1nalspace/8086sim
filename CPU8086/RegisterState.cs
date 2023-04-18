@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 namespace Final.CPU8086
 {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
-    public class CPURegister
+    public class RegisterState
     {
         [FieldOffset(0)]
         private short _AX;
@@ -108,7 +108,7 @@ namespace Final.CPU8086
             Status = 0;
         }
 
-        public void Assign(CPURegister register)
+        public void Assign(RegisterState register)
         {
             if (register == null)
                 throw new ArgumentNullException(nameof(register));

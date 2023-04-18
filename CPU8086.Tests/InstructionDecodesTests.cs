@@ -39,7 +39,7 @@ namespace Final.CPU8086
         private static void AssertAssemblyLine(string expected, string actual)
         {
             string[] expectedOps = expected.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            string[] actualOps = expected.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] actualOps = actual.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
             Assert.AreEqual(expectedOps.Length, actualOps.Length, $"Expect assembly operands length of '{expectedOps.Length}', but got '{actualOps.Length}'");
 
             for (int i = 0; i < expectedOps.Length; ++i)

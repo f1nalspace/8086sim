@@ -72,13 +72,10 @@ namespace Final.CPU8086
             s.Append(Mnemonic.ToString());
 
             bool hadRegister = false;
-            bool hadImmediate = false;
             foreach (InstructionOperand op in Operands)
             {
                 if (op.Op == OperandType.Register)
                     hadRegister |= true;
-                else if (op.Op == OperandType.Immediate)
-                    hadImmediate |= true;
             }
 
             string separator = string.Empty;
@@ -104,7 +101,7 @@ namespace Final.CPU8086
                             if (Flags.HasFlag(InstructionFlags.Far))
                                 s.Append(" FAR");
 
-                            if (!hadRegister && !hadImmediate)
+                            if (!hadRegister)
                             {
                                 if (Width.Type == DataWidthType.Word)
                                     s.Append(" WORD");

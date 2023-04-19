@@ -84,20 +84,32 @@ namespace Final.CPU8086
         private ushort _Status = 0;
         public ushort Status { get => _Status; set => SetValue(ref _Status, value); }
 
-        public const byte ZeroFlagBit = 6;
-        public const ushort ZeroFlagMask = 1 << ZeroFlagBit;
+        public const ushort CarryFlagMask = 1 << 0;
+        public const ushort ParityFlagMask = 1 << 2;
+        public const ushort AuxiliaryCarryFlagMask = 1 << 4;
+        public const ushort ZeroFlagMask = 1 << 6;
+        public const ushort SignFlagMask = 1 << 7;
+        public const ushort TrapFlagMask = 1 << 8;
+        public const ushort InterruptFlagMask = 1 << 9;
+        public const ushort DirectionalFlagMask = 1 << 10;
+        public const ushort OverflowFlagMask = 1 << 11;
+        public const ushort IOFlag1Mask = 1 << 12;
+        public const ushort IOFlag2Mask = 1 << 13;
+        public const ushort NTFlagMask = 1 << 14;
+        public const ushort MDFlagMask = 1 << 15;
 
-        public bool ZeroFlag
-        {
-            get => (Status & ZeroFlagMask) == ZeroFlagMask;
-            set
-            {
-                if (value)
-                    Status = (ushort)(Status & ~ZeroFlagMask);
-                else
-                    Status = (ushort)(Status | ZeroFlagMask);
-            } 
-        }
+        private bool GetFlag(ushort mask) => (Status & mask) == mask;
+        private void SetFlag(ushort mask, bool value) => Status = value ? (ushort)(Status & ~mask) : (ushort)(Status | mask);
+
+        public bool CarryFlag { get => GetFlag(CarryFlagMask); set => SetFlag(CarryFlagMask, value); }
+        public bool ParityFlag { get => GetFlag(ParityFlagMask); set => SetFlag(ParityFlagMask, value); }
+        public bool AuxiliaryCarryFlag { get => GetFlag(AuxiliaryCarryFlagMask); set => SetFlag(AuxiliaryCarryFlagMask, value); }
+        public bool ZeroFlag { get => GetFlag(ZeroFlagMask); set => SetFlag(ZeroFlagMask, value); }
+        public bool SignFlag { get => GetFlag(SignFlagMask); set => SetFlag(SignFlagMask, value); }
+        public bool TrapFlag { get => GetFlag(TrapFlagMask); set => SetFlag(TrapFlagMask, value); }
+        public bool InterruptFlag { get => GetFlag(InterruptFlagMask); set => SetFlag(InterruptFlagMask, value); }
+        public bool DirectionalFlag { get => GetFlag(DirectionalFlagMask); set => SetFlag(DirectionalFlagMask, value); }
+        public bool OverflowFlag { get => GetFlag(OverflowFlagMask); set => SetFlag(OverflowFlagMask, value); }
 
         public void Reset()
         {

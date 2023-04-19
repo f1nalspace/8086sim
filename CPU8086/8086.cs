@@ -240,8 +240,6 @@ namespace Final.CPU8086
                     return new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0);
             }
 
-            RaisePropertyChanged(nameof(Register));
-
             return result;
         }
 

@@ -15,7 +15,7 @@ namespace Final.CPU8086
         {
             if (value is IEnumerable<byte> bytes)
             {
-                int index = 0;
+                uint index = 0;
                 ImmutableArray<StreamByte> result = bytes.Select(b => new StreamByte(Interlocked.Increment(ref index) - 1, b)).ToImmutableArray();
                 return result;
             }

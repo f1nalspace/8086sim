@@ -20,8 +20,10 @@
     <Window.Resources>
         <s:Boolean x:Key="trueValue">True</s:Boolean>
         <s:Boolean x:Key="falseValue">False</s:Boolean>
+        <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
         
         <local:MultiValueEqualityConverter x:Key="multiValueEqConverter" />
+        <local:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" />
 
         <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
 
@@ -433,6 +435,22 @@
                                                         </MultiBinding>
                                                     </TextBlock.Text>
                                                 </TextBlock>
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True">
+                                                                <DataTrigger.Binding>
+                                                                    <MultiBinding Converter="{StaticResource isInsideInstructionRangeConverter}">
+                                                                        <Binding />
+                                                                        <Binding Path="DataContext.CurrentInstruction" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                        <Binding Source="{StaticResource maxStreamLaneLength}" />
+                                                                    </MultiBinding>
+                                                                </DataTrigger.Binding>
+                                                                <Setter Property="Background" Value="LightBlue" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -462,6 +480,15 @@
                                                                         <MultiBinding Converter="{StaticResource multiValueEqConverter}">
                                                                             <Binding Path="Index" />
                                                                             <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                        </MultiBinding>
+                                                                    </DataTrigger.Binding>
+                                                                    <Setter Property="Background" Value="LightBlue" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Value="True">
+                                                                    <DataTrigger.Binding>
+                                                                        <MultiBinding Converter="{StaticResource isInsideInstructionRangeConverter}">
+                                                                            <Binding Path="Index" />
+                                                                            <Binding Path="DataContext.CurrentInstruction" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                         </MultiBinding>
                                                                     </DataTrigger.Binding>
                                                                     <Setter Property="Background" Value="LightBlue" />

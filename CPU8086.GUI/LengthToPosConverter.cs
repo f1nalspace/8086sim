@@ -14,16 +14,16 @@ namespace Final.CPU8086
             if (value is int len && len > 0)
             {
                 int rowCount = (len / Columns) + 1;
-                int[] result = new int[rowCount];
-                int p = 0;
+                uint[] result = new uint[rowCount];
+                uint p = 0;
                 for (int i = 0; i < rowCount; ++i)
                 {
                     result[i] = p;
-                    p += Columns;
+                    p += (uint)Columns;
                 }
                 return result;
             }
-            return Array.Empty<int>();
+            return Array.Empty<uint>();
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

@@ -387,13 +387,12 @@ namespace Final.CPU8086
             if (program == null)
                 throw new ArgumentNullException(nameof(program));
 
-            Contract.Assert(ExecutionState == ExecutionState.Stopped);
-            Contract.Assert(CurrentInstruction == null);
-            Contract.Assert(CurrentStreamPosition == uint.MaxValue);
+            CurrentStreamPosition = uint.MaxValue;
+            CurrentInstruction = null;
+            ExecutionState = ExecutionState.Stopped;
+            DecodeState = DecodeState.Decoding;
 
             AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
-
-            DecodeState = DecodeState.Decoding;
 
             List<Instruction> list = new List<Instruction>();
 

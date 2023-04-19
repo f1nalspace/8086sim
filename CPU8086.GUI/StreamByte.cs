@@ -2,10 +2,10 @@
 {
     public readonly struct StreamByte
     {
-        public int Index { get; }
+        public uint Index { get; }
         public byte Value { get; }
 
-        public StreamByte(int index, byte value)
+        public StreamByte(uint index, byte value)
         {
             Index = index;
             Value = value;

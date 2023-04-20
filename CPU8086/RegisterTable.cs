@@ -1,4 +1,6 @@
-﻿namespace Final.CPU8086
+﻿using Final.CPU8086.Types;
+
+namespace Final.CPU8086
 {
     public class RegisterTable
     {

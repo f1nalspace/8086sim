@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Types
 {
     public enum DataWidthType : byte
     {
@@ -65,6 +65,6 @@ namespace Final.CPU8086
             };
         }
 
-        
+
     }
 }

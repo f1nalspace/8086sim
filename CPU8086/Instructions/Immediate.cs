@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public enum ImmediateType : byte
     {
@@ -123,7 +124,7 @@ namespace Final.CPU8086
         {
             string result;
             if (digits > 0)
-                 result = value.ToString($"X{digits}");
+                result = value.ToString($"X{digits}");
             else
                 result = value.ToString("X");
             switch (dataWidth)
@@ -197,7 +198,7 @@ namespace Final.CPU8086
                         return $"{hexPrefix}{IntToHex((int)(uint)value, dataWidth, 8)}";
                 case ImmediateType.Int:
                     if (outputMode == OutputValueMode.Auto)
-                        return $"{(int)value:D}";
+                        return $"{value:D}";
                     else
                         v = (int)(value & 0xFFFFFFFF);
                     break;

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Extensions
 {
     public static class ValueTypeExtensions
     {

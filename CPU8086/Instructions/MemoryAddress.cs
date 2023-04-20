@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct MemoryAddress : IEquatable<MemoryAddress>
@@ -57,7 +58,7 @@ namespace Final.CPU8086
                     {
                         op = '-';
                         d = Math.Abs((short)d);
-                    } 
+                    }
                     else if (d < 0)
                     {
                         op = '-';

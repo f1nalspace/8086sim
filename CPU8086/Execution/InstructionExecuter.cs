@@ -1,8 +1,10 @@
-﻿using OneOf;
+﻿using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
+using OneOf;
 using System;
 using System.Diagnostics.Contracts;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Execution
 {
     public delegate OneOf<int, Error> ExecuteInstructionFunction(CPU cpu, Instruction instruction);
 

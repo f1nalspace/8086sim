@@ -2,8 +2,9 @@
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     // https://en.wikibooks.org/wiki/X86_Assembly/X86_Architecture
     public enum OperandKind : byte

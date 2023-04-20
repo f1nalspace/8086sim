@@ -1,6 +1,6 @@
-﻿namespace Final.CPU8086
+﻿namespace Final.CPU8086.Types
 {
-    public enum Mode : byte
+    public enum ModType : byte
     {
         MemoryNoDisplacement = 0b00,
         MemoryByteDisplacement = 0b01,

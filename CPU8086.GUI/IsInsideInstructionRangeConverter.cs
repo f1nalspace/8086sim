@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Globalization;
 using System.Windows.Data;
+using Final.CPU8086.Instructions;
 
 namespace Final.CPU8086
 {

@@ -1,4 +1,8 @@
-﻿using OneOf;
+﻿using Final.CPU8086.Execution;
+using Final.CPU8086.Extensions;
+using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
+using OneOf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -425,7 +429,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, Mode mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType type)
+        static InstructionOperand CreateOperand(Operand sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType type)
         {
             switch (sourceOp.Kind)
             {
@@ -468,12 +472,12 @@ namespace Final.CPU8086
                     break;
 
                 case OperandKind.RegisterOrMemoryByte:
-                    if (mode == Mode.RegisterMode)
+                    if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetByte(registerBits));
                     else
                         return new InstructionOperand(eac, displacement);
                 case OperandKind.RegisterOrMemoryWord:
-                    if (mode == Mode.RegisterMode)
+                    if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetWord(registerBits));
                     else
                         return new InstructionOperand(eac, displacement);
@@ -713,7 +717,7 @@ namespace Final.CPU8086
             int offset = 0;
             int segment = 0;
 
-            Mode mode = Mode.Unknown;
+            ModType mode = ModType.Unknown;
 
             EffectiveAddressCalculation eac = EffectiveAddressCalculation.None;
 
@@ -760,13 +764,13 @@ namespace Final.CPU8086
                             }
                             else
                                 hasRegField = true;
-                            mode = (Mode)modField;
+                            mode = (ModType)modField;
                             eac = mode switch
                             {
-                                Mode.RegisterMode => EffectiveAddressCalculation.None,
+                                ModType.RegisterMode => EffectiveAddressCalculation.None,
                                 _ => _effectiveAddressCalculationTable.Get(rmField, modField)
                             };
-                            if (mode != Mode.RegisterMode)
+                            if (mode != ModType.RegisterMode)
                                 displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
                             else
                                 displacementLength = 0;
@@ -1038,14 +1042,14 @@ namespace Final.CPU8086
                 }
 
                 byte register = 0;
-                if (mode == Mode.RegisterMode)
+                if (mode == ModType.RegisterMode)
                 {
                     if (isDest || !hasRegField)
                         register = rmField;
                     else
                         register = regField;
                 }
-                else if (mode != Mode.Unknown)
+                else if (mode != ModType.Unknown)
                 {
                     switch (sourceOp.Kind)
                     {

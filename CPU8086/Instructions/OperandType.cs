@@ -1,4 +1,4 @@
-﻿namespace Final.CPU8086
+﻿namespace Final.CPU8086.Instructions
 {
     public enum OperandType : byte
     {

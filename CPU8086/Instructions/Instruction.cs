@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Text;
+using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public class Instruction : IEquatable<Instruction>
     {

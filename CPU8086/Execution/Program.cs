@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.IO;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Execution
 {
     public class Program : IProgram
     {

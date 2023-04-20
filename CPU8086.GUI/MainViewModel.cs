@@ -1,5 +1,8 @@
 ﻿using DevExpress.Mvvm;
 using DevExpress.Mvvm.Native;
+using Final.CPU8086.Execution;
+using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
 using OneOf;
 using System;
 using System.Collections.Generic;

@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public class InstructionList : IReadOnlyCollection<InstructionEntry>
     {

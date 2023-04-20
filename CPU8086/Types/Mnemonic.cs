@@ -1,6 +1,7 @@
 ﻿using System;
+using Final.CPU8086.Instructions;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Types
 {
     public readonly struct Mnemonic
     {

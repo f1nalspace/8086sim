@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public enum FieldType : byte
     {

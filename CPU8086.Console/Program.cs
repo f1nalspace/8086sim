@@ -1,4 +1,5 @@
-﻿using OneOf;
+﻿using Final.CPU8086.Types;
+using OneOf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

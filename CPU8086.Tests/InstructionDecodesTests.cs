@@ -3,13 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using IS = Final.CPU8086.Instruction;
-using IT = Final.CPU8086.InstructionType;
-using IO = Final.CPU8086.InstructionOperand;
-using IF = Final.CPU8086.InstructionFlags;
-using RT = Final.CPU8086.RegisterType;
-using DWT = Final.CPU8086.DataWidthType;
+using IS = Final.CPU8086.Instructions.Instruction;
+using IT = Final.CPU8086.Instructions.InstructionType;
+using IO = Final.CPU8086.Instructions.InstructionOperand;
+using IF = Final.CPU8086.Instructions.InstructionFlags;
+using RT = Final.CPU8086.Types.RegisterType;
+using DWT = Final.CPU8086.Types.DataWidthType;
 using System.Diagnostics.SymbolStore;
+using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
 
 namespace Final.CPU8086
 {

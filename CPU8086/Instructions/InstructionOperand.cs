@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
     public readonly struct InstructionOperand : IEquatable<InstructionOperand>
@@ -83,7 +84,7 @@ namespace Final.CPU8086
             switch (Op)
             {
                 case OperandType.Register:
-                    if (!Register.Equals( other.Register))
+                    if (!Register.Equals(other.Register))
                         return false;
                     break;
                 case OperandType.Address:
@@ -114,13 +115,13 @@ namespace Final.CPU8086
             };
         }
 
-        
+
 
         public override string ToString()
         {
             return Op switch
             {
-                OperandType.Register => $"Reg: {CPU8086.Register.GetName(Register)}",
+                OperandType.Register => $"Reg: {Types.Register.GetName(Register)}",
                 OperandType.Immediate => $"Imm: {Immediate}",
                 OperandType.Address => $"Mem: {Memory}",
                 OperandType.Value => $"Value: {Value}",

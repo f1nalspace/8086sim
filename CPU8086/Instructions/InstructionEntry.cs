@@ -1,7 +1,8 @@
-﻿using OneOf.Types;
+﻿using Final.CPU8086.Types;
+using OneOf.Types;
 using System.Text;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public class InstructionEntry
     {

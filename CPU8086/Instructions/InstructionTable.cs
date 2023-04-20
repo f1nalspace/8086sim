@@ -2,15 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using IL = Final.CPU8086.InstructionList;
-using IE = Final.CPU8086.InstructionEntry;
-using IT = Final.CPU8086.InstructionType;
-using IF = Final.CPU8086.InstructionFlags;
-using DT = Final.CPU8086.DataType;
-using MNE = Final.CPU8086.Mnemonic;
+using IL = Final.CPU8086.Instructions.InstructionList;
+using IE = Final.CPU8086.Instructions.InstructionEntry;
+using IT = Final.CPU8086.Instructions.InstructionType;
+using IF = Final.CPU8086.Instructions.InstructionFlags;
+using DT = Final.CPU8086.Types.DataType;
+using MNE = Final.CPU8086.Types.Mnemonic;
 using System;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Instructions
 {
     public class InstructionTable : IReadOnlyCollection<IL>
     {

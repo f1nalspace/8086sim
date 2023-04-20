@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Types
 {
     [Flags]
     public enum DataType : byte

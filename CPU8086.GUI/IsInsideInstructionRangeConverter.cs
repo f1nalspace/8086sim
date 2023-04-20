@@ -6,18 +6,41 @@ namespace Final.CPU8086
 {
     public class IsInsideInstructionRangeConverter : IMultiValueConverter
     {
+        public bool IsDirectPosition { get; set; } = false;
+
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values.Length >= 2 && values[0] is uint index && values[1] is Instruction instruction)
+            if (values.Length >= 2 && values[0] is uint testIndex && values[1] is uint streamIndex)
             {
-                uint len = 0;
-                if (values.Length >= 3 && values[2] is uint maxLen)
-                    len = maxLen;
+                if (IsDirectPosition)
+                {
+                    return testIndex == streamIndex;
+                }
+                else
+                {
+                    Instruction instruction = null;
+                    if (values.Length >= 3 && values[2] is Instruction valueInstruction)
+                        instruction = valueInstruction;
 
-                if (index >= instruction.Position && index < (instruction.Position + instruction.Length))
-                    return true;
-                if (instruction.Position >= index && instruction.Position < (index + len))
-                    return true;
+                    uint len = 0;
+                    if (values.Length >= 4 && values[3] is uint maxLen)
+                        len = maxLen;
+
+                    if (instruction != null)
+                    {
+                        if (testIndex >= instruction.Position && testIndex < (instruction.Position + instruction.Length))
+                            return true;
+                        if (instruction.Position >= testIndex && instruction.Position < (testIndex + len))
+                            return true;
+                    }
+                    else
+                    {
+                        if (streamIndex == testIndex)
+                            return true;
+                        if (streamIndex >= testIndex && streamIndex < (testIndex + len))
+                            return true;
+                    }
+                }
             }
             return false;
         }

@@ -22,8 +22,8 @@
         <s:Boolean x:Key="falseValue">False</s:Boolean>
         <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
         
-        <local:MultiValueEqualityConverter x:Key="multiValueEqConverter" />
-        <local:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" />
+        <local:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" IsDirectPosition="False" />
+        <local:IsInsideInstructionRangeConverter x:Key="isOnInstructionConverter" IsDirectPosition="True" />
 
         <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
 
@@ -31,7 +31,7 @@
             <Style.Triggers>
                 <DataTrigger Value="True">
                     <DataTrigger.Binding>
-                        <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                        <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                             <Binding Path="Position" />
                             <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                         </MultiBinding>
@@ -442,6 +442,7 @@
                                                                 <DataTrigger.Binding>
                                                                     <MultiBinding Converter="{StaticResource isInsideInstructionRangeConverter}">
                                                                         <Binding />
+                                                                        <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                         <Binding Path="DataContext.CurrentInstruction" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                         <Binding Source="{StaticResource maxStreamLaneLength}" />
                                                                     </MultiBinding>
@@ -455,6 +456,8 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+                                
+                                <!-- Instruction Stream Bytes Grid -->
                                 <ItemsControl Grid.Column="1" ItemsSource="{Binding CurrentStream, Converter={local:BytesToStreamBytesConverter}, UpdateSourceTrigger=PropertyChanged}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
@@ -477,17 +480,9 @@
                                                             <Style.Triggers>
                                                                 <DataTrigger Value="True">
                                                                     <DataTrigger.Binding>
-                                                                        <MultiBinding Converter="{StaticResource multiValueEqConverter}">
-                                                                            <Binding Path="Index" />
-                                                                            <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
-                                                                        </MultiBinding>
-                                                                    </DataTrigger.Binding>
-                                                                    <Setter Property="Background" Value="LightBlue" />
-                                                                </DataTrigger>
-                                                                <DataTrigger Value="True">
-                                                                    <DataTrigger.Binding>
                                                                         <MultiBinding Converter="{StaticResource isInsideInstructionRangeConverter}">
                                                                             <Binding Path="Index" />
+                                                                            <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                             <Binding Path="DataContext.CurrentInstruction" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                         </MultiBinding>
                                                                     </DataTrigger.Binding>
@@ -566,6 +561,8 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TabControl Grid.Column="0">
+                        
+                        <!-- Assembly Lines -->
                         <TabItem Header="Assembly">
                             <ScrollViewer>
                                 <ItemsControl ItemsSource="{Binding AssemblyLines}">
@@ -582,7 +579,7 @@
                                                         <Style.Triggers>
                                                             <DataTrigger Value="True">
                                                                 <DataTrigger.Binding>
-                                                                    <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                                                                    <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                                                                         <Binding Path="Position" />
                                                                         <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                     </MultiBinding>
@@ -632,7 +629,7 @@
                                         <Style.Triggers>
                                             <DataTrigger Value="True">
                                                 <DataTrigger.Binding>
-                                                    <MultiBinding Converter="{StaticResource multiValueEqConverter}">
+                                                    <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                                                         <Binding Path="Position" />
                                                         <Binding Path="DataContext.CurrentStreamPosition" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                     </MultiBinding>

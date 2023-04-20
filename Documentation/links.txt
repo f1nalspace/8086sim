@@ -1,1 +1,5 @@
 https://c9x.me/x86/
+
+https://www-user.tu-chemnitz.de/~heha/hsn/chm/x86.chm/x86.htm
+
+https://wiki.osdev.org/X86-64_Instruction_Encoding

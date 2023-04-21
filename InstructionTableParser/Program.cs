@@ -9,6 +9,8 @@ using CsvHelper.Configuration;
 #endif
 
 using Final.CPU8086;
+using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;

@@ -81,8 +81,8 @@ namespace Final.CPU8086
         private ushort _IP = 0;
         public ushort IP { get => _IP; set => SetValue(ref _IP, value); }
 
-        private ushort _Status = 0;
-        public ushort Status { get => _Status; set => SetValue(ref _Status, value); }
+        private ushort _status = 0;
+        public ushort Status { get => _status; set => SetValue(ref _status, value); }
 
         public const ushort CarryFlagMask = 1 << 0;
         public const ushort ParityFlagMask = 1 << 2;
@@ -99,7 +99,14 @@ namespace Final.CPU8086
         public const ushort MDFlagMask = 1 << 15;
 
         private bool GetFlag(ushort mask) => (Status & mask) == mask;
-        private void SetFlag(ushort mask, bool value) => Status = value ? (ushort)(Status & ~mask) : (ushort)(Status | mask);
+        private void SetFlag(ushort mask, bool isSet, [CallerMemberName] string propertyName = null)
+        {
+            if (isSet)
+                Status |= mask;
+            else
+                Status = (ushort)(Status & ~mask);
+            RaisePropertyChanged(propertyName);
+        }
 
         public bool CarryFlag { get => GetFlag(CarryFlagMask); set => SetFlag(CarryFlagMask, value); }
         public bool ParityFlag { get => GetFlag(ParityFlagMask); set => SetFlag(ParityFlagMask, value); }

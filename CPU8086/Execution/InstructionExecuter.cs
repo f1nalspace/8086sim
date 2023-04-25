@@ -8,7 +8,7 @@ namespace Final.CPU8086.Execution
 {
     public delegate OneOf<int, Error> ExecuteInstructionFunction(CPU cpu, Instruction instruction);
 
-    class InstructionExecuter
+    public class InstructionExecuter
     {
         private readonly ExecuteInstructionFunction[] _typeFunctionTable;
         private readonly CPU _cpu;
@@ -106,6 +106,25 @@ namespace Final.CPU8086.Execution
             }
         }
 
+        public static bool IsParity(byte value)
+        {
+            uint count = 0;
+            for (int i = 0; i < 8; ++i)
+            {
+                int mask = 1 << i;
+                if ((value & mask) == mask)
+                    ++count;
+            }
+            return count % 2 == 0;
+        }
+
+        public static bool IsParity(ushort value) => IsParity((byte)(value & 0xFF));
+
+        public static bool IsOverflow8(int value)
+            => value > sbyte.MaxValue || value < sbyte.MinValue;
+        public static bool IsOverflow16(int value)
+            => value > short.MaxValue || value < short.MinValue;
+
         private static OneOf<int, Error> Add(CPU cpu, Instruction instruction)
         {
             Contract.Assert(instruction != null);
@@ -131,15 +150,28 @@ namespace Final.CPU8086.Execution
             int appendValue = source.Value;
             int sum = oldValue + appendValue;
 
+            bool isZero;
+            bool isSign;
+            bool isParity;
+            bool isOverflow;
+
             Immediate finalDest;
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
                     finalDest = new Immediate((byte)sum, ImmediateFlag.None);
+                    isZero = (byte)sum == 0;
+                    isSign = (sbyte)sum < 0;
+                    isParity = IsParity((byte)sum);
+                    isOverflow = IsOverflow8(sum);
                     break;
 
                 case DataWidthType.Word:
                     finalDest = new Immediate((ushort)sum, ImmediateFlag.None);
+                    isZero = (ushort)sum == 0;
+                    isSign = (short)sum < 0;
+                    isParity = IsParity((byte)(sum & 0xFF));
+                    isOverflow = IsOverflow16(sum);
                     break;
 
                 default:
@@ -151,7 +183,10 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
-            cpu.Register.ZeroFlag = sum == 0;
+            cpu.Register.ZeroFlag = isZero;
+            cpu.Register.SignFlag = isSign;
+            cpu.Register.ParityFlag = isParity;
+            cpu.Register.OverflowFlag = isOverflow;
 
             int result = instruction.Length;
 
@@ -181,17 +216,30 @@ namespace Final.CPU8086.Execution
 
             int oldValue = previosDest.Value;
             int appendValue = source.Value;
-            int sum = oldValue - appendValue;
+            int sub = oldValue - appendValue;
+
+            bool isZero;
+            bool isSign;
+            bool isParity;
+            bool isOverflow;
 
             Immediate finalDest;
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    finalDest = new Immediate((byte)sum, ImmediateFlag.None);
+                    finalDest = new Immediate((byte)sub, ImmediateFlag.None);
+                    isZero = (byte)sub == 0;
+                    isSign = (sbyte)sub < 0;
+                    isParity = IsParity((byte)sub);
+                    isOverflow = IsOverflow8(sub);
                     break;
 
                 case DataWidthType.Word:
-                    finalDest = new Immediate((ushort)sum, ImmediateFlag.None);
+                    finalDest = new Immediate((ushort)sub, ImmediateFlag.None);
+                    isZero = (ushort)sub == 0;
+                    isSign = (short)sub < 0;
+                    isParity = IsParity((ushort)sub);
+                    isOverflow = IsOverflow16(sub);
                     break;
 
                 default:
@@ -202,7 +250,10 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
-            cpu.Register.ZeroFlag = sum == 0;
+            cpu.Register.ZeroFlag = isZero;
+            cpu.Register.SignFlag = isSign;
+            cpu.Register.ParityFlag = isParity;
+            cpu.Register.OverflowFlag = isOverflow;
 
             int result = instruction.Length;
 
@@ -233,7 +284,35 @@ namespace Final.CPU8086.Execution
             int appendValue = source.Value;
             int cmp = oldValue - appendValue;
 
-            cpu.Register.ZeroFlag = cmp == 0;
+            bool isZero;
+            bool isSign;
+            bool isParity;
+            bool isOverflow;
+
+            switch (instruction.Width.Type)
+            {
+                case DataWidthType.Byte:
+                    isZero = (byte)cmp == 0;
+                    isSign = (sbyte)cmp < 0;
+                    isParity = IsParity((byte)cmp);
+                    isOverflow = IsOverflow8(cmp);
+                    break;
+
+                case DataWidthType.Word:
+                    isZero = (ushort)cmp == 0;
+                    isSign = (short)cmp < 0;
+                    isParity = IsParity((ushort)cmp);
+                    isOverflow = IsOverflow16(cmp);
+                    break;
+
+                default:
+                    return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
+            }
+
+            cpu.Register.ZeroFlag = isZero;
+            cpu.Register.SignFlag = isSign;
+            cpu.Register.ParityFlag = isParity;
+            cpu.Register.OverflowFlag = isOverflow;
 
             int result = instruction.Length;
 

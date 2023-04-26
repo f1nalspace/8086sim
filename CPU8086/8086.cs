@@ -12,6 +12,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Final.CPU8086
 {
@@ -23,6 +25,7 @@ namespace Final.CPU8086
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
         private readonly InstructionTable _entryTable = new InstructionTable();
+
         private readonly InstructionExecuter _executer;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -49,6 +52,18 @@ namespace Final.CPU8086
         public IProgram ActiveProgram { get => _activeProgram; private set => SetValue(ref _activeProgram, value); }
         private IProgram _activeProgram = null;
 
+        public ExecutionState ExecutionState { get => _executionState; private set => SetValue(ref _executionState, value); }
+        private ExecutionState _executionState = ExecutionState.Stopped;
+
+        public Instruction CurrentInstruction { get => _currentInstruction; private set => SetValue(ref _currentInstruction, value); }
+        private Instruction _currentInstruction = null;
+
+        public uint PreviousIP { get => _previousIP; private set => SetValue(ref _previousIP, value); }
+        private uint _previousIP = uint.MaxValue;
+
+        public uint CurrentIP { get => _currentIP; private set => SetValue(ref _currentIP, value); }
+        private uint _currentIP = uint.MaxValue;
+
         public CPU()
         {
             _entryTable.Load();
@@ -71,6 +86,8 @@ namespace Final.CPU8086
                 Memory.Clear();
                 RaisePropertyChanged(nameof(Memory));
             }
+
+            ExecutionState = ExecutionState.Stopped;
         }
 
         public OneOf<int, Error> LoadProgram(IProgram program)
@@ -80,7 +97,10 @@ namespace Final.CPU8086
 
             ActiveProgram = program;
 
-            Register.Assign(program.Register);
+            if (program.Register != null)
+                Register.Assign(program.Register);
+            else
+                Register.Reset();
             RaisePropertyChanged(nameof(Register));
 
             Memory.Clear();
@@ -341,7 +361,8 @@ namespace Final.CPU8086
                             byte high = Memory[absoluteAddress + 1];
                             ushort u16 = (ushort)(low | (high << 8));
                             return new Immediate(u16, ImmediateFlag.None);
-                        } else 
+                        }
+                        else
                             return new Error(ErrorCode.UnsupportedDataType, $"The pointer data type '{PointerDataType}' is not supported", 0);
                     }
 
@@ -1333,6 +1354,155 @@ namespace Final.CPU8086
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
             return _executer.Execute(instruction);
+        }
+
+        public OneOf<uint, Error> BeginStep()
+        {
+            if (ActiveProgram == null)
+                return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
+            
+            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed))
+                return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(BeginStep)}", 0);
+
+            ExecutionState = ExecutionState.Halted;
+
+            if (ActiveProgram.Register != null)
+                Register.Assign(ActiveProgram.Register);
+            else
+                Register.Reset();
+
+            CurrentIP = Register.IP;
+            CurrentInstruction = null;
+            PreviousIP = CurrentIP;
+
+            return CurrentIP;
+        }
+
+        public OneOf<Instruction, Error> Step()
+        {
+            PreviousIP = CurrentIP;
+
+            if (ActiveProgram == null)
+                return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
+
+            if (ExecutionState != ExecutionState.Halted)
+                return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(Step)}", CurrentIP);
+
+            Contract.Assert(CurrentIP < ActiveProgram.Length);
+            ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)CurrentIP);
+
+            ExecutionState = ExecutionState.Running;
+
+            Thread.Sleep(500);
+            OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, CurrentIP);
+            if (decodeRes.IsT1)
+            {
+                ExecutionState = ExecutionState.Failed;
+                return decodeRes.AsT1;
+            }
+
+            Instruction instruction = decodeRes.AsT0;
+
+            CurrentIP += instruction.Length;
+            Contract.Assert(CurrentIP < ushort.MaxValue);
+            Register.IP = (ushort)CurrentIP;
+
+            CurrentInstruction = instruction;
+
+            Thread.Sleep(1000);
+            OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
+            if (executionRes.IsT1)
+            {
+                ExecutionState = ExecutionState.Failed;
+                return executionRes.AsT1;
+            }
+
+            uint newIp = (ushort)(CurrentIP + executionRes.AsT0);
+            CurrentIP = newIp;
+            Contract.Assert(CurrentIP < ushort.MaxValue);
+            Register.IP = (ushort)CurrentIP;
+
+            if (CurrentIP == (uint)ActiveProgram.Length)
+            {
+                ExecutionState = ExecutionState.Finished;
+                CurrentIP = uint.MaxValue;
+                PreviousIP = uint.MaxValue;
+                CurrentInstruction = null;
+            }
+            else
+                ExecutionState = ExecutionState.Halted;
+
+            return CurrentInstruction;
+        }
+
+        public OneOf<uint, Error> Run(RunState state)
+        {
+            if (state == null)
+                return new Error(ErrorCode.MissingStateParameter, $"The state argument is missing", 0);
+
+            if (ActiveProgram == null)
+                return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
+            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed))
+                return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(Run)}", 0);
+
+            uint result = 0;
+
+            ExecutionState = ExecutionState.Running;
+
+            if (ActiveProgram.Register != null)
+                Register.Assign(ActiveProgram.Register);
+            else
+                Register.Reset();
+
+            CurrentIP = Register.IP;
+            CurrentInstruction = null;
+            PreviousIP = CurrentIP;
+
+            while ((CurrentIP != (uint)ActiveProgram.Length) && !state.IsStopped)
+            {
+                uint ip = PreviousIP = CurrentIP;
+                Contract.Assert(ip < ActiveProgram.Length);
+                ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)ip);
+
+                Thread.Sleep(500);
+                OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, ip);
+                if (decodeRes.IsT1)
+                {
+                    ExecutionState = ExecutionState.Failed;
+                    return decodeRes.AsT1;
+                }
+
+                Instruction instruction = decodeRes.AsT0;
+
+                CurrentIP += instruction.Length;
+                Contract.Assert(CurrentIP < ushort.MaxValue);
+                Register.IP = (ushort)CurrentIP;
+
+                CurrentInstruction = instruction;
+
+                Thread.Sleep(1000);
+                OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
+                if (executionRes.IsT1)
+                {
+                    ExecutionState = ExecutionState.Failed;
+                    return executionRes.AsT1;
+                }
+
+                uint newIp = (ushort)(CurrentIP + executionRes.AsT0);
+                CurrentIP = newIp;
+                Contract.Assert(CurrentIP < ushort.MaxValue);
+                Register.IP = (ushort)CurrentIP;
+            }
+
+            if (state.IsStopped)
+                ExecutionState = ExecutionState.Stopped;
+            else
+                ExecutionState = ExecutionState.Finished;
+
+            PreviousIP = CurrentIP = uint.MaxValue;
+            CurrentInstruction = null;
+
+            return result;
         }
     }
 }

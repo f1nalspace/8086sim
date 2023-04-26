@@ -48,5 +48,11 @@
         // Load/Store errors
         FailedToLoadRegister,
         FailedToLoadMemory,
+
+        // Execute errors
+        ProgramNotLoaded,
+        InvalidExecutionState,
+        EndOfProgram,
+        MissingStateParameter,
     }
 }

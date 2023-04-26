@@ -188,9 +188,7 @@ namespace Final.CPU8086.Execution
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
-            int result = instruction.Length;
-
-            return result;
+            return 0;
         }
 
         private static OneOf<int, Error> Sub(CPU cpu, Instruction instruction)
@@ -255,9 +253,7 @@ namespace Final.CPU8086.Execution
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
-            int result = instruction.Length;
-
-            return result;
+            return 0;
         }
         private static OneOf<int, Error> Cmp(CPU cpu, Instruction instruction)
         {
@@ -314,9 +310,7 @@ namespace Final.CPU8086.Execution
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
-            int result = instruction.Length;
-
-            return result;
+            return 0;
         }
 
         private static OneOf<int, Error> Mov(CPU cpu, Instruction instruction)
@@ -340,9 +334,7 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
-            int result = instruction.Length;
-
-            return result;
+            return 0;
         }
     }
 }

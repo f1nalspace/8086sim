@@ -41,17 +41,6 @@ namespace Final.CPU8086
 
         public ObservableCollection<LogItemViewModel> Logs { get; }
 
-        public uint CurrentStreamPosition
-        {
-            get => _currentStreamPosition;
-            private set
-            {
-                _currentStreamPosition = value;
-                RaisePropertyChanged(nameof(CurrentStreamPosition));
-            }
-        }
-        private uint _currentStreamPosition = uint.MaxValue;
-
         public bool ShowStreamAsHex { get => _showStreamAsHex; set => SetValue(ref _showStreamAsHex, value); }
         private bool _showStreamAsHex = true;
 
@@ -64,17 +53,9 @@ namespace Final.CPU8086
         public bool ShowMemoryAsHex { get => _showMemoryAsHex; set => SetValue(ref _showMemoryAsHex, value); }
         private bool _showMemoryAsHex = true;
 
-        public ExecutionState ExecutionState
-        {
-            get => _executionState;
-            private set
-            {
-                _executionState = value;
-                RaisePropertyChanged(nameof(ExecutionState));
-                RefreshCommands();
-            }
-        }
-        private volatile ExecutionState _executionState = ExecutionState.Stopped;
+        public uint CurrentStreamPosition => _cpu.PreviousIP; // Previous IP is the current stream position
+
+        public ExecutionState ExecutionState => _cpu.ExecutionState;
 
         public DecodeState DecodeState
         {
@@ -88,7 +69,7 @@ namespace Final.CPU8086
         }
         private volatile DecodeState _decodeState = DecodeState.None;
 
-        public Instruction CurrentInstruction { get => GetValue<Instruction>(); private set => SetValue(value); }
+        public Instruction CurrentInstruction => _cpu.CurrentInstruction;
 
         public RegisterState Register => _cpu.Register;
 
@@ -98,7 +79,7 @@ namespace Final.CPU8086
 
         public int SelectedStreamOrMemoryTabIndex { get => GetValue<int>(); set => SetValue(value); }
 
-        public bool CanChangeStream => ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed || ExecutionState == ExecutionState.Halted;
+        public bool CanChangeStream => ExecutionState != ExecutionState.Running;
 
         public DelegateCommand RunCommand { get; }
         public DelegateCommand StopCommand { get; }
@@ -125,11 +106,9 @@ namespace Final.CPU8086
 
             _executionTask = null;
 
-            CurrentInstruction = null;
             CurrentProgram = null;
             CurrentStream = ImmutableArray<byte>.Empty;
             DecodeState = DecodeState.None;
-            ExecutionState = ExecutionState.Stopped;
             SelectedStreamOrMemoryTabIndex = 0;
 
             string[] resNames = _resources.GetNames();
@@ -182,6 +161,15 @@ namespace Final.CPU8086
                 RaisePropertyChanged(nameof(Register));
             else if (nameof(CPU.Memory).Equals(e.PropertyName))
                 MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
+            else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
+                RaisePropertyChanged(nameof(CurrentStreamPosition));
+            else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
+                RaisePropertyChanged(nameof(CurrentInstruction));
+            else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+            {
+                RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
+                RefreshCommands();
+            }
         }
 
         private void InstructionsChanged(IEnumerable<Instruction> instructions)
@@ -223,99 +211,68 @@ namespace Final.CPU8086
 
         private bool CanRun() =>
             DecodeState == DecodeState.Success &&
-            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed) &&
+            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed) &&
             (_executionTask == null || _executionTask.IsCompleted);
         private void Run()
         {
             Contract.Assert(CanRun());
 
-            CurrentInstruction = Instructions.First();
-            CurrentStreamPosition = CurrentInstruction.Position;
             _isStopping = 0;
-            ExecutionState = ExecutionState.Running;
 
-            AddLog(CurrentStreamPosition, $"Running program '{CurrentProgram}' with '{CurrentInstruction.Length}' instructions");
+            AddLog(CurrentStreamPosition, $"Running program '{CurrentProgram}'");
+
+            _dispatcherService.Invoke(() => Errors.Clear());
+
+            OneOf<int, Error> loadRes = _cpu.LoadProgram(CurrentProgram);
+            if (loadRes.IsT1)
+            {
+                _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
+                return;
+            }
+
+            _executionTask = Task.Run(() => ExecuteAsync());
+        }
+
+        private Task ExecuteAsync() => Task.Run(() =>
+        {
+            _dispatcherService.Invoke(() => Errors.Clear());
+
+            RunState state = new RunState();
 
             _cpu.Reset();
 
-            _executionTask = Task.Run(() => ExecuteAsync(false));
-        }
-
-        private async Task ExecuteAsync(bool isSingleStep)
-        {
-            _dispatcherService.Invoke(() => Errors.Clear());
-            bool isFinished = false;
             try
             {
-                while (CurrentInstruction != null && ExecutionState == ExecutionState.Running)
+                Task stoppingCheckTask = Task.Run(() =>
                 {
-                    if (_isStopping == 1)
+                    while (!state.IsStopped)
                     {
-                        ExecutionState = ExecutionState.Stopped;
-                        break;
+                        if (_isStopping == 1)
+                            state.IsStopped = true;
+                        else
+                            Thread.Sleep(10);
                     }
+                });
 
-                    await Task.Delay(10);
+                OneOf<uint, Error> runRes = new Error();
 
-                    AddLog(CurrentInstruction.Position, $"Execute instruction '{CurrentInstruction}'");
-                    OneOf<int, Error> r = _cpu.ExecuteInstruction(CurrentInstruction);
-                    if (r.IsT1)
-                    {
-                        ExecutionState = ExecutionState.Failed;
-                        _dispatcherService.Invoke(() => Errors.Add(r.AsT1));
-                        break;
-                    }
+                Task<bool> runTask = Task.Run(() => runRes = _cpu.Run(state)).ContinueWith((t) => state.IsStopped = true);
 
-                    int relativePos = r.AsT0;
-                    uint nextPos = (uint)(CurrentStreamPosition + relativePos);
+                Task.WaitAll(runTask, stoppingCheckTask);
 
-                    // Stream is finished
-                    if (nextPos >= CurrentStream.Length)
-                    {
-                        isFinished = true;
-                        break;
-                    }
-
-                    uint nextInstructionIndex = _instructionIndexMap[(int)nextPos];
-                    if (nextInstructionIndex == uint.MaxValue)
-                        throw new InvalidDataException($"No instruction mapped to stream position '{nextInstructionIndex}'!");
-
-                    CurrentStreamPosition = nextPos;
-                    CurrentInstruction = Instructions[(int)nextInstructionIndex];
-                    if (isSingleStep)
-                        break;
-                }
+                if (runRes.IsT1)
+                    _dispatcherService.Invoke(() => Errors.Add(runRes.AsT1));
             }
             catch (Exception e)
             {
                 _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
-                ExecutionState = ExecutionState.Failed;
             }
-
-            Interlocked.Exchange(ref _isStopping, 0);
-
-            if (isFinished)
+            finally
             {
-                CurrentInstruction = null;
-                CurrentStreamPosition = uint.MaxValue;
-                ExecutionState = ExecutionState.Stopped;
+                Interlocked.Exchange(ref _isStopping, 0);
+                RefreshCommands();
             }
-            else if (ExecutionState != ExecutionState.Failed)
-            {
-                if (isSingleStep && CurrentInstruction != null)
-                {
-                    ExecutionState = ExecutionState.Halted;
-                }
-                else
-                {
-                    CurrentInstruction = null;
-                    CurrentStreamPosition = uint.MaxValue;
-                    ExecutionState = ExecutionState.Stopped;
-                }
-            }
-
-            RefreshCommands();
-        }
+        });
 
         private bool CanStop() =>
             DecodeState == DecodeState.Success &&
@@ -323,7 +280,7 @@ namespace Final.CPU8086
         private async void Stop()
         {
             Contract.Assert(CanStop());
-            AddLog(CurrentInstruction.Position, $"Stopping program '{CurrentProgram}'");
+            AddLog(CurrentStreamPosition, $"Stopping program '{CurrentProgram}'");
             await StopAsync();
         }
 
@@ -341,10 +298,7 @@ namespace Final.CPU8086
             }
             finally
             {
-                ExecutionState = ExecutionState.Stopped;
-                CurrentInstruction = null;
-                CurrentStreamPosition = uint.MaxValue;
-                _isStopping = 0;
+                Interlocked.Exchange(ref _isStopping, 0);
                 RefreshCommands();
             }
         }
@@ -354,27 +308,55 @@ namespace Final.CPU8086
             CurrentStream.Length > 0 &&
             (CurrentStreamPosition == uint.MaxValue || CurrentStreamPosition < CurrentStream.Length) &&
             DecodeState == DecodeState.Success &&
-            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted) &&
+            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted || ExecutionState == ExecutionState.Finished) &&
             (_executionTask == null || _executionTask.IsCompleted);
         private void Step()
         {
             Contract.Assert(CanStep());
             if (ExecutionState == ExecutionState.Stopped)
             {
-                AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}' with '{Instructions.Length}' instructions");
-                CurrentInstruction = Instructions.First();
-                CurrentStreamPosition = CurrentInstruction.Position;
+                _dispatcherService.Invoke(() => Errors.Clear());
+
+                OneOf<int, Error> progRes = _cpu.LoadProgram(CurrentProgram);
+                if (progRes.IsT1)
+                {
+                    _dispatcherService.Invoke(() => Errors.Add(progRes.AsT1));
+                    return;
+                }
+
+                AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}'");
                 Interlocked.Exchange(ref _isStopping, 0);
-                ExecutionState = ExecutionState.Halted;
+
+                _cpu.BeginStep();
             }
             else if (ExecutionState == ExecutionState.Halted)
             {
-                AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}' with '{Instructions.Length}' instructions");
+                AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}'");
                 Interlocked.Exchange(ref _isStopping, 0);
-                ExecutionState = ExecutionState.Running;
-                _executionTask = Task.Run(() => ExecuteAsync(true));
+                _executionTask = Task.Run(() => StepAsync());
             }
         }
+
+        private Task StepAsync() => Task.Run(() =>
+        {
+            try
+            {
+                OneOf<Instruction, Error> stepRes = _cpu.Step();
+                if (stepRes.IsT1)
+                {
+                    _dispatcherService.Invoke(() => Errors.Add(stepRes.AsT1));
+                }
+            }
+            catch (Exception e)
+            {
+                _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _isStopping, 0);
+                RefreshCommands();
+            }
+        });
 
         private void RefreshAssemblyLines(IEnumerable<Instruction> instructions, bool asHex)
         {
@@ -390,9 +372,6 @@ namespace Final.CPU8086
             if (program == null)
                 throw new ArgumentNullException(nameof(program));
 
-            CurrentStreamPosition = uint.MaxValue;
-            CurrentInstruction = null;
-            ExecutionState = ExecutionState.Stopped;
             DecodeState = DecodeState.Decoding;
 
             AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
@@ -400,10 +379,6 @@ namespace Final.CPU8086
             List<Instruction> list = new List<Instruction>();
 
             ImmutableArray<byte> stream = program.Stream;
-
-            uint[] instructionIndexMap = new uint[stream.Length];
-            for (int i = 0; i < stream.Length; ++i)
-                instructionIndexMap[i] = uint.MaxValue;
 
             Errors.Clear();
             try
@@ -420,14 +395,12 @@ namespace Final.CPU8086
                         break;
                     }
                     Instruction instruction = r.AsT0;
-                    instructionIndexMap[position] = (uint)list.Count;
                     list.Add(instruction);
                     cur = cur.Slice(instruction.Length);
                     position += instruction.Length;
                 }
 
                 Instructions = list.ToImmutableArray();
-                _instructionIndexMap = instructionIndexMap.ToImmutableArray();
             }
             finally
             {

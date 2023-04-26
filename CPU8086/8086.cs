@@ -1393,7 +1393,7 @@ namespace Final.CPU8086
 
             ExecutionState = ExecutionState.Running;
 
-            Thread.Sleep(50);
+            Thread.Sleep(100);
             OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, CurrentIP);
             if (decodeRes.IsT1)
             {
@@ -1409,7 +1409,7 @@ namespace Final.CPU8086
 
             CurrentInstruction = instruction;
 
-            Thread.Sleep(100);
+            Thread.Sleep(500);
             OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
             if (executionRes.IsT1)
             {
@@ -1467,7 +1467,7 @@ namespace Final.CPU8086
                 Contract.Assert(ip < ActiveProgram.Length);
                 ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)ip);
 
-                Thread.Sleep(50);
+                Thread.Sleep(100);
                 OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, ip);
                 if (decodeRes.IsT1)
                 {
@@ -1483,7 +1483,7 @@ namespace Final.CPU8086
 
                 CurrentInstruction = instruction;
 
-                Thread.Sleep(100);
+                Thread.Sleep(500);
                 OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
                 if (executionRes.IsT1)
                 {

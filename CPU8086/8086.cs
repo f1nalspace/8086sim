@@ -1361,7 +1361,7 @@ namespace Final.CPU8086
             if (ActiveProgram == null)
                 return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
             
-            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed))
+            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed))
                 return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(BeginStep)}", 0);
 
             ExecutionState = ExecutionState.Halted;
@@ -1393,7 +1393,7 @@ namespace Final.CPU8086
 
             ExecutionState = ExecutionState.Running;
 
-            Thread.Sleep(500);
+            Thread.Sleep(50);
             OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, CurrentIP);
             if (decodeRes.IsT1)
             {
@@ -1409,7 +1409,7 @@ namespace Final.CPU8086
 
             CurrentInstruction = instruction;
 
-            Thread.Sleep(1000);
+            Thread.Sleep(100);
             OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
             if (executionRes.IsT1)
             {
@@ -1430,7 +1430,10 @@ namespace Final.CPU8086
                 CurrentInstruction = null;
             }
             else
+            {
                 ExecutionState = ExecutionState.Halted;
+                PreviousIP = CurrentIP;
+            }
 
             return CurrentInstruction;
         }
@@ -1442,7 +1445,7 @@ namespace Final.CPU8086
 
             if (ActiveProgram == null)
                 return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
-            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed))
+            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed))
                 return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(Run)}", 0);
 
             uint result = 0;
@@ -1464,7 +1467,7 @@ namespace Final.CPU8086
                 Contract.Assert(ip < ActiveProgram.Length);
                 ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)ip);
 
-                Thread.Sleep(500);
+                Thread.Sleep(50);
                 OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, ip);
                 if (decodeRes.IsT1)
                 {
@@ -1480,7 +1483,7 @@ namespace Final.CPU8086
 
                 CurrentInstruction = instruction;
 
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
                 OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
                 if (executionRes.IsT1)
                 {

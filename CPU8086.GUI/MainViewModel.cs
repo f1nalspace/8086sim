@@ -313,7 +313,7 @@ namespace Final.CPU8086
         private void Step()
         {
             Contract.Assert(CanStep());
-            if (ExecutionState == ExecutionState.Stopped)
+            if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished)
             {
                 _dispatcherService.Invoke(() => Errors.Clear());
 

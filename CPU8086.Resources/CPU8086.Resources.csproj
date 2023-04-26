@@ -6,14 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs.txt" Link="Resources\listing_0043_immediate_movs.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs.txt" Link="Resources\listing_0044_register_movs.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs.txt" Link="Resources\listing_0045_challenge_register_movs.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp.txt" Link="Resources\listing_0046_add_sub_cmp.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags.txt" Link="Resources\listing_0047_challenge_flags.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register.txt" Link="Resources\listing_0048_ip_register.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps.txt" Link="Resources\listing_0049_conditional_jumps.txt" />
-    <Content Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps.txt" Link="Resources\listing_0050_challenge_jumps.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -49,6 +41,28 @@
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps.asm" Link="Resources\listing_0049_conditional_jumps.asm" />
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps" Link="Resources\listing_0050_challenge_jumps" />
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps.asm" Link="Resources\listing_0050_challenge_jumps.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0051_memory_mov" Link="Resources\listing_0051_memory_mov" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0051_memory_mov.asm" Link="Resources\listing_0051_memory_mov.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0052_memory_add_loop" Link="Resources\listing_0052_memory_add_loop" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0052_memory_add_loop.asm" Link="Resources\listing_0052_memory_add_loop.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0053_add_loop_challenge" Link="Resources\listing_0053_add_loop_challenge" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0053_add_loop_challenge.asm" Link="Resources\listing_0053_add_loop_challenge.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0054_draw_rectangle" Link="Resources\listing_0054_draw_rectangle" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0054_draw_rectangle.asm" Link="Resources\listing_0054_draw_rectangle.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle" Link="Resources\listing_0055_challenge_rectangle" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle.asm" Link="Resources\listing_0055_challenge_rectangle.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_SingleScalar" Link="Resources\listing_0057_SingleScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_SingleScalar.asm" Link="Resources\listing_0057_SingleScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_Unroll2Scalar" Link="Resources\listing_0058_Unroll2Scalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_Unroll2Scalar.asm" Link="Resources\listing_0058_Unroll2Scalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_DualScalar" Link="Resources\listing_0059_DualScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_DualScalar.asm" Link="Resources\listing_0059_DualScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_QuadScalar" Link="Resources\listing_0060_QuadScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_QuadScalar.asm" Link="Resources\listing_0060_QuadScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_QuadScalarPtr" Link="Resources\listing_0061_QuadScalarPtr" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_QuadScalarPtr.asm" Link="Resources\listing_0061_QuadScalarPtr.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_TreeScalarPtr" Link="Resources\listing_0062_TreeScalarPtr" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_TreeScalarPtr.asm" Link="Resources\listing_0062_TreeScalarPtr.asm" />
   </ItemGroup>
 
 </Project>

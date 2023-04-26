@@ -1,0 +1,117 @@
+﻿<UserControl x:Class="Final.CPU8086.Controls.BinaryGridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Final.CPU8086"
+             xmlns:ctrls="clr-namespace:Final.CPU8086.Controls"
+             xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
+             xmlns:s="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" 
+             FontSize="16"
+             FontFamily="Consolas"
+             d:DesignHeight="446" d:DesignWidth="560" d:DataContext="{d:DesignInstance ctrls:BinaryGridViewModel, IsDesignTimeCreatable=True}">
+    <Grid x:Name="mainGrid" DataContext="{dxmvvm:ViewModelSource ctrls:BinaryGridViewModel}" Background="White">
+        <Grid.Resources>
+            <s:Boolean x:Key="trueValue">True</s:Boolean>
+            <s:Boolean x:Key="falseValue">False</s:Boolean>
+            <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
+            <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+            <local:IsInsideRangeConverter x:Key="isInsideRangeConverter" />
+            <dxmvvm:NumericToVisibilityConverter x:Key="inverseNumVisConverter" Inverse="True" />
+        </Grid.Resources>
+        <ScrollViewer>
+            <Grid>
+                <Grid Visibility="{Binding Stream.Length, UpdateSourceTrigger=PropertyChanged, Converter={dxmvvm:NumericToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ItemsControl Grid.Column="0" Width="100" ItemsSource="{Binding Lines, UpdateSourceTrigger=PropertyChanged}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                    <TextBlock TextAlignment="Right" Foreground="Gray">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                                <Binding />
+                                                <Binding Source="{StaticResource trueValue}" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <MultiBinding Converter="{StaticResource isInsideRangeConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.SelectionStart" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            <Binding Path="DataContext.SelectionLength" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            <Binding Source="{StaticResource maxStreamLaneLength}" />
+                                                        </MultiBinding>
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="Background" Value="LightBlue" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Grid -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Page, UpdateSourceTrigger=PropertyChanged}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2" Width="50">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.CellClickCommand, ElementName=mainGrid}" CommandParameter="{Binding}" />
+                                    </Border.InputBindings>
+                                    <TextBlock TextAlignment="Right">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{local:HexCellValueConverter}">
+                                                <Binding />
+                                                <Binding Path="DataContext.ShowAsHex" ElementName="mainGrid" UpdateSourceTrigger="PropertyChanged" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Value="True">
+                                                        <DataTrigger.Binding>
+                                                            <MultiBinding Converter="{StaticResource isInsideRangeConverter}">
+                                                                <Binding />
+                                                                <Binding Path="DataContext.SelectionStart" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                                <Binding Path="DataContext.SelectionLength" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            </MultiBinding>
+                                                        </DataTrigger.Binding>
+                                                        <Setter Property="Background" Value="LightBlue" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+                <Grid Visibility="{Binding Stream.Length, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource inverseNumVisConverter}}">
+                    <TextBlock Text="No stream loaded" />
+                </Grid>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

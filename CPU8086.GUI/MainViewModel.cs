@@ -339,9 +339,10 @@ namespace Final.CPU8086
 
         private Task StepAsync() => Task.Run(() =>
         {
+            RunState state = new RunState();
             try
             {
-                OneOf<Instruction, Error> stepRes = _cpu.Step();
+                OneOf<Instruction, Error> stepRes = _cpu.Step(state);
                 if (stepRes.IsT1)
                 {
                     _dispatcherService.Invoke(() => Errors.Add(stepRes.AsT1));

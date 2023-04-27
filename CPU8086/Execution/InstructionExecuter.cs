@@ -3,10 +3,11 @@ using Final.CPU8086.Types;
 using OneOf;
 using System;
 using System.Diagnostics.Contracts;
+using System.Runtime.CompilerServices;
 
 namespace Final.CPU8086.Execution
 {
-    public delegate OneOf<int, Error> ExecuteInstructionFunction(CPU cpu, Instruction instruction);
+    public delegate OneOf<int, Error> ExecuteInstructionFunction(CPU cpu, Instruction instruction, IRunState state);
 
     public class InstructionExecuter
     {
@@ -27,7 +28,7 @@ namespace Final.CPU8086.Execution
             _typeFunctionTable[(int)InstructionType.CMP] = Cmp;
         }
 
-        public OneOf<int, Error> Execute(Instruction instruction)
+        public OneOf<int, Error> Execute(Instruction instruction, IRunState state)
         {
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
@@ -36,7 +37,7 @@ namespace Final.CPU8086.Execution
             ExecuteInstructionFunction func = _typeFunctionTable[(int)type];
             if (func == null)
                 return new Error(ErrorCode.MissingExecutionFunction, $"No execution function for instruction type '{type}' found!", instruction.Position);
-            return func(_cpu, instruction);
+            return func(_cpu, instruction, state);
         }
 
         private static DataType WidthToType(DataWidth width)
@@ -82,24 +83,25 @@ namespace Final.CPU8086.Execution
             return result;
         }
 
-        private static OneOf<byte, Error> StoreValue(CPU cpu, Instruction instruction, InstructionOperand operand, Immediate source)
+        private static OneOf<byte, Error> StoreValue(CPU cpu, Instruction instruction, IRunState state, InstructionOperand operand, Immediate source)
         {
             switch (operand.Op)
             {
                 case OperandType.Register:
                     {
-                        OneOf<byte, Error> isr = cpu.StoreRegister(operand.Register, source);
-                        if (isr.IsT1)
-                            return new Error(isr.AsT1, $"Failed to store '{source}' into register '{operand.Register}' by instruction '{instruction}'", instruction.Position);
-                        return isr.AsT0;
+                        OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, operand.Register, source);
+                        if (storeRes.IsT1)
+                            return new Error(storeRes.AsT1, $"Failed to store '{source}' into register '{operand.Register}' by instruction '{instruction}'", instruction.Position);
+
+                        return storeRes.AsT0;
                     }
                 case OperandType.Address:
                     {
                         DataType dataType = WidthToType(instruction.Width);
-                        OneOf<byte, Error> asr = cpu.StoreMemory(operand.Memory, dataType, source);
-                        if (asr.IsT1)
-                            return new Error(asr.AsT1, $"Failed to store '{source}' into destination memory '{operand.Memory}' with type '{dataType}' by instruction '{instruction}'", instruction.Position);
-                        return asr.AsT0;
+                        OneOf<byte, Error> storeRes = cpu.StoreMemory(instruction, state, operand.Memory, dataType, source);
+                        if (storeRes.IsT1)
+                            return new Error(storeRes.AsT1, $"Failed to store '{source}' into destination memory '{operand.Memory}' with type '{dataType}' by instruction '{instruction}'", instruction.Position);
+                        return storeRes.AsT0;
                     }
                 default:
                     return new Error(ErrorCode.UnsupportedOperandType, $"The destination operand type '{operand.Op}' is not supported by instruction '{instruction}'", instruction.Position);
@@ -125,7 +127,7 @@ namespace Final.CPU8086.Execution
         public static bool IsOverflow16(int value)
             => value > short.MaxValue || value < short.MinValue;
 
-        private static OneOf<int, Error> Add(CPU cpu, Instruction instruction)
+        private static OneOf<int, Error> Add(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
 
@@ -179,7 +181,7 @@ namespace Final.CPU8086.Execution
 
             }
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, destOperand, finalDest);
+            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, finalDest);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
@@ -191,7 +193,7 @@ namespace Final.CPU8086.Execution
             return 0;
         }
 
-        private static OneOf<int, Error> Sub(CPU cpu, Instruction instruction)
+        private static OneOf<int, Error> Sub(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
 
@@ -244,7 +246,7 @@ namespace Final.CPU8086.Execution
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
             }
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, destOperand, finalDest);
+            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, finalDest);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
@@ -255,7 +257,7 @@ namespace Final.CPU8086.Execution
 
             return 0;
         }
-        private static OneOf<int, Error> Cmp(CPU cpu, Instruction instruction)
+        private static OneOf<int, Error> Cmp(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
 
@@ -313,7 +315,7 @@ namespace Final.CPU8086.Execution
             return 0;
         }
 
-        private static OneOf<int, Error> Mov(CPU cpu, Instruction instruction)
+        private static OneOf<int, Error> Mov(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
 
@@ -330,7 +332,7 @@ namespace Final.CPU8086.Execution
 
             Immediate source = sourceRes.AsT0;
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, destOperand, source);
+            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, source);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 

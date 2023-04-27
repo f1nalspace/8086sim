@@ -13,7 +13,7 @@ namespace Final.CPU8086
         public int Length => _raw.Length;
         public int PageCount => Length / PageSize;
 
-        public byte this[int index]
+        public byte this[uint index]
         {
             get => _raw[index];
             set => _raw[index] = value;

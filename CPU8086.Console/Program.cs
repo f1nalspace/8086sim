@@ -129,12 +129,13 @@ namespace Final.CPU8086
             return result;
         }
 
-        static readonly Argument ResArgConstant = new Argument("res", ArgumentQuantifier.One);
+        static readonly Argument ResourceArgConstant = new Argument("res", ArgumentQuantifier.One);
+        static readonly Argument ExecuteArgConstant = new Argument("exec", ArgumentQuantifier.Zero);
 
         public static int Main(string[] args)
         {
 
-            IEnumerable<Argument> parsedArgs = ParseArguments(args, ResArgConstant);
+            IEnumerable<Argument> parsedArgs = ParseArguments(args, ResourceArgConstant, ExecuteArgConstant);
             if (!parsedArgs.Any())
             {
                 Console.Error.WriteLine($"No arguments specified, please specify the file argument");
@@ -145,7 +146,7 @@ namespace Final.CPU8086
 
             OneOf<string, Error> assemblyRes;
 
-            Argument[] resArgs = parsedArgs.Where(a => ResArgConstant.Key.Equals(a.Key)).ToArray();
+            Argument[] resArgs = parsedArgs.Where(a => ResourceArgConstant.Key.Equals(a.Key)).ToArray();
             if (resArgs.Length > 0)
             {
                 string[] resNames = resArgs.Select(a => a.Value).ToArray();

@@ -169,93 +169,114 @@ namespace Final.CPU8086
             };
         }
 
-        public OneOf<byte, Error> StoreRegister(RegisterType type, Immediate value)
+        public OneOf<byte, Error> StoreRegister(Instruction instruction, IRunState state, RegisterType type, Immediate value)
         {
+            Immediate oldValue;
             byte result;
             switch (type)
             {
                 case RegisterType.AX:
+                    oldValue = new Immediate(Register.AX, ImmediateFlag.None);
                     Register.AX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.AL:
+                    oldValue = new Immediate(Register.AL, ImmediateFlag.None);
                     Register.AL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.AH:
+                    oldValue = new Immediate(Register.AH, ImmediateFlag.None);
                     Register.AH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.BX:
+                    oldValue = new Immediate(Register.BX, ImmediateFlag.None);
                     Register.BX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BL:
+                    oldValue = new Immediate(Register.BL, ImmediateFlag.None);
                     Register.BL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.BH:
+                    oldValue = new Immediate(Register.BH, ImmediateFlag.None);
                     Register.BH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.CX:
+                    oldValue = new Immediate(Register.CX, ImmediateFlag.None);
                     Register.CX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.CL:
+                    oldValue = new Immediate(Register.CL, ImmediateFlag.None);
                     Register.CL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.CH:
+                    oldValue = new Immediate(Register.CH, ImmediateFlag.None);
                     Register.CH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.DX:
+                    oldValue = new Immediate(Register.DX, ImmediateFlag.None);
                     Register.DX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DL:
+                    oldValue = new Immediate(Register.DL, ImmediateFlag.None);
                     Register.DL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.DH:
+                    oldValue = new Immediate(Register.DH, ImmediateFlag.None);
                     Register.DH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.SP:
+                    oldValue = new Immediate(Register.SP, ImmediateFlag.None);
                     Register.SP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BP:
+                    oldValue = new Immediate(Register.BP, ImmediateFlag.None);
                     Register.BP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SI:
+                    oldValue = new Immediate(Register.SI, ImmediateFlag.None);
                     Register.SI = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DI:
+                    oldValue = new Immediate(Register.DI, ImmediateFlag.None);
                     Register.DI = ImmediateToS16(value);
                     result = 2;
                     break;
 
                 case RegisterType.CS:
+                    oldValue = new Immediate(Register.CS, ImmediateFlag.None);
                     Register.CS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DS:
+                    oldValue = new Immediate(Register.DS, ImmediateFlag.None);
                     Register.DS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SS:
+                    oldValue = new Immediate(Register.SS, ImmediateFlag.None);
                     Register.SS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.ES:
+                    oldValue = new Immediate(Register.ES, ImmediateFlag.None);
                     Register.ES = ImmediateToS16(value);
                     result = 2;
                     break;
@@ -263,6 +284,8 @@ namespace Final.CPU8086
                 default:
                     return new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0);
             }
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(type, oldValue), new ExecutedValue(type, value))));
 
             return result;
         }
@@ -297,8 +320,10 @@ namespace Final.CPU8086
             };
         }
 
-        private int GetAbsoluteMemoryAddress(MemoryAddress address)
+        private uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
+            // TODO(final): Segmented access
+
             byte u8 = (byte)(address.Displacement & 0xFF);
             ushort u16 = (ushort)(address.Displacement & 0xFFFF);
             int d8 = (u8 & 0b10000000) == 0b10000000 ? (-u8) : u8;
@@ -331,10 +356,12 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation.BX_D16 => Register.BX + d16,
                 _ => int.MinValue,
             };
-            return result;
+            if (result == int.MinValue)
+                return uint.MaxValue;
+            return (uint)result;
         }
 
-        private OneOf<Immediate, Error> LoadMemory(int absoluteAddress, DataType type)
+        private OneOf<Immediate, Error> LoadMemory(uint absoluteAddress, DataType type)
         {
             int typeSize = GetDataTypeSize(type);
             if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= Memory.Length)
@@ -389,40 +416,57 @@ namespace Final.CPU8086
 
         public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
         {
-            int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == int.MinValue)
+            uint absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == uint.MinValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return LoadMemory(absoluteAddress, type);
         }
 
-        private OneOf<byte, Error> StoreMemory(int absoluteAddress, DataType type, Immediate value)
+        private OneOf<byte, Error> StoreMemory(Instruction instruction, IRunState state, uint absoluteAddress, DataType type, Immediate value)
         {
             int typeSize = GetDataTypeSize(type);
-            if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= Memory.Length)
+            if ((absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute destination memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)absoluteAddress, SegmentType.None, 0);
             switch (type)
             {
                 case DataType.Byte:
-                    Memory[absoluteAddress] = value.U8;
+                    {
+                        Immediate oldValue = new Immediate(Memory[absoluteAddress], ImmediateFlag.None);
+
+                        Memory[absoluteAddress] = value.U8;
+
+                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldValue), new ExecutedValue(address, value))));
+                    }
                     return 1;
+
                 case DataType.Word:
                     {
                         ushort u16 = value.U16;
+
+                        ushort oldValue = (ushort)((Memory[absoluteAddress + 0] << 0) | (Memory[absoluteAddress + 1] << 8));
+
+                        Immediate oldMemory = new Immediate(oldValue, ImmediateFlag.None);
+
                         Memory[absoluteAddress + 0] = (byte)((u16 >> 0) & 0xFF);
                         Memory[absoluteAddress + 1] = (byte)((u16 >> 8) & 0xFF);
+
+                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+
                         return 2;
                     }
+
                 default:
                     return new Error(ErrorCode.UnsupportedDataWidth, $"The destination memory type '{type}' is not supported!", 0);
             }
         }
 
-        public OneOf<byte, Error> StoreMemory(MemoryAddress address, DataType type, Immediate value)
+        public OneOf<byte, Error> StoreMemory(Instruction instruction, IRunState state, MemoryAddress address, DataType type, Immediate value)
         {
-            int absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == int.MinValue)
+            uint absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == uint.MaxValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
-            return StoreMemory(absoluteAddress, type, value);
+            return StoreMemory(instruction, state, absoluteAddress, type, value);
         }
 
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, uint position)
@@ -1338,11 +1382,11 @@ namespace Final.CPU8086
             return s.ToString();
         }
 
-        public OneOf<int, Error> ExecuteInstruction(Instruction instruction)
+        private OneOf<int, Error> ExecuteInstruction(Instruction instruction, IRunState state)
         {
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
-            return _executer.Execute(instruction);
+            return _executer.Execute(instruction, state);
         }
 
         public OneOf<uint, Error> BeginStep()
@@ -1367,15 +1411,18 @@ namespace Final.CPU8086
             return CurrentIP;
         }
 
-        public OneOf<Instruction, Error> Step()
+        public OneOf<Instruction, Error> Step(RunState state)
         {
-            PreviousIP = CurrentIP;
+            if (state == null)
+                return new Error(ErrorCode.MissingStateParameter, $"The state argument is missing", 0);
 
             if (ActiveProgram == null)
                 return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
 
             if (ExecutionState != ExecutionState.Halted)
                 return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(Step)}", CurrentIP);
+
+            PreviousIP = CurrentIP;
 
             Contract.Assert(CurrentIP < ActiveProgram.Length);
             ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)CurrentIP);
@@ -1399,7 +1446,7 @@ namespace Final.CPU8086
             CurrentInstruction = instruction;
 
             Thread.Sleep(500);
-            OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
+            OneOf<int, Error> executionRes = ExecuteInstruction(instruction, state);
             if (executionRes.IsT1)
             {
                 ExecutionState = ExecutionState.Failed;
@@ -1473,7 +1520,7 @@ namespace Final.CPU8086
                 CurrentInstruction = instruction;
 
                 Thread.Sleep(500);
-                OneOf<int, Error> executionRes = ExecuteInstruction(instruction);
+                OneOf<int, Error> executionRes = ExecuteInstruction(instruction, state);
                 if (executionRes.IsT1)
                 {
                     ExecutionState = ExecutionState.Failed;

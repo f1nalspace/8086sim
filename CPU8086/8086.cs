@@ -450,7 +450,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, int segment, DataType type)
+        static InstructionOperand CreateOperand(Operand sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, SegmentType segmentType, uint segmentAddress, DataType type)
         {
             switch (sourceOp.Kind)
             {
@@ -458,16 +458,16 @@ namespace Final.CPU8086
                     return new InstructionOperand(s32: sourceOp.Value);
 
                 case OperandKind.MemoryByte:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
                 case OperandKind.MemoryWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
                 case OperandKind.MemoryDoubleWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
                 case OperandKind.MemoryQuadWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
                 case OperandKind.MemoryWordReal:
                 case OperandKind.MemoryDoubleWordReal:
@@ -496,12 +496,12 @@ namespace Final.CPU8086
                     if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetByte(registerBits));
                     else
-                        return new InstructionOperand(eac, displacement);
+                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
                 case OperandKind.RegisterOrMemoryWord:
                     if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetWord(registerBits));
                     else
-                        return new InstructionOperand(eac, displacement);
+                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
                 case OperandKind.RegisterOrMemoryDoubleWord:
                 case OperandKind.RegisterOrMemoryQuadWord:
                     break;
@@ -543,22 +543,10 @@ namespace Final.CPU8086
                         return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
 
                 case OperandKind.FarPointer:
-                    {
-                        int address = offset + segment;
-                        if ((short)segment < 0)
-                            return new InstructionOperand(new MemoryAddress((short)(address & 0xFFFF)));
-                        else
-                            return new InstructionOperand(new MemoryAddress((ushort)(address & 0xFFFF)));
-                    }
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (short)(offset & 0xFFFF), segmentType, segmentAddress));
 
                 case OperandKind.NearPointer:
-                    {
-                        int address = offset + segment;
-                        if ((sbyte)address < 0)
-                            return new InstructionOperand(new MemoryAddress((sbyte)(address & 0xFF)));
-                        else
-                            return new InstructionOperand(new MemoryAddress((byte)(address & 0xFF)));
-                    }
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (sbyte)(offset & 0xFF), segmentType, segmentAddress));
 
                 case OperandKind.ST:
                     break;
@@ -736,7 +724,8 @@ namespace Final.CPU8086
             int displacement = 0;
             int immediate = 0;
             int offset = 0;
-            int segment = 0;
+            uint segmentAddress = 0;
+            SegmentType segmentType = SegmentType.None;
 
             ModType mode = ModType.Unknown;
 
@@ -876,7 +865,7 @@ namespace Final.CPU8086
                                 return new Error(value.AsT1, $"No more bytes left for reading the segment-{t} in field '{field}'", position);
                             byte seg8 = value.AsT0;
                             int shift = t * 8;
-                            segment |= ((int)seg8 << shift);
+                            segmentAddress |= ((uint)seg8 << shift);
                         }
                         break;
 
@@ -1099,7 +1088,7 @@ namespace Final.CPU8086
                 else
                     sourceType = bestInferredType;
 
-                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segment, sourceType);
+                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segmentType, segmentAddress, sourceType);
 
                 targetOps[opCount++] = targetOp;
 

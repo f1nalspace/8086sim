@@ -75,9 +75,6 @@ namespace Final.CPU8086.Instructions
             Value = value;
         }
 
-        public InstructionOperand(EffectiveAddressCalculation eac, int displacement)
-            : this(new MemoryAddress(eac, displacement)) { }
-
         public bool Equals(InstructionOperand other)
         {
             if (Op != other.Op) return false;

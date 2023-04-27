@@ -118,6 +118,11 @@ namespace Final.CPU8086
         public bool DirectionalFlag { get => GetFlag(DirectionalFlagMask); set => SetFlag(DirectionalFlagMask, value); }
         public bool OverflowFlag { get => GetFlag(OverflowFlagMask); set => SetFlag(OverflowFlagMask, value); }
 
+        public RegisterState()
+        {
+            Reset();
+        }
+
         public void Reset()
         {
             AX = 0;
@@ -130,10 +135,10 @@ namespace Final.CPU8086
             SI = 0;
             DI = 0;
 
-            CS = 0;
-            DS = 0;
-            SS = 0;
-            ES = 0;
+            CS = 0x3000;
+            DS = 0x2000;
+            SS = 0x5000;
+            ES = 0x7000;
 
             IP = 0;
 

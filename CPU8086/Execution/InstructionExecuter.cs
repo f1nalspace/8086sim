@@ -172,7 +172,7 @@ namespace Final.CPU8086.Execution
                     finalDest = new Immediate((ushort)sum, ImmediateFlag.None);
                     isZero = (ushort)sum == 0;
                     isSign = (short)sum < 0;
-                    isParity = IsParity((byte)(sum & 0xFF));
+                    isParity = IsParity((ushort)sum);
                     isOverflow = IsOverflow16(sum);
                     break;
 

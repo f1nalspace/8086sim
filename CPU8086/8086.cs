@@ -322,13 +322,48 @@ namespace Final.CPU8086
 
         private uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
+            static RegisterType SegmentToRegister(SegmentType type)
+            {
+                return type switch
+                {
+                    SegmentType.CS => RegisterType.CS,
+                    SegmentType.DS => RegisterType.DS,
+                    SegmentType.SS => RegisterType.SS,
+                    SegmentType.ES => RegisterType.ES,
+                    _ => RegisterType.Unknown,
+                };
+            }
+
             // TODO(final): Segmented access
+            ushort segmentBase;
+            switch (address.SegmentType)
+            {
+                case SegmentType.Direct:
+                    segmentBase = (ushort)address.SegmentAddress;
+                    break;
+                case SegmentType.CS:
+                case SegmentType.DS:
+                case SegmentType.SS:
+                case SegmentType.ES:
+                    {
+                        RegisterType segmentRegister = SegmentToRegister(address.SegmentType);
+                        OneOf<Immediate, Error> loadedSegment = LoadRegister(segmentRegister);
+                        if (loadedSegment.IsT1)
+                            return uint.MaxValue;
+                        segmentBase = loadedSegment.AsT0.U16;
+                    }
+                    break;
+                default:
+                    segmentBase = 0;
+                    break;
+            }
 
             byte u8 = (byte)(address.Displacement & 0xFF);
             ushort u16 = (ushort)(address.Displacement & 0xFFFF);
             int d8 = (u8 & 0b10000000) == 0b10000000 ? (-u8) : u8;
             int d16 = (u16 & 0b10000000_00000000) == 0b10000000_00000000 ? (-u16) : u16;
-            int result = address.EAC switch
+
+            int offset = address.EAC switch
             {
                 EffectiveAddressCalculation.BX_SI => Register.BX + Register.SI,
                 EffectiveAddressCalculation.BX_DI => Register.BX + Register.DI,
@@ -356,9 +391,13 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation.BX_D16 => Register.BX + d16,
                 _ => int.MinValue,
             };
-            if (result == int.MinValue)
+
+            if (offset == int.MinValue)
                 return uint.MaxValue;
-            return (uint)result;
+
+            uint result = (uint)((segmentBase * 10) + offset);
+
+            return result;
         }
 
         private OneOf<Immediate, Error> LoadMemory(uint absoluteAddress, DataType type)
@@ -906,6 +945,7 @@ namespace Final.CPU8086
                             byte seg8 = value.AsT0;
                             int shift = t * 8;
                             segmentAddress |= ((uint)seg8 << shift);
+                            segmentType = SegmentType.Direct;
                         }
                         break;
 

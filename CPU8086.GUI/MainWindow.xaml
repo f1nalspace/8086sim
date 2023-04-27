@@ -144,7 +144,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="AX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="AX" ToolTip="Accumulator Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" Padding="4 0" HorizontalAlignment="Right">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -154,7 +154,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" ToolTip="Accumulator Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -164,7 +164,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" ToolTip="Accumulator Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -189,7 +189,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="BX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="BX" ToolTip="Base Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -199,7 +199,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" ToolTip="Base Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -209,7 +209,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" ToolTip="Base Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -234,7 +234,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="CX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="CX" ToolTip="Counting Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -244,7 +244,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" ToolTip="Counting Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -254,7 +254,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" ToolTip="Counting Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -279,7 +279,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Row="0" Grid.Column="0" Text="DX" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="DX" ToolTip="Data Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -289,7 +289,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" ToolTip="Data Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -299,7 +299,7 @@
                                     </TextBlock.Text>
                                 </TextBlock>
 
-                                <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" ToolTip="Data Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{local:HexCellValueConverter}">
@@ -312,21 +312,19 @@
 
                             <Separator Grid.Row="4" />
 
-                            <!-- SP -->
+                            <!-- SP/CS -->
                             <Grid Grid.Row="5" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="SP" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="SP" ToolTip="Stack Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -335,23 +333,31 @@
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
+
+                                <TextBlock Grid.Column="2" Grid.Row="0" Text="CS" ToolTip="Code Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
+                                <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                            <Binding Path="Register.CS" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </Grid>
 
-                            <!-- BP -->
+                            <!-- BP/DS -->
                             <Grid Grid.Row="6" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="BP" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="BP" ToolTip="Base Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -360,23 +366,31 @@
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
+
+                                <TextBlock Grid.Column="2" Grid.Row="0" Text="DS" ToolTip="Data Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
+                                <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                            <Binding Path="Register.DS" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </Grid>
 
-                            <!-- SI -->
+                            <!-- SI/SS -->
                             <Grid Grid.Row="7" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="SI" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="SI" ToolTip="Source Index" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -385,27 +399,46 @@
                                         </MultiBinding>
                                     </TextBlock.Text>
                                 </TextBlock>
+
+                                <TextBlock Grid.Column="2" Grid.Row="0" Text="SS" ToolTip="Stack Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
+                                <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                            <Binding Path="Register.SS" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </Grid>
 
-                            <!-- DI -->
+                            <!-- DI/ES -->
                             <Grid Grid.Row="8" Background="LightGoldenrodYellow">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60" />
-                                    <ColumnDefinition Width="20" />
-                                    <ColumnDefinition Width="30" />
-                                    <ColumnDefinition Width="5" />
-                                    <ColumnDefinition Width="30" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="DI" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="DI" ToolTip="Destination Index" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">
                                             <Binding Path="Register.DI" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
+                                            <Binding Source="$" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+
+                                <TextBlock Grid.Column="2" Grid.Row="0" Text="ES" ToolTip="Extra Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
+                                <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                            <Binding Path="Register.ES" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Source="$" />
                                         </MultiBinding>
@@ -429,7 +462,7 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="IP" HorizontalAlignment="Right" Padding="4 0" />
+                                <TextBlock Grid.Column="0" Grid.Row="0" Text="IP" ToolTip="Instruction Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
                                         <MultiBinding Converter="{StaticResource streamPosValueConverter}">

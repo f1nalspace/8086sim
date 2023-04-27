@@ -7,6 +7,10 @@
         /// </summary>
         None = 0,
         /// <summary>
+        /// A direct address of a segment
+        /// </summary>
+        Direct,
+        /// <summary>
         /// Code segment (CS)
         /// </summary>
         CS,

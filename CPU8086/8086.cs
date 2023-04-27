@@ -422,12 +422,16 @@ namespace Final.CPU8086
             return LoadMemory(absoluteAddress, type);
         }
 
-        private OneOf<byte, Error> StoreMemory(Instruction instruction, IRunState state, uint absoluteAddress, DataType type, Immediate value)
+        public OneOf<byte, Error> StoreMemory(Instruction instruction, IRunState state, MemoryAddress address, DataType type, Immediate value)
         {
+            uint absoluteAddress = GetAbsoluteMemoryAddress(address);
+            if (absoluteAddress == uint.MaxValue)
+                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
+
             int typeSize = GetDataTypeSize(type);
             if ((absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute destination memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)absoluteAddress, SegmentType.None, 0);
+
             switch (type)
             {
                 case DataType.Byte:
@@ -459,14 +463,6 @@ namespace Final.CPU8086
                 default:
                     return new Error(ErrorCode.UnsupportedDataWidth, $"The destination memory type '{type}' is not supported!", 0);
             }
-        }
-
-        public OneOf<byte, Error> StoreMemory(Instruction instruction, IRunState state, MemoryAddress address, DataType type, Immediate value)
-        {
-            uint absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == uint.MaxValue)
-                return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
-            return StoreMemory(instruction, state, absoluteAddress, type, value);
         }
 
         private static OneOf<byte, Error> ReadU8(ref ReadOnlySpan<byte> stream, string streamName, uint position)

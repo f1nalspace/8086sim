@@ -185,10 +185,34 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
+            Flags oldFlags = new Flags(
+                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            );
+
+            Flags newFlags = new Flags(
+                parity: isParity ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: isZero ? FlagValue.One : FlagValue.Zero,
+                sign: isSign ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            );
+
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
 
             return 0;
         }
@@ -250,10 +274,34 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
+            Flags oldFlags = new Flags(
+                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            );
+
+            Flags newFlags = new Flags(
+                parity: isParity ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: isZero ? FlagValue.One : FlagValue.Zero,
+                sign: isSign ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            );
+
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
 
             return 0;
         }
@@ -307,10 +355,34 @@ namespace Final.CPU8086.Execution
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
             }
 
+            Flags oldFlags = new Flags(
+                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            );
+
+            Flags newFlags = new Flags(
+                parity: isParity ? FlagValue.One : FlagValue.Zero,
+                auxiliary: FlagValue.Ignore,
+                zero: isZero ? FlagValue.One : FlagValue.Zero,
+                sign: isSign ? FlagValue.One : FlagValue.Zero,
+                trap: FlagValue.Ignore,
+                interrupt: FlagValue.Ignore,
+                direction: FlagValue.Ignore,
+                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            );
+
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
             cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
 
             return 0;
         }

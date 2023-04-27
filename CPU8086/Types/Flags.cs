@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Final.CPU8086.Types
 {
@@ -10,6 +11,7 @@ namespace Final.CPU8086.Types
         One
     }
 
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct Flags
     {
         public FlagValue Parity { get; }

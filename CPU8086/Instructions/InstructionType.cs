@@ -227,7 +227,7 @@
         /// </summary>
         LODSW,
         /// <summary>
-        /// Decrement CX and Loop if CX Not Zero
+        /// Loop While Not Zero (CX == 0)
         /// </summary>
         LOOP,
         /// <summary>

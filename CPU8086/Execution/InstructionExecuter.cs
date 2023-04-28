@@ -4,6 +4,7 @@ using OneOf;
 using System;
 using System.Diagnostics.Contracts;
 using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Final.CPU8086.Execution
 {
@@ -26,6 +27,30 @@ namespace Final.CPU8086.Execution
             _typeFunctionTable[(int)InstructionType.ADD] = Add;
             _typeFunctionTable[(int)InstructionType.SUB] = Sub;
             _typeFunctionTable[(int)InstructionType.CMP] = Cmp;
+
+            _typeFunctionTable[(int)InstructionType.JE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JNE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JC] = Jump;
+            _typeFunctionTable[(int)InstructionType.JNC] = Jump;
+            _typeFunctionTable[(int)InstructionType.JO] = Jump;
+            _typeFunctionTable[(int)InstructionType.JNO] = Jump;
+            _typeFunctionTable[(int)InstructionType.JS] = Jump;
+            _typeFunctionTable[(int)InstructionType.JNS] = Jump;
+            _typeFunctionTable[(int)InstructionType.JP] = Jump;
+            _typeFunctionTable[(int)InstructionType.JNP] = Jump;
+            _typeFunctionTable[(int)InstructionType.JCXZ] = Jump;
+            _typeFunctionTable[(int)InstructionType.JG] = Jump;
+            _typeFunctionTable[(int)InstructionType.JGE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JL] = Jump;
+            _typeFunctionTable[(int)InstructionType.JLE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JA] = Jump;
+            _typeFunctionTable[(int)InstructionType.JAE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JB] = Jump;
+            _typeFunctionTable[(int)InstructionType.JBE] = Jump;
+            _typeFunctionTable[(int)InstructionType.JMP] = Jump;
+            _typeFunctionTable[(int)InstructionType.LOOP] = Jump;
+            _typeFunctionTable[(int)InstructionType.LOOPE] = Jump;
+            _typeFunctionTable[(int)InstructionType.LOOPNZ] = Jump;
         }
 
         public OneOf<int, Error> Execute(Instruction instruction, IRunState state)
@@ -50,6 +75,25 @@ namespace Final.CPU8086.Execution
                 _ => DataType.None,
             };
         }
+
+        public static bool IsParity(byte value)
+        {
+            uint count = 0;
+            for (int i = 0; i < 8; ++i)
+            {
+                int mask = 1 << i;
+                if ((value & mask) == mask)
+                    ++count;
+            }
+            return count % 2 == 0;
+        }
+
+        public static bool IsParity(ushort value) => IsParity((byte)(value & 0xFF));
+
+        public static bool IsOverflow8(int value)
+            => value > sbyte.MaxValue || value < sbyte.MinValue;
+        public static bool IsOverflow16(int value)
+            => value > short.MaxValue || value < short.MinValue;
 
         private static OneOf<Immediate, Error> LoadValue(CPU cpu, Instruction instruction, InstructionOperand operand)
         {
@@ -108,24 +152,172 @@ namespace Final.CPU8086.Execution
             }
         }
 
-        public static bool IsParity(byte value)
+        private static OneOf<int, Error> Jump(CPU cpu, Instruction instruction, IRunState state)
         {
-            uint count = 0;
-            for (int i = 0; i < 8; ++i)
+            Contract.Assert(instruction != null);
+
+            if (instruction.Operands.Length != 1)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+
+            InstructionType type = instruction.Mnemonic.Type;
+
+            InstructionOperand labelOperand = instruction.Operands[0];
+
+            var isZero = cpu.Register.ZeroFlag;
+            var isCarry = cpu.Register.CarryFlag;
+            var isOverflow = cpu.Register.OverflowFlag;
+            var isSign = cpu.Register.SignFlag;
+            var isParity = cpu.Register.ParityFlag;
+
+            OneOf<Immediate, Error> cxLoad = cpu.LoadRegister(RegisterType.CX);
+            if (cxLoad.IsT1)
+                return cxLoad.AsT1;
+            short cx = cxLoad.AsT0.S16;
+
+            bool updatedCX = false;
+            bool canJump = false;
+            switch (type)
             {
-                int mask = 1 << i;
-                if ((value & mask) == mask)
-                    ++count;
+                case InstructionType.JMP:
+                    canJump = true; break;
+
+                // Jump if Zero, Jump if Equal (ZF == 1)
+                case InstructionType.JE:
+                    canJump = isZero; break;
+                // Jump if Not Zero, Jump if Not Equal (ZF == 0)
+                case InstructionType.JNE:
+                    canJump = !isZero; break;
+                // Jump if Carry (CF == 1)
+                case InstructionType.JC:
+                    canJump = isCarry; break;
+                // Jump if No Carry (CF == 0)
+                case InstructionType.JNC:
+                    canJump = !isCarry; break;
+                // Jump if Overflow (OF == 1)
+                case InstructionType.JO:
+                    canJump = isOverflow; break;
+                // Jump if No Overflow (OF == 0)
+                case InstructionType.JNO:
+                    canJump = !isOverflow; break;
+                // Jump if Signed (SF == 1)
+                case InstructionType.JS:
+                    canJump = isSign; break;
+                // Jump if No Signed (SF == 0)
+                case InstructionType.JNS:
+                    canJump = !isSign; break;
+                // Jump if Parity, Jump if Parity is Even (PF == 1)
+                case InstructionType.JP:
+                    canJump = isParity; break;
+                // Jump if Not Parity, Jump if Parity is Odd (PF == 0)
+                case InstructionType.JNP:
+                    canJump = !isParity; break;
+
+                // Jump if CX Register is zero (CX == 0)
+                case InstructionType.JCXZ:
+                    canJump = cx == 0; break;
+
+                // Jump if Greater, Jump if Not Less or Equal (ZF == 0 && SF == OF)
+                case InstructionType.JG:
+                    canJump = !isZero && isSign == isOverflow; break;
+                // Jump if Greater or Equal, Jump if Not Less (SF == OF)
+                case InstructionType.JGE:
+                    canJump = isSign == isOverflow; break;
+                // Jump if Less, Jump if Not Greater or Equal (SF != OF)
+                case InstructionType.JL:
+                    canJump = isSign != isOverflow; break;
+                // Jump if Less or Equal, Jump if Not Greater (ZF == 1 || SF != OF)
+                case InstructionType.JLE:
+                    canJump = isZero || isSign != isOverflow; break;
+
+                // Jump if Above, Jump if Not Below or Equal (ZF == 0 && CF == 0)
+                case InstructionType.JA:
+                    canJump = !isZero && !isCarry; break;
+                // Jump if Above or Equal, Jump if Not Below (CF == 0)
+                case InstructionType.JAE:
+                    canJump = !isCarry; break;
+                // Jump if Below, Jump if Not Above or Equal (CF == 1)
+                case InstructionType.JB:
+                    canJump = isCarry; break;
+                // Jump if Below or Equal, Jump if Not Above  (ZF == 1 || CF == 1)
+                case InstructionType.JBE:
+                    canJump = isZero || isCarry; break;
+
+                // Decrement CX and Loop if CX == 0
+                case InstructionType.LOOP:
+                    {
+                        --cx;
+                        updatedCX = true;
+                        canJump = cx == 0;
+                    }
+                    break;
+
+                // Decrement CX and Loop if CX == 0 && ZF == 1
+                case InstructionType.LOOPE:
+                    {
+                        --cx;
+                        updatedCX = true;
+                        canJump = cx == 0 && isZero;
+                    }
+                    break;
+
+                // Decrement CX and Loop if CX == 0 && ZF == 0
+                case InstructionType.LOOPNZ:
+                    {
+                        --cx;
+                        updatedCX = true;
+                        canJump = cx == 0 && !isZero;
+                    }
+                    break;
+
+                default:
+                    return new Error(ErrorCode.UnsupportedInstruction, $"The jump instruction '{type}' is not supported!", instruction.Position);
             }
-            return count % 2 == 0;
+
+            if (updatedCX)
+            {
+                OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, RegisterType.CX, new Immediate(cx, ImmediateFlag.None));
+                if (storeRes.IsT1)
+                    return storeRes.AsT1;
+            }
+
+            if (canJump)
+            {
+                // Resolve operand
+                int relativeAddress;
+                switch (labelOperand.Op)
+                {
+                    case OperandType.Register:
+                        {
+                            OneOf<Immediate, Error> regLoad = cpu.LoadRegister(labelOperand.Register);
+                            if (regLoad.IsT1)
+                                return regLoad.AsT1;
+                            relativeAddress = regLoad.AsT0.Value;
+                        }
+                        break;
+                    case OperandType.Address:
+                        {
+                            DataType dataType = WidthToType(instruction.Width);
+                            OneOf<Immediate, Error> memLoad = cpu.LoadMemory(labelOperand.Memory, dataType);
+                            if (memLoad.IsT1)
+                                return memLoad.AsT1;
+                            relativeAddress = memLoad.AsT0.Value;
+                        }
+                        break;
+                    case OperandType.Immediate:
+                        relativeAddress = labelOperand.Immediate.Value;
+                        break;
+                    case OperandType.Value:
+                        relativeAddress = labelOperand.Value;
+                        break;
+                    default:
+                        return new Error(ErrorCode.UnsupportedOperandType, $"The label operand type '{labelOperand.Op}' is not supported!", instruction.Position);
+                }
+
+                return relativeAddress;
+            }
+
+            return 0;
         }
-
-        public static bool IsParity(ushort value) => IsParity((byte)(value & 0xFF));
-
-        public static bool IsOverflow8(int value)
-            => value > sbyte.MaxValue || value < sbyte.MinValue;
-        public static bool IsOverflow16(int value)
-            => value > short.MaxValue || value < short.MinValue;
 
         private static OneOf<int, Error> Add(CPU cpu, Instruction instruction, IRunState state)
         {

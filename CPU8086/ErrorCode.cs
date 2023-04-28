@@ -54,5 +54,6 @@
         InvalidExecutionState,
         EndOfProgram,
         MissingStateParameter,
+        UnsupportedInstruction,
     }
 }

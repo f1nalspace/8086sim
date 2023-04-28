@@ -75,20 +75,20 @@ namespace Final.CPU8086.Instructions
             bool hadRegister = false;
             foreach (InstructionOperand op in Operands)
             {
-                if (op.Op == OperandType.Register)
+                if (op.Type == OperandType.Register)
                     hadRegister |= true;
             }
 
             string separator = string.Empty;
             foreach (InstructionOperand op in Operands)
             {
-                if (op.Op == OperandType.None)
+                if (op.Type == OperandType.None)
                     continue;
 
                 s.Append(separator);
                 separator = ",";
 
-                switch (op.Op)
+                switch (op.Type)
                 {
                     case OperandType.Register:
                         {

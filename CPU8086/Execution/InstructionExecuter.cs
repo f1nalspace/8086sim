@@ -98,7 +98,7 @@ namespace Final.CPU8086.Execution
         private static OneOf<Immediate, Error> LoadValue(CPU cpu, Instruction instruction, InstructionOperand operand)
         {
             Immediate result;
-            switch (operand.Op)
+            switch (operand.Type)
             {
                 case OperandType.Register:
                     {
@@ -122,14 +122,14 @@ namespace Final.CPU8086.Execution
                     result = operand.Immediate;
                     break;
                 default:
-                    return new Error(ErrorCode.UnsupportedOperandType, $"The source operand type '{operand.Op}' is not supported by instruction '{instruction}'", instruction.Position);
+                    return new Error(ErrorCode.UnsupportedOperandType, $"The source operand type '{operand.Type}' is not supported by instruction '{instruction}'", instruction.Position);
             }
             return result;
         }
 
         private static OneOf<byte, Error> StoreValue(CPU cpu, Instruction instruction, IRunState state, InstructionOperand operand, Immediate source)
         {
-            switch (operand.Op)
+            switch (operand.Type)
             {
                 case OperandType.Register:
                     {
@@ -148,7 +148,7 @@ namespace Final.CPU8086.Execution
                         return storeRes.AsT0;
                     }
                 default:
-                    return new Error(ErrorCode.UnsupportedOperandType, $"The destination operand type '{operand.Op}' is not supported by instruction '{instruction}'", instruction.Position);
+                    return new Error(ErrorCode.UnsupportedOperandType, $"The destination operand type '{operand.Type}' is not supported by instruction '{instruction}'", instruction.Position);
             }
         }
 
@@ -284,7 +284,7 @@ namespace Final.CPU8086.Execution
             {
                 // Resolve operand
                 int relativeAddress;
-                switch (labelOperand.Op)
+                switch (labelOperand.Type)
                 {
                     case OperandType.Register:
                         {
@@ -310,7 +310,7 @@ namespace Final.CPU8086.Execution
                         relativeAddress = labelOperand.Value;
                         break;
                     default:
-                        return new Error(ErrorCode.UnsupportedOperandType, $"The label operand type '{labelOperand.Op}' is not supported!", instruction.Position);
+                        return new Error(ErrorCode.UnsupportedOperandType, $"The label operand type '{labelOperand.Type}' is not supported!", instruction.Position);
                 }
 
                 return relativeAddress;

@@ -8,7 +8,7 @@ namespace Final.CPU8086.Instructions
     public readonly struct InstructionOperand : IEquatable<InstructionOperand>
     {
         [FieldOffset(0)]
-        public readonly OperandType Op;
+        public readonly OperandType Type;
         [FieldOffset(1)]
         public readonly MemoryAddress Memory;
         [FieldOffset(1)]
@@ -20,7 +20,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(RegisterType register)
         {
-            Op = OperandType.Register;
+            Type = OperandType.Register;
             Memory = new MemoryAddress();
             Immediate = new Immediate();
             Value = 0;
@@ -32,7 +32,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(Immediate immediate)
         {
-            Op = OperandType.Immediate;
+            Type = OperandType.Immediate;
             Memory = new MemoryAddress();
             Register = RegisterType.Unknown;
             Value = 0;
@@ -59,7 +59,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(MemoryAddress address)
         {
-            Op = OperandType.Address;
+            Type = OperandType.Address;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Value = 0;
@@ -68,7 +68,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(int value)
         {
-            Op = OperandType.Address;
+            Type = OperandType.Address;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Memory = new MemoryAddress();
@@ -77,8 +77,8 @@ namespace Final.CPU8086.Instructions
 
         public bool Equals(InstructionOperand other)
         {
-            if (Op != other.Op) return false;
-            switch (Op)
+            if (Type != other.Type) return false;
+            switch (Type)
             {
                 case OperandType.Register:
                     if (!Register.Equals(other.Register))
@@ -102,13 +102,13 @@ namespace Final.CPU8086.Instructions
         public override bool Equals(object obj) => obj is InstructionOperand op && Equals(op);
         public override int GetHashCode()
         {
-            return Op switch
+            return Type switch
             {
-                OperandType.Register => HashCode.Combine(Op, Register),
-                OperandType.Address => HashCode.Combine(Op, Memory),
-                OperandType.Immediate => HashCode.Combine(Op, Immediate),
-                OperandType.Value => HashCode.Combine(Op, Value),
-                _ => HashCode.Combine(Op),
+                OperandType.Register => HashCode.Combine(Type, Register),
+                OperandType.Address => HashCode.Combine(Type, Memory),
+                OperandType.Immediate => HashCode.Combine(Type, Immediate),
+                OperandType.Value => HashCode.Combine(Type, Value),
+                _ => HashCode.Combine(Type),
             };
         }
 
@@ -116,7 +116,7 @@ namespace Final.CPU8086.Instructions
 
         public override string ToString()
         {
-            return Op switch
+            return Type switch
             {
                 OperandType.Register => $"Reg: {Types.Register.GetName(Register)}",
                 OperandType.Immediate => $"Imm: {Immediate}",

@@ -1280,14 +1280,14 @@ namespace Final.CPU8086
                             InstructionOperand firstOp = instruction.Operands[0];
 
                             uint absoluteAddress = 0;
-                            if (firstOp.Op == OperandType.Immediate)
+                            if (firstOp.Type == OperandType.Immediate)
                             {
                                 if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
                                     return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
                                 int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
                                 absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
                             }
-                            else if (firstOp.Op == OperandType.Value)
+                            else if (firstOp.Type == OperandType.Value)
                             {
                                 int relativeAddressAfterThisInstruction = firstOp.Value;
                                 absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);

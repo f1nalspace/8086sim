@@ -21,6 +21,8 @@
 
         // Program errors
         MissingProgramParameter,
+        ProgramTooLarge,
+        ProgramNotLoaded,
 
         // Execution errors
         ExecutionFailed,
@@ -50,7 +52,6 @@
         FailedToLoadMemory,
 
         // Execute errors
-        ProgramNotLoaded,
         InvalidExecutionState,
         EndOfProgram,
         MissingStateParameter,

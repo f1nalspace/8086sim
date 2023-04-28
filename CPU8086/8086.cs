@@ -19,6 +19,24 @@ namespace Final.CPU8086
 {
     public class CPU : INotifyPropertyChanged
     {
+        private const int HighestMemoryAddress = 0xFFFFF;
+
+        private const int ExtraSegmentEnd = 0x7FFFF;
+        private const int ExtraSegmentStart = 0x70000;
+        private const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
+
+        private const int StackSegmentEnd = 0x5FFFF;
+        private const int StackSegmentStart = 0x50000;
+        private const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
+
+        private const int CodeSegmentEnd = 0x3FFFF;
+        private const int CodeSegmentStart = 0x30000;
+        private const int CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
+
+        private const int DataSegmentEnd = 0x2FFFF;
+        private const int DataSegmentStart = 0x20000;
+        private const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
+
         private const int MaxInstructionLength = 6;
 
         private static readonly RegisterTable _regTable = new RegisterTable();
@@ -94,6 +112,8 @@ namespace Final.CPU8086
         {
             if (program == null)
                 return new Error(ErrorCode.MissingProgramParameter, $"Missing program argument!", 0);
+            if (program.Length > CodeSegmentLength)
+                return new Error(ErrorCode.ProgramTooLarge, $"The program '{program.Name}' is too large with '{program.Length}' bytes and does not fit in the code segment of max length '{CodeSegmentLength}' bytes!", 0);
 
             ActiveProgram = program;
 
@@ -104,6 +124,7 @@ namespace Final.CPU8086
             RaisePropertyChanged(nameof(Register));
 
             Memory.Clear();
+            Memory.Set(CodeSegmentStart, program.Stream.AsSpan());
             RaisePropertyChanged(nameof(Memory));
 
             return program.Length;
@@ -290,19 +311,7 @@ namespace Final.CPU8086
             return result;
         }
 
-        private const int HighestMemoryAddress = 0xFFFFF;
-
-        private const int EndExtraSegmentStart = 0x7FFFF;
-        private const int StartExtraSegmentStart = 0x70000;
-
-        private const int EndStackSegmentStart = 0x5FFFF;
-        private const int StartStackSegmentStart = 0x50000;
-
-        private const int EndCodeSegmentStart = 0x3FFFF;
-        private const int StartCodeSegmentStart = 0x30000;
-
-        private const int EndDataSegmentStart = 0x2FFFF;
-        private const int StartDataSegmentStart = 0x20000;
+        
 
         private int GetDataTypeSize(DataType type)
         {

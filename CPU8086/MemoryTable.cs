@@ -29,6 +29,14 @@ namespace Final.CPU8086
             Array.Clear(_raw, 0, _raw.Length);
         }
 
+        public void Set(uint offset, ReadOnlySpan<byte> data)
+        {
+            if (offset + data.Length > _raw.Length)
+                throw new InsufficientMemoryException($"Can´t load '{data.Length}' bytes of memory starting from '{offset}'");
+            for (int i = 0; i < data.Length; ++i)
+                _raw[offset + i] = data[i];
+        }
+
         public ImmutableArray<byte> ReadPage(int pageIndex)
         {
             int index = pageIndex * PageSize;

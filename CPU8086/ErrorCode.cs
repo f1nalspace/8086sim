@@ -53,6 +53,7 @@
 
         // Execute errors
         InvalidExecutionState,
+        InvalidSegmentAddress,
         EndOfProgram,
         MissingStateParameter,
         UnsupportedInstruction,

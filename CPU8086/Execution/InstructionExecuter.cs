@@ -87,6 +87,18 @@ namespace Final.CPU8086.Execution
             };
         }
 
+        private static byte WidthToLength(DataWidth width)
+        {
+            return width.Type switch
+            {
+                DataWidthType.Byte => 1,
+                DataWidthType.Word => 2,
+                DataWidthType.DoubleWord => 4,
+                DataWidthType.QuadWord => 8,
+                _ => 0,
+            };
+        }
+
         public static bool IsParity(byte value)
         {
             uint count = 0;
@@ -173,27 +185,88 @@ namespace Final.CPU8086.Execution
             if (instruction.Operands.Length != expectedOperandLen)
                 return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
 
-            const OperandType expectedOperandType = OperandType.Register;
-            InstructionOperand op = instruction.Operands[0];
-            if (op.Type != expectedOperandType)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect operand type '{expectedOperandType}', but got '{op.Type}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
-
             switch (instruction.Type)
             {
                 case InstructionType.PUSH:
-                    break;
                 case InstructionType.POP:
-                    break;
+                    {
+                        const OperandType expectedOperandType = OperandType.Register;
+                        InstructionOperand op = instruction.Operands[0];
+                        if (op.Type != expectedOperandType)
+                            return new Error(ErrorCode.MismatchInstructionOperands, $"Expect operand type '{expectedOperandType}', but got '{op.Type}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+                        DataType dataType = WidthToType(instruction.Width);
+                        byte dataLen = WidthToLength(instruction.Width);
+                        if (dataType == DataType.None || dataLen == 0)
+                            return new Error(ErrorCode.UnsupportedDataWidth, $"Unsupported data width '{instruction.Width}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+                        RegisterType register = op.Register;
+
+                        // Load value from register
+                        OneOf<Immediate, Error> regLoad = cpu.LoadRegister(register);
+                        if (regLoad.IsT1)
+                            return regLoad.AsT1;
+                        Immediate regValue = regLoad.AsT0;
+
+                        if (instruction.Type == InstructionType.PUSH)
+                        {
+                            // Decrement SP
+                            Immediate oldSP = new Immediate(cpu.Register.SP);
+                            cpu.Register.SP -= dataLen;
+                            Immediate newSP = new Immediate(cpu.Register.SP);
+                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
+
+                            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, cpu.Register.SP, SegmentType.SS, 0);
+
+                            // Load previous value from SS:SP
+                            OneOf<Immediate, Error> previousLoadRes = cpu.LoadMemory(address, dataType);
+                            if (previousLoadRes.IsT1)
+                                return previousLoadRes.AsT1;
+                            Immediate previousValue = previousLoadRes.AsT0;
+
+                            // Store register in SS:SP
+                            OneOf<byte, Error> storeRes = cpu.StoreMemory(instruction, state, address, dataType, regValue);
+                            if (storeRes.IsT1)
+                                return storeRes.AsT1;
+
+                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, previousValue), new ExecutedValue(address, regValue))));
+                        }
+                        else
+                        {
+                            Contract.Assert(instruction.Type == InstructionType.POP);
+
+                            Immediate oldSP = new Immediate(cpu.Register.SP);
+
+                            // Load register value from SS:SP
+                            OneOf<Immediate, Error> loadRes = cpu.LoadMemory(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, oldSP.S16, SegmentType.SS, 0), dataType);
+                            if (loadRes.IsT1)
+                                return loadRes.AsT1;
+                            Immediate newValue = loadRes.AsT0;
+
+                            // Increment SP
+                            cpu.Register.SP += dataLen;
+                            Immediate newSP = new Immediate(cpu.Register.SP);
+                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
+
+                            // Store value to register
+                            OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, register, newValue);
+                            if (storeRes.IsT1)
+                                return storeRes.AsT1;
+
+                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(register, regValue), new ExecutedValue(register, newValue))));
+                        }
+                    } break;
 
                 case InstructionType.PUSHF:
-                    break;
+                    throw new NotImplementedException();
+
                 case InstructionType.POPF:
-                    break;
+                    throw new NotImplementedException();
             }
 
-            throw new NotImplementedException();
+            return 0;
         }
-        
+
         private static OneOf<int, Error> DirectJump(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);

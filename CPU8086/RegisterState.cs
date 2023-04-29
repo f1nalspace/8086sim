@@ -130,7 +130,7 @@ namespace Final.CPU8086
             CX = 0;
             DX = 0;
 
-            SP = 0;
+            SP = short.MaxValue;
             BP = 0;
             SI = 0;
             DI = 0;

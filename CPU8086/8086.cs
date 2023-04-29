@@ -166,7 +166,7 @@ namespace Final.CPU8086
             };
         }
 
-        public int GetDataTypeSize(DataType type)
+        public static int GetDataTypeSize(DataType type)
         {
             // NOTE(final): We either have a pointer or a type with a pointer, so we strip out the pointer and we are left with the actual type
             if (type == DataType.Pointer)
@@ -345,21 +345,21 @@ namespace Final.CPU8086
             };
         }
 
-        private uint GetAbsoluteMemoryAddress(MemoryAddress address)
+        public uint GetSegmentAddress(SegmentType type, uint segmentAddress, int offset)
         {
             // Get segment base offset
-            ushort segmentBase;
-            switch (address.SegmentType)
+            uint segmentBase;
+            switch (type)
             {
                 case SegmentType.Direct:
-                    segmentBase = (ushort)address.SegmentAddress;
+                    segmentBase = segmentAddress;
                     break;
                 case SegmentType.CS:
                 case SegmentType.DS:
                 case SegmentType.SS:
                 case SegmentType.ES:
                     {
-                        RegisterType segmentRegister = SegmentToRegister(address.SegmentType);
+                        RegisterType segmentRegister = SegmentToRegister(type);
                         OneOf<Immediate, Error> loadedSegment = LoadRegister(segmentRegister);
                         if (loadedSegment.IsT1)
                             return uint.MaxValue;
@@ -370,6 +370,14 @@ namespace Final.CPU8086
                     segmentBase = 0;
                     break;
             }
+
+            uint result = (uint)((segmentBase << 4) + offset);
+            return result;
+        }
+
+        private uint GetAbsoluteMemoryAddress(MemoryAddress address)
+        {
+            
 
             byte u8 = (byte)(address.Displacement & 0xFF);
             ushort u16 = (ushort)(address.Displacement & 0xFFFF);
@@ -409,7 +417,7 @@ namespace Final.CPU8086
             if (offset == int.MinValue)
                 return uint.MaxValue;
 
-            uint result = (uint)((segmentBase << 4) + offset);
+            uint result = GetSegmentAddress(address.SegmentType, address.SegmentAddress, offset);
 
             return result;
         }

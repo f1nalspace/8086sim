@@ -52,6 +52,9 @@ namespace Final.CPU8086.Types
         public override bool Equals([NotNullWhen(true)] object obj) => obj is DataWidth dw && Equals(dw);
         public override int GetHashCode() => Type.GetHashCode();
 
+        public static bool operator ==(DataWidth dw1, DataWidth dw2) => dw1.Equals(dw2);
+        public static bool operator !=(DataWidth dw1, DataWidth dw2) => !dw1.Equals(dw2);
+
         public override string ToString()
         {
             return Type switch
@@ -65,6 +68,9 @@ namespace Final.CPU8086.Types
             };
         }
 
-
+        public static readonly DataWidth Byte = new DataWidth(DataWidthType.Byte);
+        public static readonly DataWidth Word = new DataWidth(DataWidthType.Word);
+        public static readonly DataWidth DoubleWord = new DataWidth(DataWidthType.DoubleWord);
+        public static readonly DataWidth QuadWord = new DataWidth(DataWidthType.QuadWord);
     }
 }

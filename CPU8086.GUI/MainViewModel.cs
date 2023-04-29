@@ -361,7 +361,7 @@ namespace Final.CPU8086
 
         private void RefreshAssemblyLines(IEnumerable<Instruction> instructions, bool asHex)
         {
-            OneOf<AssemblyLine[], Error> res = _cpu.GetAssemblyLines(instructions, asHex ? OutputValueMode.AsHex : OutputValueMode.AsInteger);
+            OneOf<AssemblyLine[], Error> res = CPU.GetAssemblyLines(instructions, asHex ? OutputValueMode.AsHex : OutputValueMode.AsInteger);
             if (res.IsT0)
                 AssemblyLines = res.AsT0.ToImmutableArray();
             else

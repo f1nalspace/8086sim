@@ -48,8 +48,11 @@ namespace Final.CPU8086
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private static readonly DataWidth PointerDataWidth = new DataWidth(DataWidthType.Word);
-        private static readonly DataType PointerDataType = DataType.Word;
+        private static readonly DataWidth FarPointerDataWidth = new DataWidth(DataWidthType.Word);
+        private static readonly DataWidth NearPointerDataWidth = new DataWidth(DataWidthType.Byte);
+
+        private static readonly DataType FarPointerDataType = DataType.Word;
+        private static readonly DataType NearPointerDataType = DataType.Byte;
 
         private void RaisePropertyChanged(string propertyName)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
@@ -134,33 +137,51 @@ namespace Final.CPU8086
         {
             return type switch
             {
-                RegisterType.AX => new Immediate(Register.AX, ImmediateFlag.None),
-                RegisterType.AL => new Immediate(Register.AL, ImmediateFlag.None),
-                RegisterType.AH => new Immediate(Register.AH, ImmediateFlag.None),
+                RegisterType.AX => new Immediate(Register.AX),
+                RegisterType.AL => new Immediate(Register.AL),
+                RegisterType.AH => new Immediate(Register.AH),
 
-                RegisterType.BX => new Immediate(Register.BX, ImmediateFlag.None),
-                RegisterType.BL => new Immediate(Register.BL, ImmediateFlag.None),
-                RegisterType.BH => new Immediate(Register.BH, ImmediateFlag.None),
+                RegisterType.BX => new Immediate(Register.BX),
+                RegisterType.BL => new Immediate(Register.BL),
+                RegisterType.BH => new Immediate(Register.BH),
 
-                RegisterType.CX => new Immediate(Register.CX, ImmediateFlag.None),
-                RegisterType.CL => new Immediate(Register.CL, ImmediateFlag.None),
-                RegisterType.CH => new Immediate(Register.CH, ImmediateFlag.None),
+                RegisterType.CX => new Immediate(Register.CX),
+                RegisterType.CL => new Immediate(Register.CL),
+                RegisterType.CH => new Immediate(Register.CH),
 
-                RegisterType.DX => new Immediate(Register.DX, ImmediateFlag.None),
-                RegisterType.DL => new Immediate(Register.DL, ImmediateFlag.None),
-                RegisterType.DH => new Immediate(Register.DH, ImmediateFlag.None),
+                RegisterType.DX => new Immediate(Register.DX),
+                RegisterType.DL => new Immediate(Register.DL),
+                RegisterType.DH => new Immediate(Register.DH),
 
-                RegisterType.SP => new Immediate(Register.SP, ImmediateFlag.None),
-                RegisterType.BP => new Immediate(Register.BP, ImmediateFlag.None),
-                RegisterType.SI => new Immediate(Register.SI, ImmediateFlag.None),
-                RegisterType.DI => new Immediate(Register.DI, ImmediateFlag.None),
+                RegisterType.SP => new Immediate(Register.SP),
+                RegisterType.BP => new Immediate(Register.BP),
+                RegisterType.SI => new Immediate(Register.SI),
+                RegisterType.DI => new Immediate(Register.DI),
 
-                RegisterType.CS => new Immediate(Register.CS, ImmediateFlag.None),
-                RegisterType.DS => new Immediate(Register.DS, ImmediateFlag.None),
-                RegisterType.SS => new Immediate(Register.SS, ImmediateFlag.None),
-                RegisterType.ES => new Immediate(Register.ES, ImmediateFlag.None),
+                RegisterType.CS => new Immediate(Register.CS),
+                RegisterType.DS => new Immediate(Register.DS),
+                RegisterType.SS => new Immediate(Register.SS),
+                RegisterType.ES => new Immediate(Register.ES),
 
                 _ => new Error(ErrorCode.UnsupportedRegisterType, $"The register type '{type}' is not supported", 0),
+            };
+        }
+
+        public int GetDataTypeSize(DataType type)
+        {
+            // NOTE(final): We either have a pointer or a type with a pointer, so we strip out the pointer and we are left with the actual type
+            if (type == DataType.Pointer)
+                type = FarPointerDataType;
+            else if (type.HasFlag(DataType.Pointer))
+                type ^= ~DataType.Pointer;
+            return type switch
+            {
+                DataType.Byte => 1,
+                DataType.Word => 2,
+                DataType.DoubleWord or
+                DataType.Int => 4,
+                DataType.QuadWord => 8,
+                _ => 0,
             };
         }
 
@@ -197,107 +218,107 @@ namespace Final.CPU8086
             switch (type)
             {
                 case RegisterType.AX:
-                    oldValue = new Immediate(Register.AX, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.AX);
                     Register.AX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.AL:
-                    oldValue = new Immediate(Register.AL, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.AL);
                     Register.AL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.AH:
-                    oldValue = new Immediate(Register.AH, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.AH);
                     Register.AH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.BX:
-                    oldValue = new Immediate(Register.BX, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.BX);
                     Register.BX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BL:
-                    oldValue = new Immediate(Register.BL, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.BL);
                     Register.BL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.BH:
-                    oldValue = new Immediate(Register.BH, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.BH);
                     Register.BH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.CX:
-                    oldValue = new Immediate(Register.CX, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.CX);
                     Register.CX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.CL:
-                    oldValue = new Immediate(Register.CL, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.CL);
                     Register.CL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.CH:
-                    oldValue = new Immediate(Register.CH, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.CH);
                     Register.CH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.DX:
-                    oldValue = new Immediate(Register.DX, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.DX);
                     Register.DX = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DL:
-                    oldValue = new Immediate(Register.DL, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.DL);
                     Register.DL = ImmediateToS8(value);
                     result = 1;
                     break;
                 case RegisterType.DH:
-                    oldValue = new Immediate(Register.DH, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.DH);
                     Register.DH = ImmediateToS8(value);
                     result = 1;
                     break;
 
                 case RegisterType.SP:
-                    oldValue = new Immediate(Register.SP, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.SP);
                     Register.SP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.BP:
-                    oldValue = new Immediate(Register.BP, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.BP);
                     Register.BP = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SI:
-                    oldValue = new Immediate(Register.SI, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.SI);
                     Register.SI = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DI:
-                    oldValue = new Immediate(Register.DI, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.DI);
                     Register.DI = ImmediateToS16(value);
                     result = 2;
                     break;
 
                 case RegisterType.CS:
-                    oldValue = new Immediate(Register.CS, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.CS);
                     Register.CS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.DS:
-                    oldValue = new Immediate(Register.DS, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.DS);
                     Register.DS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.SS:
-                    oldValue = new Immediate(Register.SS, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.SS);
                     Register.SS = ImmediateToS16(value);
                     result = 2;
                     break;
                 case RegisterType.ES:
-                    oldValue = new Immediate(Register.ES, ImmediateFlag.None);
+                    oldValue = new Immediate(Register.ES);
                     Register.ES = ImmediateToS16(value);
                     result = 2;
                     break;
@@ -313,37 +334,21 @@ namespace Final.CPU8086
 
         
 
-        private int GetDataTypeSize(DataType type)
+        static RegisterType SegmentToRegister(SegmentType type)
         {
-            if (type == DataType.Pointer)
-                type = PointerDataType;
             return type switch
             {
-                DataType.Byte => 1,
-                DataType.Word => 2,
-                DataType.Int => 4,
-                DataType.DoubleWord => 4,
-                DataType.QuadWord => 8,
-                DataType.Pointer => 8,
-                _ => 0,
+                SegmentType.CS => RegisterType.CS,
+                SegmentType.DS => RegisterType.DS,
+                SegmentType.SS => RegisterType.SS,
+                SegmentType.ES => RegisterType.ES,
+                _ => RegisterType.Unknown,
             };
         }
 
         private uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
-            static RegisterType SegmentToRegister(SegmentType type)
-            {
-                return type switch
-                {
-                    SegmentType.CS => RegisterType.CS,
-                    SegmentType.DS => RegisterType.DS,
-                    SegmentType.SS => RegisterType.SS,
-                    SegmentType.ES => RegisterType.ES,
-                    _ => RegisterType.Unknown,
-                };
-            }
-
-            // TODO(final): Segmented access
+            // Get segment base offset
             ushort segmentBase;
             switch (address.SegmentType)
             {
@@ -401,6 +406,7 @@ namespace Final.CPU8086
                 _ => int.MinValue,
             };
 
+            // Exit out with an large address when we got an unsupported EAC
             if (offset == int.MinValue)
                 return uint.MaxValue;
 
@@ -409,8 +415,25 @@ namespace Final.CPU8086
             return result;
         }
 
+        private static DataType ResolvePointerDataType(DataType type)
+        {
+            if (!type.HasFlag(DataType.Pointer))
+                return DataType.None;
+            if (type == DataType.Pointer)
+                return FarPointerDataType;
+            return type ^ ~DataType.Pointer;
+        }
+
         private OneOf<Immediate, Error> LoadMemory(uint absoluteAddress, DataType type)
         {
+            if (type.HasFlag(DataType.Pointer))
+            {
+                DataType pointerType = ResolvePointerDataType(type);
+                if (pointerType == DataType.None)
+                    return new Error(ErrorCode.UnsupportedDataType, $"The pointer type '{type}' is not supported", 0);
+                type = pointerType;
+            }
+
             int typeSize = GetDataTypeSize(type);
             if (absoluteAddress < 0 || (absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute source memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
@@ -418,47 +441,32 @@ namespace Final.CPU8086
             switch (type)
             {
                 case DataType.Byte:
-                    return new Immediate(Memory[absoluteAddress], ImmediateFlag.None);
+                    return new Immediate(Memory[absoluteAddress]);
 
                 case DataType.Word:
                     {
-                        byte low = Memory[absoluteAddress + 0];
-                        byte high = Memory[absoluteAddress + 1];
-                        ushort u16 = (ushort)(low | (high << 8));
-                        return new Immediate(u16, ImmediateFlag.None);
+                        ushort u16 = (ushort)(
+                            (Memory[absoluteAddress + 0] << 0) | 
+                            (Memory[absoluteAddress + 1] << 8));
+                        return new Immediate(u16);
                     }
 
-                case DataType.Pointer:
+                case DataType.Int:
+                case DataType.DoubleWord:
                     {
-                        if (PointerDataType == DataType.Word)
-                        {
-                            byte low = Memory[absoluteAddress + 0];
-                            byte high = Memory[absoluteAddress + 1];
-                            ushort u16 = (ushort)(low | (high << 8));
-                            return new Immediate(u16, ImmediateFlag.None);
-                        }
+                        uint u32 = (uint)(
+                            (Memory[absoluteAddress + 0] << 0) |
+                            (Memory[absoluteAddress + 1] << 8) |
+                            (Memory[absoluteAddress + 2] << 16) |
+                            (Memory[absoluteAddress + 3] << 24));
+                        if (type == DataType.Int)
+                            return new Immediate((int)u32);
                         else
-                            return new Error(ErrorCode.UnsupportedDataType, $"The pointer data type '{PointerDataType}' is not supported", 0);
+                            return new Immediate(u32);
                     }
 
                 default:
-                    {
-                        if (type.HasFlag(DataType.Pointer))
-                        {
-                            DataType pointerDataType;
-                            if (type.HasFlag(DataType.Byte))
-                                pointerDataType = DataType.Byte;
-                            else if (type.HasFlag(DataType.Word))
-                                pointerDataType = DataType.Word;
-                            else if (type == DataType.Pointer)
-                                pointerDataType = PointerDataType;
-                            else
-                                return new Error(ErrorCode.UnsupportedDataType, $"The source pointer memory type '{type}' is not supported!", 0);
-                            return LoadMemory(absoluteAddress, pointerDataType);
-                        }
-                        else
-                            return new Error(ErrorCode.UnsupportedDataType, $"The source memory type '{type}' is not supported!", 0);
-                    }
+                    return new Error(ErrorCode.UnsupportedDataType, $"The source memory type '{type}' is not supported!", 0);
             }
         }
 
@@ -476,6 +484,14 @@ namespace Final.CPU8086
             if (absoluteAddress == uint.MaxValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
 
+            if (type.HasFlag(DataType.Pointer))
+            {
+                DataType pointerType = ResolvePointerDataType(type);
+                if (pointerType == DataType.None)
+                    return new Error(ErrorCode.UnsupportedDataType, $"The type '{type}' is not supported by a pointer", 0);
+                type = pointerType;
+            }
+
             int typeSize = GetDataTypeSize(type);
             if ((absoluteAddress + typeSize) >= Memory.Length)
                 return new Error(ErrorCode.InvalidMemoryAddress, $"The absolute destination memory address '{absoluteAddress}' is not valid for type '{type}'!", 0);
@@ -484,28 +500,49 @@ namespace Final.CPU8086
             {
                 case DataType.Byte:
                     {
-                        Immediate oldValue = new Immediate(Memory[absoluteAddress], ImmediateFlag.None);
-
+                        Immediate oldValue = new Immediate(Memory[absoluteAddress]);
                         Memory[absoluteAddress] = value.U8;
-
                         state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldValue), new ExecutedValue(address, value))));
                     }
                     return 1;
 
                 case DataType.Word:
                     {
-                        ushort u16 = value.U16;
-
                         ushort oldValue = (ushort)((Memory[absoluteAddress + 0] << 0) | (Memory[absoluteAddress + 1] << 8));
+                        Immediate oldMemory = new Immediate(oldValue);
 
-                        Immediate oldMemory = new Immediate(oldValue, ImmediateFlag.None);
-
-                        Memory[absoluteAddress + 0] = (byte)((u16 >> 0) & 0xFF);
-                        Memory[absoluteAddress + 1] = (byte)((u16 >> 8) & 0xFF);
+                        ushort newValue = value.U16;
+                        Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
+                        Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
 
                         state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
 
                         return 2;
+                    }
+
+                case DataType.Int:
+                case DataType.DoubleWord:
+                    {
+                        uint oldValue = (uint)(
+                            (Memory[absoluteAddress + 0] << 0) | 
+                            (Memory[absoluteAddress + 1] << 8) | 
+                            (Memory[absoluteAddress + 2] << 16) | 
+                            (Memory[absoluteAddress + 3] << 24));
+                        Immediate oldMemory;
+                        if (type == DataType.Int)
+                            oldMemory = new Immediate((int)oldValue);
+                        else
+                            oldMemory = new Immediate(oldValue);
+
+                        uint newValue = value.U32;
+                        Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
+                        Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
+                        Memory[absoluteAddress + 2] = (byte)((newValue >> 16) & 0xFF);
+                        Memory[absoluteAddress + 3] = (byte)((newValue >> 24) & 0xFF);
+
+                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+
+                        return 4;
                     }
 
                 default:
@@ -753,7 +790,7 @@ namespace Final.CPU8086
                 DataType.DoubleWord => new DataWidth(DataWidthType.DoubleWord),
                 DataType.Int => new DataWidth(DataWidthType.DoubleWord),
                 DataType.QuadWord => new DataWidth(DataWidthType.QuadWord),
-                DataType.Pointer => PointerDataWidth,
+                DataType.Pointer => FarPointerDataWidth,
                 _ => new DataWidth()
             };
         }
@@ -1019,14 +1056,14 @@ namespace Final.CPU8086
                         OperandKind.ImmediateWord => DataType.Word,
                         OperandKind.ImmediateDoubleWord => DataType.DoubleWord,
 
-                        OperandKind.TypePointer => DataType.Pointer,
+                        OperandKind.TypePointer => FarPointerDataType | DataType.Pointer,
 
                         OperandKind.TypeShort => DataType.Word,
                         OperandKind.TypeDoubleWord => DataType.DoubleWord,
                         OperandKind.TypeInt => DataType.DoubleWord,
 
-                        OperandKind.NearPointer => DataType.Pointer,
-                        OperandKind.FarPointer => DataType.Pointer,
+                        OperandKind.NearPointer => NearPointerDataType | DataType.Pointer,
+                        OperandKind.FarPointer => FarPointerDataType | DataType.Pointer,
 
                         OperandKind.ShortLabel => DataType.Byte,
                         OperandKind.LongLabel => DataType.Word,
@@ -1236,7 +1273,7 @@ namespace Final.CPU8086
             }
         }
 
-        public OneOf<AssemblyLine[], Error> GetAssemblyLines(IEnumerable<Instruction> instructions, OutputValueMode outputMode, string hexPrefix = "0x")
+        public static OneOf<AssemblyLine[], Error> GetAssemblyLines(IEnumerable<Instruction> instructions, OutputValueMode outputMode, string hexPrefix = "0x")
         {
             //
             // Second we convert the instructions into a hashtable, mapped by its position
@@ -1256,7 +1293,7 @@ namespace Final.CPU8086
 
             foreach (Instruction instruction in instructions)
             {
-                switch (instruction.Mnemonic.Type)
+                switch (instruction.Type)
                 {
                     case InstructionType.CALL:
                     case InstructionType.JMP:
@@ -1351,7 +1388,7 @@ namespace Final.CPU8086
                             hasLock |= true;
                     }
 
-                    if (hasLock && instruction.Mnemonic.Type == InstructionType.XCHG)
+                    if (hasLock && instruction.Type == InstructionType.XCHG)
                     {
                         // NOTE(@final): LOCK XCHG requires the operands to be reversed in the assembly output
                         InstructionOperand tmp = instruction.Operands[0];
@@ -1438,7 +1475,7 @@ namespace Final.CPU8086
         {
             if (ActiveProgram == null)
                 return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
-            
+
             if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed))
                 return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(BeginStep)}", 0);
 
@@ -1460,7 +1497,7 @@ namespace Final.CPU8086
         {
             if (instruction == null)
                 return false;
-            InstructionType type = instruction.Mnemonic.Type;
+            InstructionType type = instruction.Type;
             return type switch
             {
                 InstructionType.HLT => true,

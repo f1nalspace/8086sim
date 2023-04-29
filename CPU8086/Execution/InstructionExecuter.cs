@@ -28,36 +28,46 @@ namespace Final.CPU8086.Execution
             _typeFunctionTable[(int)InstructionType.SUB] = Sub;
             _typeFunctionTable[(int)InstructionType.CMP] = Cmp;
 
-            _typeFunctionTable[(int)InstructionType.JE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JNE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JC] = Jump;
-            _typeFunctionTable[(int)InstructionType.JNC] = Jump;
-            _typeFunctionTable[(int)InstructionType.JO] = Jump;
-            _typeFunctionTable[(int)InstructionType.JNO] = Jump;
-            _typeFunctionTable[(int)InstructionType.JS] = Jump;
-            _typeFunctionTable[(int)InstructionType.JNS] = Jump;
-            _typeFunctionTable[(int)InstructionType.JP] = Jump;
-            _typeFunctionTable[(int)InstructionType.JNP] = Jump;
-            _typeFunctionTable[(int)InstructionType.JCXZ] = Jump;
-            _typeFunctionTable[(int)InstructionType.JG] = Jump;
-            _typeFunctionTable[(int)InstructionType.JGE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JL] = Jump;
-            _typeFunctionTable[(int)InstructionType.JLE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JA] = Jump;
-            _typeFunctionTable[(int)InstructionType.JAE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JB] = Jump;
-            _typeFunctionTable[(int)InstructionType.JBE] = Jump;
-            _typeFunctionTable[(int)InstructionType.JMP] = Jump;
-            _typeFunctionTable[(int)InstructionType.LOOP] = Jump;
-            _typeFunctionTable[(int)InstructionType.LOOPE] = Jump;
-            _typeFunctionTable[(int)InstructionType.LOOPNZ] = Jump;
+            _typeFunctionTable[(int)InstructionType.JE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JNE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JC] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JNC] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JO] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JNO] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JS] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JNS] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JP] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JNP] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JCXZ] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JG] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JGE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JL] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JLE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JA] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JAE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JB] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.JBE] = ConditionalJump;
+
+            _typeFunctionTable[(int)InstructionType.JMP] = DirectJump;
+            _typeFunctionTable[(int)InstructionType.CALL] = DirectJump;
+            _typeFunctionTable[(int)InstructionType.RET] = DirectJump;
+            _typeFunctionTable[(int)InstructionType.RETF] = DirectJump;
+
+            _typeFunctionTable[(int)InstructionType.LOOP] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.LOOPE] = ConditionalJump;
+            _typeFunctionTable[(int)InstructionType.LOOPNZ] = ConditionalJump;
+
+            _typeFunctionTable[(int)InstructionType.PUSH] = PushOrPop;
+            _typeFunctionTable[(int)InstructionType.POP] = PushOrPop;
+            _typeFunctionTable[(int)InstructionType.PUSHF] = PushOrPop;
+            _typeFunctionTable[(int)InstructionType.POPF] = PushOrPop;
         }
 
         public OneOf<int, Error> Execute(Instruction instruction, IRunState state)
         {
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
-            InstructionType type = instruction.Mnemonic.Type;
+            InstructionType type = instruction.Type;
             Contract.Assert((int)type < _typeFunctionTable.Length);
             ExecuteInstructionFunction func = _typeFunctionTable[(int)type];
             if (func == null)
@@ -72,6 +82,7 @@ namespace Final.CPU8086.Execution
                 DataWidthType.Byte => DataType.Byte,
                 DataWidthType.Word => DataType.Word,
                 DataWidthType.DoubleWord => DataType.DoubleWord,
+                DataWidthType.QuadWord => DataType.QuadWord,
                 _ => DataType.None,
             };
         }
@@ -95,7 +106,7 @@ namespace Final.CPU8086.Execution
         public static bool IsOverflow16(int value)
             => value > short.MaxValue || value < short.MinValue;
 
-        private static OneOf<Immediate, Error> LoadValue(CPU cpu, Instruction instruction, InstructionOperand operand)
+        private static OneOf<Immediate, Error> LoadOperand(CPU cpu, Instruction instruction, InstructionOperand operand)
         {
             Immediate result;
             switch (operand.Type)
@@ -118,16 +129,20 @@ namespace Final.CPU8086.Execution
                     }
                     break;
                 case OperandType.Immediate:
-                case OperandType.Value:
                     result = operand.Immediate;
                     break;
+
+                case OperandType.Value:
+                    result = new Immediate(operand.Value);
+                    break;
+
                 default:
                     return new Error(ErrorCode.UnsupportedOperandType, $"The source operand type '{operand.Type}' is not supported by instruction '{instruction}'", instruction.Position);
             }
             return result;
         }
 
-        private static OneOf<byte, Error> StoreValue(CPU cpu, Instruction instruction, IRunState state, InstructionOperand operand, Immediate source)
+        private static OneOf<byte, Error> StoreOperand(CPU cpu, Instruction instruction, IRunState state, InstructionOperand operand, Immediate source)
         {
             switch (operand.Type)
             {
@@ -152,35 +167,113 @@ namespace Final.CPU8086.Execution
             }
         }
 
-        private static OneOf<int, Error> Jump(CPU cpu, Instruction instruction, IRunState state)
+        private static OneOf<int, Error> PushOrPop(CPU cpu, Instruction instruction, IRunState state)
+        {
+            const int expectedOperandLen = 1;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            const OperandType expectedOperandType = OperandType.Register;
+            InstructionOperand op = instruction.Operands[0];
+            if (op.Type != expectedOperandType)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect operand type '{expectedOperandType}', but got '{op.Type}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            switch (instruction.Type)
+            {
+                case InstructionType.PUSH:
+                    break;
+                case InstructionType.POP:
+                    break;
+
+                case InstructionType.PUSHF:
+                    break;
+                case InstructionType.POPF:
+                    break;
+            }
+
+            throw new NotImplementedException();
+        }
+        
+        private static OneOf<int, Error> DirectJump(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
 
-            if (instruction.Operands.Length != 1)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+            InstructionType type = instruction.Type;
 
-            InstructionType type = instruction.Mnemonic.Type;
-
-            InstructionOperand labelOperand = instruction.Operands[0];
-
-            var isZero = cpu.Register.ZeroFlag;
-            var isCarry = cpu.Register.CarryFlag;
-            var isOverflow = cpu.Register.OverflowFlag;
-            var isSign = cpu.Register.SignFlag;
-            var isParity = cpu.Register.ParityFlag;
-
-            OneOf<Immediate, Error> cxLoad = cpu.LoadRegister(RegisterType.CX);
-            if (cxLoad.IsT1)
-                return cxLoad.AsT1;
-            short cx = cxLoad.AsT0.S16;
-
-            bool updatedCX = false;
-            bool canJump = false;
             switch (type)
             {
                 case InstructionType.JMP:
-                    canJump = true; break;
+                    break; // Nothing special todo, return operand address
 
+                case InstructionType.CALL:
+                    // TODO(final): PUSH IP to the stack and return operand address
+                    throw new NotImplementedException();
+
+                case InstructionType.RET:
+                case InstructionType.RETF:
+                    // TODO(final): POP IP from the stack and return that address
+                    throw new NotImplementedException();
+
+                default:
+                    return new Error(ErrorCode.UnsupportedInstruction, $"Unsupported type '{type}' for direct jump instruction '{instruction.Mnemonic}'", instruction.Position);
+            }
+
+            const int expectedOperandLen = 1;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for direct jump instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            InstructionOperand labelOperand = instruction.Operands[0];
+
+            OneOf<Immediate, Error> loadRes = LoadOperand(cpu, instruction, labelOperand);
+            if (loadRes.IsT1)
+                return loadRes.AsT1;
+            int relativeAddress = loadRes.AsT0.Value;
+            return relativeAddress;
+        }
+
+        private static OneOf<int, Error> ConditionalJump(CPU cpu, Instruction instruction, IRunState state)
+        {
+            Contract.Assert(instruction != null);
+
+            const int expectedOperandLen = 1;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for conditional jump instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            InstructionType type = instruction.Type;
+
+            InstructionOperand labelOperand = instruction.Operands[0];
+
+            bool isZero = cpu.Register.ZeroFlag;
+            bool isCarry = cpu.Register.CarryFlag;
+            bool isOverflow = cpu.Register.OverflowFlag;
+            bool isSign = cpu.Register.SignFlag;
+            bool isParity = cpu.Register.ParityFlag;
+
+            // Load CX if needed
+            short cx;
+            switch (type)
+            {
+                case InstructionType.JCXZ:
+                case InstructionType.LOOP:
+                case InstructionType.LOOPE:
+                case InstructionType.LOOPNZ:
+                    {
+                        OneOf<Immediate, Error> cxLoad = cpu.LoadRegister(RegisterType.CX);
+                        if (cxLoad.IsT1)
+                            return cxLoad.AsT1;
+                        cx = cxLoad.AsT0.S16;
+                    }
+                    break;
+
+                default:
+                    cx = 0;
+                    break;
+            }
+            short initialCX = cx;
+
+            bool canJump;
+            switch (type)
+            {
                 // Jump if Zero, Jump if Equal (ZF == 1)
                 case InstructionType.JE:
                     canJump = isZero; break;
@@ -246,7 +339,6 @@ namespace Final.CPU8086.Execution
                 case InstructionType.LOOP:
                     {
                         --cx;
-                        updatedCX = true;
                         canJump = cx == 0;
                     }
                     break;
@@ -255,7 +347,6 @@ namespace Final.CPU8086.Execution
                 case InstructionType.LOOPE:
                     {
                         --cx;
-                        updatedCX = true;
                         canJump = cx == 0 && isZero;
                     }
                     break;
@@ -264,55 +355,28 @@ namespace Final.CPU8086.Execution
                 case InstructionType.LOOPNZ:
                     {
                         --cx;
-                        updatedCX = true;
                         canJump = cx == 0 && !isZero;
                     }
                     break;
 
                 default:
-                    return new Error(ErrorCode.UnsupportedInstruction, $"The jump instruction '{type}' is not supported!", instruction.Position);
+                    return new Error(ErrorCode.UnsupportedInstruction, $"Unsupported type '{type}' for conditional jump instruction '{instruction.Mnemonic}'", instruction.Position);
             }
 
-            if (updatedCX)
+            // Update CX if needed
+            if (initialCX != cx)
             {
-                OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, RegisterType.CX, new Immediate(cx, ImmediateFlag.None));
+                OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, RegisterType.CX, new Immediate(cx));
                 if (storeRes.IsT1)
                     return storeRes.AsT1;
             }
 
             if (canJump)
             {
-                // Resolve operand
-                int relativeAddress;
-                switch (labelOperand.Type)
-                {
-                    case OperandType.Register:
-                        {
-                            OneOf<Immediate, Error> regLoad = cpu.LoadRegister(labelOperand.Register);
-                            if (regLoad.IsT1)
-                                return regLoad.AsT1;
-                            relativeAddress = regLoad.AsT0.Value;
-                        }
-                        break;
-                    case OperandType.Address:
-                        {
-                            DataType dataType = WidthToType(instruction.Width);
-                            OneOf<Immediate, Error> memLoad = cpu.LoadMemory(labelOperand.Memory, dataType);
-                            if (memLoad.IsT1)
-                                return memLoad.AsT1;
-                            relativeAddress = memLoad.AsT0.Value;
-                        }
-                        break;
-                    case OperandType.Immediate:
-                        relativeAddress = labelOperand.Immediate.Value;
-                        break;
-                    case OperandType.Value:
-                        relativeAddress = labelOperand.Value;
-                        break;
-                    default:
-                        return new Error(ErrorCode.UnsupportedOperandType, $"The label operand type '{labelOperand.Type}' is not supported!", instruction.Position);
-                }
-
+                OneOf<Immediate, Error> loadRes = LoadOperand(cpu, instruction, labelOperand);
+                if (loadRes.IsT1)
+                    return loadRes.AsT1;
+                int relativeAddress = loadRes.AsT0.Value;
                 return relativeAddress;
             }
 
@@ -323,19 +387,20 @@ namespace Final.CPU8086.Execution
         {
             Contract.Assert(instruction != null);
 
-            if (instruction.Operands.Length != 2)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for add instruction '{instruction.Mnemonic}'", instruction.Position);
 
             InstructionOperand destOperand = instruction.Operands[0];
 
             InstructionOperand sourceOperand = instruction.Operands[1];
 
-            OneOf<Immediate, Error> sourceRes = LoadValue(cpu, instruction, sourceOperand);
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
             if (sourceRes.IsT1)
                 return sourceRes.AsT1;
             Immediate source = sourceRes.AsT0;
 
-            OneOf<Immediate, Error> previosDestRes = LoadValue(cpu, instruction, destOperand);
+            OneOf<Immediate, Error> previosDestRes = LoadOperand(cpu, instruction, destOperand);
             if (previosDestRes.IsT1)
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
@@ -353,7 +418,7 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    finalDest = new Immediate((byte)sum, ImmediateFlag.None);
+                    finalDest = new Immediate((byte)sum);
                     isZero = (byte)sum == 0;
                     isSign = (sbyte)sum < 0;
                     isParity = IsParity((byte)sum);
@@ -361,7 +426,7 @@ namespace Final.CPU8086.Execution
                     break;
 
                 case DataWidthType.Word:
-                    finalDest = new Immediate((ushort)sum, ImmediateFlag.None);
+                    finalDest = new Immediate((ushort)sum);
                     isZero = (ushort)sum == 0;
                     isSign = (short)sum < 0;
                     isParity = IsParity((ushort)sum);
@@ -373,7 +438,7 @@ namespace Final.CPU8086.Execution
 
             }
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, finalDest);
+            OneOf<byte, Error> storeRes = StoreOperand(cpu, instruction, state, destOperand, finalDest);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
@@ -413,19 +478,20 @@ namespace Final.CPU8086.Execution
         {
             Contract.Assert(instruction != null);
 
-            if (instruction.Operands.Length != 2)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for sub instruction '{instruction.Mnemonic}'", instruction.Position);
 
             InstructionOperand destOperand = instruction.Operands[0];
 
             InstructionOperand sourceOperand = instruction.Operands[1];
 
-            OneOf<Immediate, Error> sourceRes = LoadValue(cpu, instruction, sourceOperand);
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
             if (sourceRes.IsT1)
                 return sourceRes.AsT1;
             Immediate source = sourceRes.AsT0;
 
-            OneOf<Immediate, Error> previosDestRes = LoadValue(cpu, instruction, destOperand);
+            OneOf<Immediate, Error> previosDestRes = LoadOperand(cpu, instruction, destOperand);
             if (previosDestRes.IsT1)
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
@@ -443,7 +509,7 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    finalDest = new Immediate((byte)sub, ImmediateFlag.None);
+                    finalDest = new Immediate((byte)sub);
                     isZero = (byte)sub == 0;
                     isSign = (sbyte)sub < 0;
                     isParity = IsParity((byte)sub);
@@ -451,7 +517,7 @@ namespace Final.CPU8086.Execution
                     break;
 
                 case DataWidthType.Word:
-                    finalDest = new Immediate((ushort)sub, ImmediateFlag.None);
+                    finalDest = new Immediate((ushort)sub);
                     isZero = (ushort)sub == 0;
                     isSign = (short)sub < 0;
                     isParity = IsParity((ushort)sub);
@@ -462,7 +528,7 @@ namespace Final.CPU8086.Execution
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
             }
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, finalDest);
+            OneOf<byte, Error> storeRes = StoreOperand(cpu, instruction, state, destOperand, finalDest);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
@@ -501,19 +567,20 @@ namespace Final.CPU8086.Execution
         {
             Contract.Assert(instruction != null);
 
-            if (instruction.Operands.Length != 2)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for cmp instruction '{instruction.Mnemonic}'", instruction.Position);
 
             InstructionOperand destOperand = instruction.Operands[0];
 
             InstructionOperand sourceOperand = instruction.Operands[1];
 
-            OneOf<Immediate, Error> sourceRes = LoadValue(cpu, instruction, sourceOperand);
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
             if (sourceRes.IsT1)
                 return sourceRes.AsT1;
             Immediate source = sourceRes.AsT0;
 
-            OneOf<Immediate, Error> destRes = LoadValue(cpu, instruction, destOperand);
+            OneOf<Immediate, Error> destRes = LoadOperand(cpu, instruction, destOperand);
             if (destRes.IsT1)
                 return destRes.AsT1;
             Immediate previosDest = destRes.AsT0;
@@ -583,20 +650,21 @@ namespace Final.CPU8086.Execution
         {
             Contract.Assert(instruction != null);
 
-            if (instruction.Operands.Length != 2)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Invalid number of operands for {instruction.Mnemonic} instruction", instruction.Position);
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for move instruction '{instruction.Mnemonic}'", instruction.Position);
 
             InstructionOperand destOperand = instruction.Operands[0];
 
             InstructionOperand sourceOperand = instruction.Operands[1];
 
-            OneOf<Immediate, Error> sourceRes = LoadValue(cpu, instruction, sourceOperand);
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
             if (sourceRes.IsT1)
                 return sourceRes.AsT1;
 
             Immediate source = sourceRes.AsT0;
 
-            OneOf<byte, Error> storeRes = StoreValue(cpu, instruction, state, destOperand, source);
+            OneOf<byte, Error> storeRes = StoreOperand(cpu, instruction, state, destOperand, source);
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 

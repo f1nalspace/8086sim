@@ -65,42 +65,42 @@ namespace Final.CPU8086.Instructions
             }
         }
 
-        public Immediate(byte u8, ImmediateFlag flags) : this()
+        public Immediate(byte u8, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.Byte;
             Flags = flags;
             U8 = u8;
         }
 
-        public Immediate(sbyte s8, ImmediateFlag flags) : this()
+        public Immediate(sbyte s8, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.SignedByte;
             Flags = flags;
             S8 = s8;
         }
 
-        public Immediate(ushort u16, ImmediateFlag flags) : this()
+        public Immediate(ushort u16, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.Word;
             Flags = flags;
             U16 = u16;
         }
 
-        public Immediate(short s16, ImmediateFlag flags) : this()
+        public Immediate(short s16, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.SignedWord;
             Flags = flags;
             S16 = s16;
         }
 
-        public Immediate(uint u32, ImmediateFlag flags) : this()
+        public Immediate(uint u32, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.DoubleWord;
             Flags = flags;
             U32 = u32;
         }
 
-        public Immediate(int s32, ImmediateFlag flags) : this()
+        public Immediate(int s32, ImmediateFlag flags = ImmediateFlag.None) : this()
         {
             Type = ImmediateType.Int;
             Flags = flags;

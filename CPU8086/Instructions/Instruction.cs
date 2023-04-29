@@ -14,6 +14,7 @@ namespace Final.CPU8086.Instructions
         public InstructionFlags Flags { get; }
         public InstructionOperand[] Operands { get; }
 
+        public InstructionType Type => Mnemonic.Type;
         public InstructionOperand FirstOperand => Operands.Length > 0 ? Operands[0] : new InstructionOperand();
         public InstructionOperand SecondOperand => Operands.Length > 1 ? Operands[1] : new InstructionOperand();
 

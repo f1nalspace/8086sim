@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using Final.CPU8086.Types;
 
-namespace Final.CPU8086.Instructions
+namespace Final.CPU8086.Types
 {
     public enum ImmediateType : byte
     {

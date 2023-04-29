@@ -1,5 +1,4 @@
-﻿using Final.CPU8086.Instructions;
-using Final.CPU8086.Types;
+﻿using Final.CPU8086.Types;
 using System.Runtime.InteropServices;
 
 namespace Final.CPU8086.Execution

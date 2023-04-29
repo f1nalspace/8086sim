@@ -8,7 +8,7 @@
         xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
         xmlns:s="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="Finals 8086 Simulator" 
+        Title="8086 CPU Simulator by Torsten Spaete" 
         Height="960" 
         Width="1280" 
         FontSize="16"

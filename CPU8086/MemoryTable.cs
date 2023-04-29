@@ -37,6 +37,8 @@ namespace Final.CPU8086
                 _raw[offset + i] = data[i];
         }
 
+        public ReadOnlySpan<byte> Get(int offset, int length) => _raw.AsSpan(offset, length);
+
         public ImmutableArray<byte> ReadPage(int pageIndex)
         {
             int index = pageIndex * PageSize;

@@ -135,10 +135,10 @@ namespace Final.CPU8086
             SI = 0;
             DI = 0;
 
-            CS = 0x3000;
-            DS = 0x2000;
-            SS = 0x5000;
-            ES = 0x7000;
+            CS = CPU.CodeSegmentStart >> 4;
+            DS = CPU.DataSegmentStart >> 4;
+            SS = CPU.StackSegmentStart >> 4;
+            ES = CPU.ExtraSegmentStart >> 4;
 
             IP = 0;
 

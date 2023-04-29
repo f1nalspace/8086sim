@@ -19,23 +19,23 @@ namespace Final.CPU8086
 {
     public class CPU : INotifyPropertyChanged
     {
-        private const int HighestMemoryAddress = 0xFFFFF;
+        public const int HighestMemoryAddress = 0xFFFFF;
 
-        private const int ExtraSegmentEnd = 0x7FFFF;
-        private const int ExtraSegmentStart = 0x70000;
-        private const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
+        public const int ExtraSegmentEnd = 0x7FFFF;
+        public const int ExtraSegmentStart = 0x70000;
+        public const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
 
-        private const int StackSegmentEnd = 0x5FFFF;
-        private const int StackSegmentStart = 0x50000;
-        private const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
+        public const int StackSegmentEnd = 0x5FFFF;
+        public const int StackSegmentStart = 0x50000;
+        public const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
 
-        private const int CodeSegmentEnd = 0x3FFFF;
-        private const int CodeSegmentStart = 0x30000;
-        private const int CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
+        public const int CodeSegmentEnd = 0x3FFFF;
+        public const int CodeSegmentStart = 0x30000;
+        public const int CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
 
-        private const int DataSegmentEnd = 0x2FFFF;
-        private const int DataSegmentStart = 0x20000;
-        private const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
+        public const int DataSegmentEnd = 0x2FFFF;
+        public const int DataSegmentStart = 0x20000;
+        public const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
 
         private const int MaxInstructionLength = 6;
 
@@ -404,7 +404,7 @@ namespace Final.CPU8086
             if (offset == int.MinValue)
                 return uint.MaxValue;
 
-            uint result = (uint)((segmentBase * 10) + offset);
+            uint result = (uint)((segmentBase << 4) + offset);
 
             return result;
         }
@@ -1456,6 +1456,18 @@ namespace Final.CPU8086
             return CurrentIP;
         }
 
+        private static bool IsFinishedInstruction(Instruction instruction)
+        {
+            if (instruction == null)
+                return false;
+            InstructionType type = instruction.Mnemonic.Type;
+            return type switch
+            {
+                InstructionType.HLT => true,
+                _ => false
+            };
+        }
+
         public OneOf<Instruction, Error> Step(RunState state)
         {
             if (state == null)
@@ -1470,7 +1482,13 @@ namespace Final.CPU8086
             PreviousIP = CurrentIP;
 
             Contract.Assert(CurrentIP < ActiveProgram.Length);
-            ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)CurrentIP);
+
+            int codeStart = CodeSegmentStart;
+            int codeEnd = codeStart + ActiveProgram.Length;
+            uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, 0, SegmentType.CS, CurrentIP));
+            int codeLen = codeEnd - (int)codeOffset;
+
+            ReadOnlySpan<byte> stream = Memory.Get((int)codeStart, (int)codeLen);
 
             ExecutionState = ExecutionState.Running;
 
@@ -1503,7 +1521,7 @@ namespace Final.CPU8086
             Contract.Assert(CurrentIP < ushort.MaxValue);
             Register.IP = (ushort)CurrentIP;
 
-            if (CurrentIP == (uint)ActiveProgram.Length)
+            if ((CurrentIP == (uint)ActiveProgram.Length) || IsFinishedInstruction(instruction))
             {
                 ExecutionState = ExecutionState.Finished;
                 CurrentIP = uint.MaxValue;
@@ -1542,11 +1560,21 @@ namespace Final.CPU8086
             CurrentInstruction = null;
             PreviousIP = CurrentIP;
 
-            while ((CurrentIP != (uint)ActiveProgram.Length) && !state.IsStopped)
+            int codeStart = CodeSegmentStart;
+            int codeEnd = codeStart + ActiveProgram.Length;
+
+            while (!state.IsStopped)
             {
+                if ((CurrentIP == (uint)ActiveProgram.Length) || IsFinishedInstruction(CurrentInstruction))
+                    break;
+
                 uint ip = PreviousIP = CurrentIP;
                 Contract.Assert(ip < ActiveProgram.Length);
-                ReadOnlySpan<byte> stream = ActiveProgram.Stream.AsSpan().Slice((int)ip);
+
+                uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, 0, SegmentType.CS, ip));
+                int codeLen = codeEnd - (int)codeOffset;
+
+                ReadOnlySpan<byte> stream = Memory.Get(codeStart, codeLen);
 
                 Thread.Sleep(100);
                 OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, ip);

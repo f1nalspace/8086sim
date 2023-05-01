@@ -38,7 +38,7 @@ namespace Final.CPU8086
 
         private const int MaxInstructionLength = 6;
 
-        private static readonly RegisterTable _regTable = new RegisterTable();
+        private static readonly REGMappingTable _regTable = new REGMappingTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
 
         private readonly InstructionTable _entryTable = new InstructionTable();
@@ -65,7 +65,7 @@ namespace Final.CPU8086
             }
         }
 
-        public MemoryTable Memory { get; }
+        public MemoryState Memory { get; }
 
         public RegisterState Register { get; }
 
@@ -90,7 +90,7 @@ namespace Final.CPU8086
 
             _executer = new InstructionExecuter(this);
 
-            Memory = new MemoryTable();
+            Memory = new MemoryState();
             Register = new RegisterState();
         }
 

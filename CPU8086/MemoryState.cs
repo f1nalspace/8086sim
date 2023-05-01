@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 
 namespace Final.CPU8086
 {
-    public class MemoryTable
+    public class MemoryState
     {
         private readonly byte[] _raw = new byte[0xFFFFF];
 
@@ -18,7 +18,7 @@ namespace Final.CPU8086
             set => _raw[index] = value;
         }
 
-        public MemoryTable()
+        public MemoryState()
         {
             Array.Clear(_raw, 0, _raw.Length);
         }

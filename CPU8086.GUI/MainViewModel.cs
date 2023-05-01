@@ -122,7 +122,7 @@ namespace Final.CPU8086
 
             MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
             MemoryPageIndex = 0;
-            MemoryPageOffset = MemoryPageIndex * MemoryTable.PageSize;
+            MemoryPageOffset = MemoryPageIndex * MemoryState.PageSize;
         }
 
         private void AddLog(uint position, string message)
@@ -149,7 +149,7 @@ namespace Final.CPU8086
 
         private void MemoryPageIndexChanged(int index)
         {
-            MemoryPageOffset = index * MemoryTable.PageSize;
+            MemoryPageOffset = index * MemoryState.PageSize;
             JumpToFirstMemoryPageCommand.RaiseCanExecuteChanged();
             JumpToLastMemoryPageCommand.RaiseCanExecuteChanged();
         }

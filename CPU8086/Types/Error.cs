@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Types
 {
     public readonly struct Error
     {

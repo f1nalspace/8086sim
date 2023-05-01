@@ -16,25 +16,51 @@ using System.Threading;
 
 namespace Final.CPU8086
 {
+    /// <summary>
+    /// <para>Simulates a 8086 CPU with support for decoding instructions, as well as executing them.</para>
+    /// <para>It is *not* cycle exact, but to simulate performance some delays are built-in.</para>
+    /// </summary>
     public class CPU : INotifyPropertyChanged
     {
-        public const int HighestMemoryAddress = 0xFFFFF;
+        // A 8086 can execute rougly 4770 instructions per second, resulting in ~0.2 Milliseconds per cycle
+        public const double Hz = 4.77 * 1000.0;
+        public const double MillisecondPerCycle = 1000.0 / Hz;
 
-        public const int ExtraSegmentEnd = 0x7FFFF;
-        public const int ExtraSegmentStart = 0x70000;
-        public const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
+        //
+        // Default segmented memory layout
+        //
+        // [128 KB][64 KB  Data][64 KB  Code][64 KB][64 KB Stack][64 KB][64 KB Extra][512 KB]
 
-        public const int StackSegmentEnd = 0x5FFFF;
-        public const int StackSegmentStart = 0x50000;
-        public const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
+        // Unknown: 128 KB 0x00000 to 0x1FFFF
 
-        public const int CodeSegmentEnd = 0x3FFFF;
+        // Data Segment: 64 KB 0x20000 to 0x2FFFF
+        public const int DataSegmentStart = 0x20000;
+        public const int DataSegmentEnd = 0x2FFFF;
+        public const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
+
+        // Code Segment: 64 KB 0x30000 to 0x3FFFF
         public const int CodeSegmentStart = 0x30000;
+        public const int CodeSegmentEnd = 0x3FFFF;
         public const int CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
 
-        public const int DataSegmentEnd = 0x2FFFF;
-        public const int DataSegmentStart = 0x20000;
-        public const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
+        // Unknown: 64 KB 0x40000 to 0x4FFFF
+
+        // Stack Segment: 64 KB 0x50000 to 0x5FFFF
+        public const int StackSegmentStart = 0x50000;
+        public const int StackSegmentEnd = 0x5FFFF;
+        public const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
+
+        // Unknown: 64 KB 0x60000 to 0x6FFFF
+
+        // Extra Segment: 64 KB 0x70000 to 0x7FFFF
+        public const int ExtraSegmentStart = 0x70000;
+        public const int ExtraSegmentEnd = 0x7FFFF;
+        public const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
+
+        // Unknown: 512 KB 0x80000 to 0xFFFFF
+
+        // The 8086 had 1 MB of total memory available, divided up into several 64 KB segments
+        public const int HighestMemoryAddress = 0xFFFFF;
 
         private const int MaxInstructionLength = 6;
 

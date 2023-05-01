@@ -608,32 +608,32 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(Operand sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, SegmentType segmentType, uint segmentAddress, DataType type)
+        static InstructionOperand CreateOperand(OperandDefinition sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, SegmentType segmentType, uint segmentAddress, DataType type)
         {
             switch (sourceOp.Kind)
             {
-                case OperandKind.Value:
+                case OperandDefinitionKind.Value:
                     return new InstructionOperand(s32: sourceOp.Value);
 
-                case OperandKind.MemoryByte:
+                case OperandDefinitionKind.MemoryByte:
                     return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
-                case OperandKind.MemoryWord:
+                case OperandDefinitionKind.MemoryWord:
                     return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
-                case OperandKind.MemoryDoubleWord:
+                case OperandDefinitionKind.MemoryDoubleWord:
                     return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
-                case OperandKind.MemoryQuadWord:
+                case OperandDefinitionKind.MemoryQuadWord:
                     return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
 
-                case OperandKind.MemoryWordReal:
-                case OperandKind.MemoryDoubleWordReal:
-                case OperandKind.MemoryQuadWordReal:
-                case OperandKind.MemoryTenByteReal:
+                case OperandDefinitionKind.MemoryWordReal:
+                case OperandDefinitionKind.MemoryDoubleWordReal:
+                case OperandDefinitionKind.MemoryQuadWordReal:
+                case OperandDefinitionKind.MemoryTenByteReal:
                     break;
 
-                case OperandKind.SourceRegister:
+                case OperandDefinitionKind.SourceRegister:
                     {
                         if (type == DataType.Byte)
                             return new InstructionOperand(_regTable.GetByte(registerBits));
@@ -643,168 +643,168 @@ namespace Final.CPU8086
                             throw new NotSupportedException($"Unsupported type of '{type}' for source register");
                     }
 
-                case OperandKind.RegisterByte:
+                case OperandDefinitionKind.RegisterByte:
                     return new InstructionOperand(_regTable.GetByte(registerBits));
-                case OperandKind.RegisterWord:
+                case OperandDefinitionKind.RegisterWord:
                     return new InstructionOperand(_regTable.GetWord(registerBits));
-                case OperandKind.RegisterDoubleWord:
+                case OperandDefinitionKind.RegisterDoubleWord:
                     break;
 
-                case OperandKind.RegisterOrMemoryByte:
+                case OperandDefinitionKind.RegisterOrMemoryByte:
                     if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetByte(registerBits));
                     else
                         return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
-                case OperandKind.RegisterOrMemoryWord:
+                case OperandDefinitionKind.RegisterOrMemoryWord:
                     if (mode == ModType.RegisterMode)
                         return new InstructionOperand(_regTable.GetWord(registerBits));
                     else
                         return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
-                case OperandKind.RegisterOrMemoryDoubleWord:
-                case OperandKind.RegisterOrMemoryQuadWord:
+                case OperandDefinitionKind.RegisterOrMemoryDoubleWord:
+                case OperandDefinitionKind.RegisterOrMemoryQuadWord:
                     break;
 
-                case OperandKind.ImmediateByte:
+                case OperandDefinitionKind.ImmediateByte:
                     if ((sbyte)immediate < 0)
                         return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.None);
                     else
                         return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.None);
-                case OperandKind.ImmediateWord:
+                case OperandDefinitionKind.ImmediateWord:
                     if ((short)immediate < 0)
                         return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.None);
                     else
                         return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.None);
-                case OperandKind.ImmediateDoubleWord:
+                case OperandDefinitionKind.ImmediateDoubleWord:
                     if ((int)immediate < 0)
                         return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
                     else
                         return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
 
-                case OperandKind.TypeDoubleWord:
+                case OperandDefinitionKind.TypeDoubleWord:
                     break;
-                case OperandKind.TypeShort:
+                case OperandDefinitionKind.TypeShort:
                     break;
-                case OperandKind.TypeInt:
+                case OperandDefinitionKind.TypeInt:
                     break;
-                case OperandKind.TypePointer:
+                case OperandDefinitionKind.TypePointer:
                     break;
 
-                case OperandKind.ShortLabel:
+                case OperandDefinitionKind.ShortLabel:
                     if ((sbyte)displacement < 0)
                         return new InstructionOperand((sbyte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
                     else
                         return new InstructionOperand((byte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
-                case OperandKind.LongLabel:
+                case OperandDefinitionKind.LongLabel:
                     if ((short)displacement < 0)
                         return new InstructionOperand((short)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
                     else
                         return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
 
-                case OperandKind.FarPointer:
+                case OperandDefinitionKind.FarPointer:
                     return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (short)(offset & 0xFFFF), segmentType, segmentAddress));
 
-                case OperandKind.NearPointer:
+                case OperandDefinitionKind.NearPointer:
                     return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (sbyte)(offset & 0xFF), segmentType, segmentAddress));
 
-                case OperandKind.ST:
+                case OperandDefinitionKind.ST:
                     break;
-                case OperandKind.ST_I:
+                case OperandDefinitionKind.ST_I:
                     break;
-                case OperandKind.M:
+                case OperandDefinitionKind.M:
                     break;
-                case OperandKind.M_Number:
+                case OperandDefinitionKind.M_Number:
                     break;
 
-                case OperandKind.RAX:
+                case OperandDefinitionKind.RAX:
                     return new InstructionOperand(RegisterType.RAX);
-                case OperandKind.EAX:
+                case OperandDefinitionKind.EAX:
                     return new InstructionOperand(RegisterType.EAX);
-                case OperandKind.AX:
+                case OperandDefinitionKind.AX:
                     return new InstructionOperand(RegisterType.AX);
-                case OperandKind.AL:
+                case OperandDefinitionKind.AL:
                     return new InstructionOperand(RegisterType.AL);
-                case OperandKind.AH:
+                case OperandDefinitionKind.AH:
                     return new InstructionOperand(RegisterType.AH);
 
-                case OperandKind.RBX:
+                case OperandDefinitionKind.RBX:
                     return new InstructionOperand(RegisterType.RBX);
-                case OperandKind.EBX:
+                case OperandDefinitionKind.EBX:
                     return new InstructionOperand(RegisterType.EBX);
-                case OperandKind.BX:
+                case OperandDefinitionKind.BX:
                     return new InstructionOperand(RegisterType.BX);
-                case OperandKind.BL:
+                case OperandDefinitionKind.BL:
                     return new InstructionOperand(RegisterType.BL);
-                case OperandKind.BH:
+                case OperandDefinitionKind.BH:
                     return new InstructionOperand(RegisterType.BH);
 
-                case OperandKind.RCX:
+                case OperandDefinitionKind.RCX:
                     return new InstructionOperand(RegisterType.RCX);
-                case OperandKind.ECX:
+                case OperandDefinitionKind.ECX:
                     return new InstructionOperand(RegisterType.ECX);
-                case OperandKind.CX:
+                case OperandDefinitionKind.CX:
                     return new InstructionOperand(RegisterType.CX);
-                case OperandKind.CL:
+                case OperandDefinitionKind.CL:
                     return new InstructionOperand(RegisterType.CL);
-                case OperandKind.CH:
+                case OperandDefinitionKind.CH:
                     return new InstructionOperand(RegisterType.CH);
 
-                case OperandKind.RDX:
+                case OperandDefinitionKind.RDX:
                     return new InstructionOperand(RegisterType.RDX);
-                case OperandKind.EDX:
+                case OperandDefinitionKind.EDX:
                     return new InstructionOperand(RegisterType.EDX);
-                case OperandKind.DX:
+                case OperandDefinitionKind.DX:
                     return new InstructionOperand(RegisterType.DX);
-                case OperandKind.DL:
+                case OperandDefinitionKind.DL:
                     return new InstructionOperand(RegisterType.DL);
-                case OperandKind.DH:
+                case OperandDefinitionKind.DH:
                     return new InstructionOperand(RegisterType.DH);
 
-                case OperandKind.RSP:
+                case OperandDefinitionKind.RSP:
                     return new InstructionOperand(RegisterType.RSP);
-                case OperandKind.ESP:
+                case OperandDefinitionKind.ESP:
                     return new InstructionOperand(RegisterType.ESP);
-                case OperandKind.SP:
+                case OperandDefinitionKind.SP:
                     return new InstructionOperand(RegisterType.SP);
 
-                case OperandKind.RBP:
+                case OperandDefinitionKind.RBP:
                     return new InstructionOperand(RegisterType.RBP);
-                case OperandKind.EBP:
+                case OperandDefinitionKind.EBP:
                     return new InstructionOperand(RegisterType.EBP);
-                case OperandKind.BP:
+                case OperandDefinitionKind.BP:
                     return new InstructionOperand(RegisterType.BP);
 
-                case OperandKind.RSI:
+                case OperandDefinitionKind.RSI:
                     return new InstructionOperand(RegisterType.RSI);
-                case OperandKind.ESI:
+                case OperandDefinitionKind.ESI:
                     return new InstructionOperand(RegisterType.ESI);
-                case OperandKind.SI:
+                case OperandDefinitionKind.SI:
                     return new InstructionOperand(RegisterType.SI);
 
-                case OperandKind.RDI:
+                case OperandDefinitionKind.RDI:
                     return new InstructionOperand(RegisterType.RDI);
-                case OperandKind.EDI:
+                case OperandDefinitionKind.EDI:
                     return new InstructionOperand(RegisterType.EDI);
-                case OperandKind.DI:
+                case OperandDefinitionKind.DI:
                     return new InstructionOperand(RegisterType.DI);
 
-                case OperandKind.CS:
+                case OperandDefinitionKind.CS:
                     return new InstructionOperand(RegisterType.CS);
-                case OperandKind.DS:
+                case OperandDefinitionKind.DS:
                     return new InstructionOperand(RegisterType.DS);
-                case OperandKind.SS:
+                case OperandDefinitionKind.SS:
                     return new InstructionOperand(RegisterType.SS);
-                case OperandKind.ES:
+                case OperandDefinitionKind.ES:
                     return new InstructionOperand(RegisterType.ES);
 
-                case OperandKind.CR:
+                case OperandDefinitionKind.CR:
                     return new InstructionOperand(RegisterType.CR);
-                case OperandKind.DR:
+                case OperandDefinitionKind.DR:
                     return new InstructionOperand(RegisterType.DR);
-                case OperandKind.TR:
+                case OperandDefinitionKind.TR:
                     return new InstructionOperand(RegisterType.TR);
-                case OperandKind.FS:
+                case OperandDefinitionKind.FS:
                     return new InstructionOperand(RegisterType.FS);
-                case OperandKind.GS:
+                case OperandDefinitionKind.GS:
                     return new InstructionOperand(RegisterType.GS);
 
                 default:
@@ -893,11 +893,11 @@ namespace Final.CPU8086
 
             bool hasRegField = false;
 
-            foreach (Field field in entry.Fields)
+            foreach (FieldDefinition field in entry.Fields)
             {
                 switch (field.Type)
                 {
-                    case FieldType.Constant:
+                    case FieldDefinitionType.Constant:
                         {
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
@@ -906,15 +906,15 @@ namespace Final.CPU8086
                                 return new Error(ErrorCode.ConstantFieldMismatch, $"Expect constant to be '{field.Value}', but got instead '{value.AsT0}' in field '{field}'", position);
                         }
                         break;
-                    case FieldType.ModRegRM:
-                    case FieldType.Mod000RM:
-                    case FieldType.Mod001RM:
-                    case FieldType.Mod010RM:
-                    case FieldType.Mod011RM:
-                    case FieldType.Mod100RM:
-                    case FieldType.Mod101RM:
-                    case FieldType.Mod110RM:
-                    case FieldType.Mod111RM:
+                    case FieldDefinitionType.ModRegRM:
+                    case FieldDefinitionType.Mod000RM:
+                    case FieldDefinitionType.Mod001RM:
+                    case FieldDefinitionType.Mod010RM:
+                    case FieldDefinitionType.Mod011RM:
+                    case FieldDefinitionType.Mod100RM:
+                    case FieldDefinitionType.Mod101RM:
+                    case FieldDefinitionType.Mod110RM:
+                    case FieldDefinitionType.Mod111RM:
                         {
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
@@ -923,10 +923,10 @@ namespace Final.CPU8086
                             modField = (byte)(mrm >> 6 & 0b111);
                             regField = (byte)(mrm >> 3 & 0b111);
                             rmField = (byte)(mrm >> 0 & 0b111);
-                            if (field.Type != FieldType.ModRegRM)
+                            if (field.Type != FieldDefinitionType.ModRegRM)
                             {
                                 hasRegField = false;
-                                byte expectReg = field.Type - FieldType.Mod000RM;
+                                byte expectReg = field.Type - FieldDefinitionType.Mod000RM;
                                 if (expectReg != regField)
                                     return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'", position);
                             }
@@ -944,10 +944,10 @@ namespace Final.CPU8086
                                 displacementLength = 0;
                         }
                         break;
-                    case FieldType.Displacement0:
-                    case FieldType.Displacement1:
+                    case FieldDefinitionType.Displacement0:
+                    case FieldDefinitionType.Displacement1:
                         {
-                            int t = field.Type - FieldType.Displacement0;
+                            int t = field.Type - FieldDefinitionType.Displacement0;
                             if (modField == byte.MaxValue || (displacementLength > 0 && t < displacementLength))
                             {
                                 OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
@@ -959,12 +959,12 @@ namespace Final.CPU8086
                             }
                         }
                         break;
-                    case FieldType.Immediate0:
-                    case FieldType.Immediate1:
-                    case FieldType.Immediate2:
-                    case FieldType.Immediate3:
+                    case FieldDefinitionType.Immediate0:
+                    case FieldDefinitionType.Immediate1:
+                    case FieldDefinitionType.Immediate2:
+                    case FieldDefinitionType.Immediate3:
                         {
-                            int t = (int)field.Type - (int)FieldType.Immediate0;
+                            int t = (int)field.Type - (int)FieldDefinitionType.Immediate0;
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
@@ -974,10 +974,10 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.RelativeLabelDisplacement0:
-                    case FieldType.RelativeLabelDisplacement1:
+                    case FieldDefinitionType.RelativeLabelDisplacement0:
+                    case FieldDefinitionType.RelativeLabelDisplacement1:
                         {
-                            int t = field.Type - FieldType.RelativeLabelDisplacement0;
+                            int t = field.Type - FieldDefinitionType.RelativeLabelDisplacement0;
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'", position);
@@ -987,7 +987,7 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.Immediate0to3:
+                    case FieldDefinitionType.Immediate0to3:
                         {
                             for (int t = 0; t < 4; t++)
                             {
@@ -1001,10 +1001,10 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.Offset0:
-                    case FieldType.Offset1:
+                    case FieldDefinitionType.Offset0:
+                    case FieldDefinitionType.Offset1:
                         {
-                            int t = (int)(field.Type - FieldType.Offset0);
+                            int t = (int)(field.Type - FieldDefinitionType.Offset0);
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return new Error(value.AsT1, $"No more bytes left for reading the offset-{t} in field '{field}'", position);
@@ -1014,10 +1014,10 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.Segment0:
-                    case FieldType.Segment1:
+                    case FieldDefinitionType.Segment0:
+                    case FieldDefinitionType.Segment1:
                         {
-                            int t = (int)(field.Type - FieldType.Segment0);
+                            int t = (int)(field.Type - FieldDefinitionType.Segment0);
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return new Error(value.AsT1, $"No more bytes left for reading the segment-{t} in field '{field}'", position);
@@ -1028,7 +1028,7 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.ShortLabelOrShortLow:
+                    case FieldDefinitionType.ShortLabelOrShortLow:
                         {
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
@@ -1038,8 +1038,8 @@ namespace Final.CPU8086
                         }
                         break;
 
-                    case FieldType.LongLabel:
-                    case FieldType.ShortHigh:
+                    case FieldDefinitionType.LongLabel:
+                    case FieldDefinitionType.ShortHigh:
                         {
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
@@ -1063,94 +1063,94 @@ namespace Final.CPU8086
             DataType bestInferredType = DataType.None;
             if (entry.DataWidth.Type == DataWidthType.None)
             {
-                foreach (Operand sourceOp in entry.Operands)
+                foreach (OperandDefinition sourceOp in entry.Operands)
                 {
                     DataType inferredType = sourceOp.Kind switch
                     {
-                        OperandKind.MemoryByte => DataType.Byte,
-                        OperandKind.MemoryWord => DataType.Word,
-                        OperandKind.MemoryDoubleWord => DataType.DoubleWord,
-                        OperandKind.MemoryQuadWord => DataType.QuadWord,
+                        OperandDefinitionKind.MemoryByte => DataType.Byte,
+                        OperandDefinitionKind.MemoryWord => DataType.Word,
+                        OperandDefinitionKind.MemoryDoubleWord => DataType.DoubleWord,
+                        OperandDefinitionKind.MemoryQuadWord => DataType.QuadWord,
 
-                        OperandKind.MemoryWordReal => DataType.Word,
-                        OperandKind.MemoryDoubleWordReal => DataType.DoubleWord,
-                        OperandKind.MemoryQuadWordReal => DataType.QuadWord,
-                        OperandKind.MemoryTenByteReal => throw new NotImplementedException(),
+                        OperandDefinitionKind.MemoryWordReal => DataType.Word,
+                        OperandDefinitionKind.MemoryDoubleWordReal => DataType.DoubleWord,
+                        OperandDefinitionKind.MemoryQuadWordReal => DataType.QuadWord,
+                        OperandDefinitionKind.MemoryTenByteReal => throw new NotImplementedException(),
 
-                        OperandKind.RegisterByte => DataType.Byte,
-                        OperandKind.RegisterWord => DataType.Word,
-                        OperandKind.RegisterDoubleWord => DataType.DoubleWord,
-                        OperandKind.RegisterOrMemoryByte => DataType.Byte,
-                        OperandKind.RegisterOrMemoryWord => DataType.Word,
-                        OperandKind.RegisterOrMemoryDoubleWord => DataType.DoubleWord,
-                        OperandKind.RegisterOrMemoryQuadWord => DataType.QuadWord,
+                        OperandDefinitionKind.RegisterByte => DataType.Byte,
+                        OperandDefinitionKind.RegisterWord => DataType.Word,
+                        OperandDefinitionKind.RegisterDoubleWord => DataType.DoubleWord,
+                        OperandDefinitionKind.RegisterOrMemoryByte => DataType.Byte,
+                        OperandDefinitionKind.RegisterOrMemoryWord => DataType.Word,
+                        OperandDefinitionKind.RegisterOrMemoryDoubleWord => DataType.DoubleWord,
+                        OperandDefinitionKind.RegisterOrMemoryQuadWord => DataType.QuadWord,
 
-                        OperandKind.ImmediateByte => DataType.Byte,
-                        OperandKind.ImmediateWord => DataType.Word,
-                        OperandKind.ImmediateDoubleWord => DataType.DoubleWord,
+                        OperandDefinitionKind.ImmediateByte => DataType.Byte,
+                        OperandDefinitionKind.ImmediateWord => DataType.Word,
+                        OperandDefinitionKind.ImmediateDoubleWord => DataType.DoubleWord,
 
-                        OperandKind.TypePointer => FarPointerDataType | DataType.Pointer,
+                        OperandDefinitionKind.TypePointer => FarPointerDataType | DataType.Pointer,
 
-                        OperandKind.TypeShort => DataType.Word,
-                        OperandKind.TypeDoubleWord => DataType.DoubleWord,
-                        OperandKind.TypeInt => DataType.DoubleWord,
+                        OperandDefinitionKind.TypeShort => DataType.Word,
+                        OperandDefinitionKind.TypeDoubleWord => DataType.DoubleWord,
+                        OperandDefinitionKind.TypeInt => DataType.DoubleWord,
 
-                        OperandKind.NearPointer => NearPointerDataType | DataType.Pointer,
-                        OperandKind.FarPointer => FarPointerDataType | DataType.Pointer,
+                        OperandDefinitionKind.NearPointer => NearPointerDataType | DataType.Pointer,
+                        OperandDefinitionKind.FarPointer => FarPointerDataType | DataType.Pointer,
 
-                        OperandKind.ShortLabel => DataType.Byte,
-                        OperandKind.LongLabel => DataType.Word,
+                        OperandDefinitionKind.ShortLabel => DataType.Byte,
+                        OperandDefinitionKind.LongLabel => DataType.Word,
 
-                        OperandKind.RAX => DataType.QuadWord,
-                        OperandKind.EAX => DataType.DoubleWord,
-                        OperandKind.AX => DataType.Word,
-                        OperandKind.AL => DataType.Byte,
-                        OperandKind.AH => DataType.Byte,
+                        OperandDefinitionKind.RAX => DataType.QuadWord,
+                        OperandDefinitionKind.EAX => DataType.DoubleWord,
+                        OperandDefinitionKind.AX => DataType.Word,
+                        OperandDefinitionKind.AL => DataType.Byte,
+                        OperandDefinitionKind.AH => DataType.Byte,
 
-                        OperandKind.RBX => DataType.QuadWord,
-                        OperandKind.EBX => DataType.DoubleWord,
-                        OperandKind.BX => DataType.Word,
-                        OperandKind.BL => DataType.Byte,
-                        OperandKind.BH => DataType.Byte,
+                        OperandDefinitionKind.RBX => DataType.QuadWord,
+                        OperandDefinitionKind.EBX => DataType.DoubleWord,
+                        OperandDefinitionKind.BX => DataType.Word,
+                        OperandDefinitionKind.BL => DataType.Byte,
+                        OperandDefinitionKind.BH => DataType.Byte,
 
-                        OperandKind.RCX => DataType.QuadWord,
-                        OperandKind.ECX => DataType.DoubleWord,
-                        OperandKind.CX => DataType.Word,
-                        OperandKind.CL => DataType.Byte,
-                        OperandKind.CH => DataType.Byte,
+                        OperandDefinitionKind.RCX => DataType.QuadWord,
+                        OperandDefinitionKind.ECX => DataType.DoubleWord,
+                        OperandDefinitionKind.CX => DataType.Word,
+                        OperandDefinitionKind.CL => DataType.Byte,
+                        OperandDefinitionKind.CH => DataType.Byte,
 
-                        OperandKind.RDX => DataType.QuadWord,
-                        OperandKind.EDX => DataType.DoubleWord,
-                        OperandKind.DX => DataType.Word,
-                        OperandKind.DL => DataType.Byte,
-                        OperandKind.DH => DataType.Byte,
+                        OperandDefinitionKind.RDX => DataType.QuadWord,
+                        OperandDefinitionKind.EDX => DataType.DoubleWord,
+                        OperandDefinitionKind.DX => DataType.Word,
+                        OperandDefinitionKind.DL => DataType.Byte,
+                        OperandDefinitionKind.DH => DataType.Byte,
 
-                        OperandKind.RSP => DataType.QuadWord,
-                        OperandKind.ESP => DataType.DoubleWord,
-                        OperandKind.SP => DataType.Word,
+                        OperandDefinitionKind.RSP => DataType.QuadWord,
+                        OperandDefinitionKind.ESP => DataType.DoubleWord,
+                        OperandDefinitionKind.SP => DataType.Word,
 
-                        OperandKind.RBP => DataType.QuadWord,
-                        OperandKind.EBP => DataType.DoubleWord,
-                        OperandKind.BP => DataType.Word,
+                        OperandDefinitionKind.RBP => DataType.QuadWord,
+                        OperandDefinitionKind.EBP => DataType.DoubleWord,
+                        OperandDefinitionKind.BP => DataType.Word,
 
-                        OperandKind.RSI => DataType.QuadWord,
-                        OperandKind.ESI => DataType.DoubleWord,
-                        OperandKind.SI => DataType.Word,
+                        OperandDefinitionKind.RSI => DataType.QuadWord,
+                        OperandDefinitionKind.ESI => DataType.DoubleWord,
+                        OperandDefinitionKind.SI => DataType.Word,
 
-                        OperandKind.RDI => DataType.QuadWord,
-                        OperandKind.EDI => DataType.DoubleWord,
-                        OperandKind.DI => DataType.Word,
+                        OperandDefinitionKind.RDI => DataType.QuadWord,
+                        OperandDefinitionKind.EDI => DataType.DoubleWord,
+                        OperandDefinitionKind.DI => DataType.Word,
 
-                        OperandKind.CS or
-                        OperandKind.DS or
-                        OperandKind.SS or
-                        OperandKind.ES or
-                        OperandKind.CR => DataType.Word,
+                        OperandDefinitionKind.CS or
+                        OperandDefinitionKind.DS or
+                        OperandDefinitionKind.SS or
+                        OperandDefinitionKind.ES or
+                        OperandDefinitionKind.CR => DataType.Word,
 
-                        OperandKind.DR or
-                        OperandKind.TR or
-                        OperandKind.FS or
-                        OperandKind.GS => DataType.Word,
+                        OperandDefinitionKind.DR or
+                        OperandDefinitionKind.TR or
+                        OperandDefinitionKind.FS or
+                        OperandDefinitionKind.GS => DataType.Word,
 
                         _ => DataType.None,
                     };
@@ -1162,7 +1162,7 @@ namespace Final.CPU8086
                 bestInferredType = DataWidthToDataType(entry.DataWidth);
 
             bool isDest = true;
-            foreach (Operand sourceOp in entry.Operands)
+            foreach (OperandDefinition sourceOp in entry.Operands)
             {
                 Debug.Assert(opCount < targetOps.Length);
 
@@ -1171,37 +1171,37 @@ namespace Final.CPU8086
                 // Operands to skip or to validate
                 switch (sourceOp.Kind)
                 {
-                    case OperandKind.KeywordFar:
+                    case OperandDefinitionKind.KeywordFar:
                         Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far));
                         explicitType |= bestInferredType;
                         continue;
 
-                    case OperandKind.TypePointer:
+                    case OperandDefinitionKind.TypePointer:
                         Contract.Assert(entry.DataType.HasFlag(DataType.Pointer));
                         explicitType |= entry.DataType;
                         continue;
 
-                    case OperandKind.TypeDoubleWord:
+                    case OperandDefinitionKind.TypeDoubleWord:
                         Contract.Assert(entry.DataType.HasFlag(DataType.DoubleWord));
                         explicitType |= entry.DataType;
                         continue;
 
-                    case OperandKind.TypeInt:
+                    case OperandDefinitionKind.TypeInt:
                         Contract.Assert(entry.DataType.HasFlag(DataType.Int));
                         explicitType |= entry.DataType;
                         continue;
 
-                    case OperandKind.TypeShort:
+                    case OperandDefinitionKind.TypeShort:
                         Contract.Assert(entry.DataType.HasFlag(DataType.Word));
                         explicitType |= entry.DataType;
                         continue;
 
-                    case OperandKind.NearPointer:
+                    case OperandDefinitionKind.NearPointer:
                         Contract.Assert(!entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
                         explicitType |= entry.DataType;
                         break; // We want to create an operand for this
 
-                    case OperandKind.FarPointer:
+                    case OperandDefinitionKind.FarPointer:
                         Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
                         explicitType |= entry.DataType;
                         break; // We want to create an operand for this
@@ -1222,13 +1222,13 @@ namespace Final.CPU8086
                 {
                     switch (sourceOp.Kind)
                     {
-                        case OperandKind.RegisterByte:
-                        case OperandKind.RegisterWord:
-                        case OperandKind.RegisterDoubleWord:
-                        case OperandKind.RegisterOrMemoryByte:
-                        case OperandKind.RegisterOrMemoryWord:
-                        case OperandKind.RegisterOrMemoryDoubleWord:
-                        case OperandKind.RegisterOrMemoryQuadWord:
+                        case OperandDefinitionKind.RegisterByte:
+                        case OperandDefinitionKind.RegisterWord:
+                        case OperandDefinitionKind.RegisterDoubleWord:
+                        case OperandDefinitionKind.RegisterOrMemoryByte:
+                        case OperandDefinitionKind.RegisterOrMemoryWord:
+                        case OperandDefinitionKind.RegisterOrMemoryDoubleWord:
+                        case OperandDefinitionKind.RegisterOrMemoryQuadWord:
                             if (!hasRegField)
                                 register = rmField;
                             else

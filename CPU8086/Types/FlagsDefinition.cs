@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace Final.CPU8086.Types
 {
-    public enum FlagValue : byte
+    public enum FlagDefinitionValue : byte
     {
         Ignore = 0,
         Value,
@@ -12,18 +12,18 @@ namespace Final.CPU8086.Types
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public readonly struct Flags
+    public readonly struct FlagsDefinition
     {
-        public FlagValue Parity { get; }
-        public FlagValue Auxiliary { get; }
-        public FlagValue Zero { get; }
-        public FlagValue Sign { get; }
-        public FlagValue Trap { get; }
-        public FlagValue Interrupt { get; }
-        public FlagValue Direction { get; }
-        public FlagValue Overflow { get; }
+        public FlagDefinitionValue Parity { get; }
+        public FlagDefinitionValue Auxiliary { get; }
+        public FlagDefinitionValue Zero { get; }
+        public FlagDefinitionValue Sign { get; }
+        public FlagDefinitionValue Trap { get; }
+        public FlagDefinitionValue Interrupt { get; }
+        public FlagDefinitionValue Direction { get; }
+        public FlagDefinitionValue Overflow { get; }
 
-        public Flags(FlagValue parity, FlagValue auxiliary, FlagValue zero, FlagValue sign, FlagValue trap, FlagValue interrupt, FlagValue direction, FlagValue overflow)
+        public FlagsDefinition(FlagDefinitionValue parity, FlagDefinitionValue auxiliary, FlagDefinitionValue zero, FlagDefinitionValue sign, FlagDefinitionValue trap, FlagDefinitionValue interrupt, FlagDefinitionValue direction, FlagDefinitionValue overflow)
         {
             Parity = parity;
             Auxiliary = auxiliary;
@@ -35,7 +35,7 @@ namespace Final.CPU8086.Types
             Overflow = overflow;
         }
 
-        public Flags(ReadOnlySpan<char> data)
+        public FlagsDefinition(ReadOnlySpan<char> data)
         {
             if (data.Length != 8)
                 throw new ArgumentException($"Expect the state flags to be a length of 8, but got {data.Length}");
@@ -49,36 +49,36 @@ namespace Final.CPU8086.Types
             Overflow = Parse(data[0], 'o');
         }
 
-        public static implicit operator Flags(string value) => new Flags(value);
-        public static explicit operator string(Flags flags) => flags.ToString();
+        public static implicit operator FlagsDefinition(string value) => new FlagsDefinition(value);
+        public static explicit operator string(FlagsDefinition flags) => flags.ToString();
 
-        private static FlagValue Parse(char c, char t)
+        private static FlagDefinitionValue Parse(char c, char t)
         {
             if (c == t)
-                return FlagValue.Value;
+                return FlagDefinitionValue.Value;
             return c switch
             {
-                '0' => FlagValue.Zero,
-                '1' => FlagValue.One,
+                '0' => FlagDefinitionValue.Zero,
+                '1' => FlagDefinitionValue.One,
                 '*' or
-                '-' => FlagValue.Ignore,
+                '-' => FlagDefinitionValue.Ignore,
                 _ => throw new NotImplementedException($"The state flag char '{c}' is not implemented")
             };
         }
 
-        private static char ToChar(FlagValue flag, char t)
+        private static char ToChar(FlagDefinitionValue flag, char t)
         {
             return flag switch
             {
-                FlagValue.Value => t,
-                FlagValue.Zero => '0',
-                FlagValue.One => '1',
-                FlagValue.Ignore => '-',
+                FlagDefinitionValue.Value => t,
+                FlagDefinitionValue.Zero => '0',
+                FlagDefinitionValue.One => '1',
+                FlagDefinitionValue.Ignore => '-',
                 _ => throw new NotImplementedException($"The state flag '{flag}' is not implemented")
             };
         }
 
-        public static readonly Flags Empty = new Flags();
+        public static readonly FlagsDefinition Empty = new FlagsDefinition();
 
         public override string ToString()
         {

@@ -33,6 +33,8 @@ namespace Final.CPU8086.Types
         }
         public override bool Equals(object obj) => obj is MemoryAddress mem && Equals(mem);
         public override int GetHashCode() => HashCode.Combine(EAC, Displacement, SegmentType, SegmentAddress);
+        public static bool operator ==(MemoryAddress left, MemoryAddress right) => left.Equals(right);
+        public static bool operator !=(MemoryAddress left, MemoryAddress right) => !(left == right);
 
         public string Asm(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.AsHex, string hexPrefix = "0x")
         {

@@ -4,6 +4,15 @@ using Final.CPU8086.Types;
 
 namespace Final.CPU8086.Instructions
 {
+    public enum OperandType : byte
+    {
+        None = 0,
+        Register,
+        Address,
+        Immediate,
+        Value,
+    }
+
     [StructLayout(LayoutKind.Explicit, Pack = 1)]
     public readonly struct InstructionOperand : IEquatable<InstructionOperand>
     {

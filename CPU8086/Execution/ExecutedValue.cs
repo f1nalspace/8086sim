@@ -23,11 +23,11 @@ namespace Final.CPU8086.Execution
         [FieldOffset(1)]
         public readonly Immediate Value;
         [FieldOffset(1)]
-        public readonly Flags Flags;
+        public readonly FlagsDefinition Flags;
 
         public ExecutedValue(RegisterType reg, Immediate value)
         {
-            Flags = new Flags();
+            Flags = new FlagsDefinition();
             Memory = new MemoryAddress();
             Type = ExecutedValueType.Register;
             Register = reg;
@@ -36,14 +36,14 @@ namespace Final.CPU8086.Execution
 
         public ExecutedValue(MemoryAddress memory, Immediate value)
         {
-            Flags = new Flags();
+            Flags = new FlagsDefinition();
             Register = RegisterType.Unknown;
             Type = ExecutedValueType.Memory;
             Memory = memory;
             Value = value;
         }
 
-        public ExecutedValue(Flags flags)
+        public ExecutedValue(FlagsDefinition flags)
         {
             Memory = new MemoryAddress();
             Value = new Immediate();

@@ -515,26 +515,26 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
-            Flags oldFlags = new Flags(
-                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
-                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition oldFlags = new FlagsDefinition(
+                parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
-            Flags newFlags = new Flags(
-                parity: isParity ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: isZero ? FlagValue.One : FlagValue.Zero,
-                sign: isSign ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition newFlags = new FlagsDefinition(
+                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
             cpu.Register.ZeroFlag = isZero;
@@ -605,26 +605,26 @@ namespace Final.CPU8086.Execution
             if (storeRes.IsT1)
                 return storeRes.AsT1;
 
-            Flags oldFlags = new Flags(
-                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
-                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition oldFlags = new FlagsDefinition(
+                parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
-            Flags newFlags = new Flags(
-                parity: isParity ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: isZero ? FlagValue.One : FlagValue.Zero,
-                sign: isSign ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition newFlags = new FlagsDefinition(
+                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
             cpu.Register.ZeroFlag = isZero;
@@ -687,26 +687,26 @@ namespace Final.CPU8086.Execution
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
             }
 
-            Flags oldFlags = new Flags(
-                parity: cpu.Register.ParityFlag ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: cpu.Register.ZeroFlag ? FlagValue.One : FlagValue.Zero,
-                sign: cpu.Register.SignFlag ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: cpu.Register.OverflowFlag ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition oldFlags = new FlagsDefinition(
+                parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
-            Flags newFlags = new Flags(
-                parity: isParity ? FlagValue.One : FlagValue.Zero,
-                auxiliary: FlagValue.Ignore,
-                zero: isZero ? FlagValue.One : FlagValue.Zero,
-                sign: isSign ? FlagValue.One : FlagValue.Zero,
-                trap: FlagValue.Ignore,
-                interrupt: FlagValue.Ignore,
-                direction: FlagValue.Ignore,
-                overflow: isOverflow ? FlagValue.One : FlagValue.Zero
+            FlagsDefinition newFlags = new FlagsDefinition(
+                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
             cpu.Register.ZeroFlag = isZero;

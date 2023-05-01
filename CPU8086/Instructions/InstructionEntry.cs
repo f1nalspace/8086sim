@@ -11,17 +11,17 @@ namespace Final.CPU8086.Instructions
         public DataWidth DataWidth { get; }
         public InstructionFlags Flags { get; set; }
         public DataType DataType { get; }
-        public Flags UsedFlags { get; }
+        public FlagsDefinition UsedFlags { get; }
         public Platform Platform { get; }
         public int MinLength { get; }
         public int MaxLength { get; }
-        public Field[] Fields { get; }
-        public Operand[] Operands { get; }
+        public FieldDefinition[] Fields { get; }
+        public OperandDefinition[] Operands { get; }
         public string Description { get; set; }
 
         public InstructionType Type => Mnemonic.Type;
 
-        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, DataType dataType, Flags usedFlags, Platform platform, int minLength, int maxLength, Field[] fields, Operand[] operands)
+        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, DataType dataType, FlagsDefinition usedFlags, Platform platform, int minLength, int maxLength, FieldDefinition[] fields, OperandDefinition[] operands)
         {
             Op = op;
             DataWidth = dataWidth;
@@ -74,7 +74,7 @@ namespace Final.CPU8086.Instructions
             s.Append('|');
             s.Append(DataType);
             s.Append('|');
-            foreach (Operand operand in Operands)
+            foreach (OperandDefinition operand in Operands)
             {
                 s.Append(' ');
                 s.Append(operand);

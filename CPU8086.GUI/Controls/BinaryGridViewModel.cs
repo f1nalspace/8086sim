@@ -237,8 +237,7 @@ namespace Final.CPU8086.Controls
             int streamLength = stream.Length;
             if (streamLength > 0 && pageCount > 0 && bytesPerPage > 0)
             {
-                Contract.Assert(pageCount > 0);
-                uint byteIndex = pageCount > 0 ? Math.Max(0, Math.Min(pageOffset * bytesPerPage, pageCount - 1)) : 0;
+                uint byteIndex = Math.Max(0, Math.Min(pageOffset, pageCount - 1)) * bytesPerPage;
 
                 uint byteCount = Math.Min(bytesPerPage, (uint)(streamLength - byteIndex));
                 Page = stream

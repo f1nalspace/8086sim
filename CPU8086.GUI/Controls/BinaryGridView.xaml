@@ -16,11 +16,23 @@
             <s:Boolean x:Key="trueValue">True</s:Boolean>
             <s:Boolean x:Key="falseValue">False</s:Boolean>
             <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
+            <s:UInt32 x:Key="one">1</s:UInt32>
             <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
             <local:IsInsideRangeConverter x:Key="isInsideRangeConverter" />
             <dxmvvm:NumericToVisibilityConverter x:Key="inverseNumVisConverter" Inverse="True" />
         </Grid.Resources>
-        <ScrollViewer>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <DockPanel Grid.Row="0" LastChildFill="True">
+            <TextBox x:Name="addressTextbox" Text="{Binding JumpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <TextBox.InputBindings>
+                    <KeyBinding Gesture="Enter" Command="{Binding JumpToAddressCommand}" CommandParameter="{Binding Text, ElementName=addressTextbox, UpdateSourceTrigger=PropertyChanged}" />
+                </TextBox.InputBindings>
+            </TextBox>
+        </DockPanel>
+        <ScrollViewer Grid.Row="1">
             <Grid>
                 <Grid Visibility="{Binding Stream.Length, UpdateSourceTrigger=PropertyChanged, Converter={dxmvvm:NumericToVisibilityConverter}}">
                     <Grid.ColumnDefinitions>
@@ -35,7 +47,7 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2">
+                                <Border BorderThickness="1" Margin="2 2">
                                     <TextBlock TextAlignment="Right" Foreground="Gray">
                                         <TextBlock.Text>
                                             <MultiBinding Converter="{StaticResource streamPosValueConverter}">
@@ -46,6 +58,7 @@
                                     </TextBlock>
                                     <Border.Style>
                                         <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="LightGray" />
                                             <Style.Triggers>
                                                 <DataTrigger Value="True">
                                                     <DataTrigger.Binding>
@@ -57,6 +70,17 @@
                                                         </MultiBinding>
                                                     </DataTrigger.Binding>
                                                     <Setter Property="Background" Value="LightBlue" />
+                                                </DataTrigger>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <MultiBinding Converter="{StaticResource isInsideRangeConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.VisualPosition" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            <Binding Path="DataContext.VisualLength" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            <Binding Source="{StaticResource maxStreamLaneLength}" />
+                                                        </MultiBinding>
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="BorderBrush" Value="LightCoral" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -75,10 +99,27 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderThickness="1" BorderBrush="LightGray" Margin="2 2" Width="50">
+                                <Border BorderThickness="1" Margin="2 2" Width="50">
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick" Command="{Binding DataContext.CellClickCommand, ElementName=mainGrid}" CommandParameter="{Binding}" />
                                     </Border.InputBindings>
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="LightGray" />
+                                            <Style.Triggers>
+                                                <DataTrigger Value="True">
+                                                    <DataTrigger.Binding>
+                                                        <MultiBinding Converter="{StaticResource isInsideRangeConverter}">
+                                                            <Binding />
+                                                            <Binding Path="DataContext.VisualPosition" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                            <Binding Path="DataContext.VisualLength" UpdateSourceTrigger="PropertyChanged" ElementName="mainGrid" />
+                                                        </MultiBinding>
+                                                    </DataTrigger.Binding>
+                                                    <Setter Property="BorderBrush" Value="LightCoral" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
                                     <TextBlock TextAlignment="Right">
                                         <TextBlock.Text>
                                             <MultiBinding Converter="{local:HexCellValueConverter}">

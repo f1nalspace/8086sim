@@ -1,5 +1,8 @@
-﻿using System;
+﻿using DevExpress.Mvvm.Native;
+using System;
 using System.Globalization;
+using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 
@@ -60,7 +63,7 @@ namespace Final.CPU8086
                 else
                     return sb.Value.ToString("D");
             }
-            return string.Empty;
+            return DependencyProperty.UnsetValue;
         }
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)

@@ -40,6 +40,7 @@
         // R/M + MOD = 8 * 3
         public readonly EffectiveAddressCalculation[] _table;
         private readonly byte[] _displacementLengths;
+        private readonly byte[] _cycles;
 
         public static EffectiveAddressCalculationTable Instance
         {
@@ -103,6 +104,37 @@
             _displacementLengths[(byte)EffectiveAddressCalculation.BP_D16] = 2;
             _displacementLengths[(byte)EffectiveAddressCalculation.BX_D16] = 2;
             _displacementLengths[(byte)EffectiveAddressCalculation.DirectAddress] = 2;
+
+            _cycles = new byte[32];
+            // Direct
+            _cycles[(byte)EffectiveAddressCalculation.DirectAddress] = 6;
+            // Register indirect
+            _cycles[(byte)EffectiveAddressCalculation.SI] = 5;
+            _cycles[(byte)EffectiveAddressCalculation.DI] = 5;
+            _cycles[(byte)EffectiveAddressCalculation.BX] = 5;
+            // Register relative
+            _cycles[(byte)EffectiveAddressCalculation.SI_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.SI_D16] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.DI_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.DI_D16] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.BX_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.BX_D16] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.BP_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.BP_D16] = 9;
+            // Based indexed
+            _cycles[(byte)EffectiveAddressCalculation.BP_DI] = 7;
+            _cycles[(byte)EffectiveAddressCalculation.BX_SI] = 7;
+            _cycles[(byte)EffectiveAddressCalculation.BP_SI] = 8;
+            _cycles[(byte)EffectiveAddressCalculation.BX_DI] = 8;
+            // Based indexed relative
+            _cycles[(byte)EffectiveAddressCalculation.BP_DI_D8] = 11;
+            _cycles[(byte)EffectiveAddressCalculation.BP_DI_D16] = 11;
+            _cycles[(byte)EffectiveAddressCalculation.BX_SI_D8] = 11;
+            _cycles[(byte)EffectiveAddressCalculation.BX_SI_D16] = 11;
+            _cycles[(byte)EffectiveAddressCalculation.BP_SI_D8] = 12;
+            _cycles[(byte)EffectiveAddressCalculation.BP_SI_D16] = 12;
+            _cycles[(byte)EffectiveAddressCalculation.BX_DI_D8] = 12;
+            _cycles[(byte)EffectiveAddressCalculation.BX_DI_D16] = 12;
         }
 
         public EffectiveAddressCalculation Get(byte rm, byte mod)
@@ -110,6 +142,8 @@
             byte index = (byte)(mod * 8 + rm);
             return _table[index];
         }
+
+        public byte GetCycles(EffectiveAddressCalculation eac) => _cycles[(byte)eac];
 
         public byte GetDisplacementLength(EffectiveAddressCalculation eac) => _displacementLengths[(byte)eac];
     }

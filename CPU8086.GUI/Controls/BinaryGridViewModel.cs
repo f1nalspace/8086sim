@@ -6,6 +6,8 @@ using System.Collections.Immutable;
 using System.Collections.Generic;
 using System.Threading;
 using System.Diagnostics.Contracts;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Final.CPU8086.Controls
 {
@@ -40,7 +42,7 @@ namespace Final.CPU8086.Controls
         public uint PageCount
         {
             get => GetValue<uint>();
-            private set => SetValue(value);
+            private set => SetValue(value, () => PageCountChanged(value));
         }
 
         public uint PageOffset
@@ -50,6 +52,18 @@ namespace Final.CPU8086.Controls
         }
 
         public uint StreamStart
+        {
+            get => GetValue<uint>();
+            private set => SetValue(value);
+        }
+
+        public uint VisualPosition
+        {
+            get => GetValue<uint>();
+            private set => SetValue(value);
+        }
+
+        public uint VisualLength
         {
             get => GetValue<uint>();
             private set => SetValue(value);
@@ -77,12 +91,22 @@ namespace Final.CPU8086.Controls
         private StreamByte[] _page = Array.Empty<StreamByte>();
 
         public event BinaryGridCellClickEventHandler CellClicked;
+        public event BinaryGridPageChangedEventHandler PageChanged;
+
+        public string JumpAddress
+        {
+            get => _jumpAddress;
+            set => SetValue(ref _jumpAddress, value);
+        }
+        private string _jumpAddress = null;
 
         public DelegateCommand<StreamByte> CellClickCommand { get; }
+        public DelegateCommand<string> JumpToAddressCommand { get; }
 
         public BinaryGridViewModel()
         {
             CellClickCommand = new DelegateCommand<StreamByte>(CellClick);
+            JumpToAddressCommand = new DelegateCommand<string>(JumpToAddress, CanJumpToAddress);
 
             //StreamByte[] r = new StreamByte[256];
             //for (uint i = 0; i < 256; i++)
@@ -94,6 +118,80 @@ namespace Final.CPU8086.Controls
 
             //BytesPerPage = 64;
             //PageOffset = 0;
+        }
+
+        private static readonly Regex _hexRangeRex = new Regex("0[xX](?<first>[0-9a-fA-F]+)\\s*(?:[-]0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
+        private static readonly Regex _intRangeRex = new Regex("(?<first>[0-9]+)\\s*(?:[-](?<second>[0-9]+))?", RegexOptions.Compiled);
+
+        private static (uint Start, uint Length) GetAddressRange(string address)
+        {
+            uint start, end;
+            if (!string.IsNullOrEmpty(address))
+            {
+                Match hexMatch = _hexRangeRex.Match(address);
+                if (hexMatch.Success)
+                {
+                    start = uint.Parse(hexMatch.Groups["first"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    if (!string.IsNullOrWhiteSpace(hexMatch.Groups["second"]?.Value))
+                        end = uint.Parse(hexMatch.Groups["second"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    else
+                        end = start;
+                }
+                else
+                {
+                    Match intMatch = _intRangeRex.Match(address);
+                    if (intMatch.Success)
+                    {
+                        start = uint.Parse(intMatch.Groups["first"].Value);
+                        if (!string.IsNullOrWhiteSpace(intMatch.Groups["second"]?.Value))
+                            end = uint.Parse(intMatch.Groups["second"].Value);
+                        else
+                            end = start;
+                    }
+                    else
+                        return (0, 0);
+                }
+            }
+            else
+                return (0, 0);
+            if (start > end)
+                return (0, 0);
+            else if (start == end)
+                return (start, 1);
+            return (start, (end - start) + 1);
+        }
+
+        private bool CanJumpToAddress(string address) => true;
+        private void JumpToAddress(string address)
+        {
+            var range = GetAddressRange(address);
+            if (range.Length == 0)
+            {
+                VisualPosition = 0;
+                VisualLength = 0;
+                return;
+            }
+
+            Contract.Assert(range.Length > 0);
+
+            if (PageCount > 0 && BytesPerPage > 0)
+                PageOffset = Math.Max(0, Math.Min(PageCount - 1, range.Start / BytesPerPage));
+            else
+                PageOffset = 0;
+
+            VisualPosition = range.Start;
+            VisualLength = range.Length;
+        }
+
+        private void RefreshPagingProperties()
+        {
+            RaisePropertiesChanged(nameof(CanFirstPage), nameof(CanLastPage), nameof(CanNextPage), nameof(CanPrevPage));
+        }
+
+        private void PageCountChanged(uint count)
+        {
+            RefreshPagingProperties();
+            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, count, PageOffset));
         }
 
         private void BytesPerPageChanged(StreamByte[] stream, uint bytesPerPage)
@@ -142,7 +240,7 @@ namespace Final.CPU8086.Controls
                 Contract.Assert(pageCount > 0);
                 uint byteIndex = pageCount > 0 ? Math.Max(0, Math.Min(pageOffset * bytesPerPage, pageCount - 1)) : 0;
 
-                uint byteCount = Math.Min(BytesPerPage, (uint)(streamLength - byteIndex));
+                uint byteCount = Math.Min(bytesPerPage, (uint)(streamLength - byteIndex));
                 Page = stream
                     .AsSpan()
                     .Slice((int)byteIndex, (int)byteCount)
@@ -158,29 +256,36 @@ namespace Final.CPU8086.Controls
                 StreamStart = 0;
                 UpdateLines(0, (uint)stream.Length);
             }
+
+            RefreshPagingProperties();
+
+            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageCount, pageOffset));
         }
 
+        public bool AllowPaging => PageCount > 0 && BytesPerPage > 0;
+        public bool CanFirstPage => AllowPaging && PageOffset > 0;
         public void FirstPage() => PageOffset = 0;
+        public bool CanLastPage => AllowPaging && PageOffset < PageCount - 1;
         public void LastPage() => PageOffset = PageCount > 0 ? PageCount - 1 : 0;
+        public bool CanNextPage => AllowPaging && PageOffset < PageCount - 1;
         public void NextPage()
         {
-            if (PageCount == 0 || BytesPerPage == 0)
-                return;
             if (PageOffset < (PageCount - 1))
                 PageOffset++;
         }
+        public bool CanPrevPage => AllowPaging && PageOffset > 0;
         public void PrevPage()
         {
-            if (PageCount == 0 || BytesPerPage == 0)
-                return;
             if (PageOffset > 0)
                 PageOffset--;
         }
+
         public void PageFromByte(uint byteIndex)
         {
-            if (PageCount == 0 || BytesPerPage == 0)
-                return;
-            PageOffset = byteIndex / BytesPerPage;
+            if (AllowPaging)
+                PageOffset = byteIndex / BytesPerPage;
+            else
+                PageOffset = 0;
         }
 
         private void CellClick(StreamByte cell) => CellClicked?.Invoke(this, new BinaryGridCellClickEventArgs(this, cell));
@@ -197,5 +302,7 @@ namespace Final.CPU8086.Controls
             else
                 Stream = Array.Empty<StreamByte>();
         }
+
+        public IAutoService GetAutoService() => throw new NotSupportedException();
     }
 }

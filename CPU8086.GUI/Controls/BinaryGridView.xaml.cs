@@ -18,7 +18,7 @@ namespace Final.CPU8086.Controls
     /// <summary>
     /// Interaction logic for BinaryGridView.xaml
     /// </summary>
-    public partial class BinaryGridView : UserControl
+    public partial class BinaryGridView : UserControl, IAutoService
     {
         public static readonly DependencyProperty StreamSourceProperty =
             DependencyProperty.Register(nameof(StreamSource), typeof(object), typeof(BinaryGridView), new PropertyMetadata(null, StreamSourcePropertyChanged));
@@ -75,6 +75,22 @@ namespace Final.CPU8086.Controls
             }
         }
 
+        public static readonly DependencyPropertyKey CanFirstPagePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(CanFirstPage), typeof(bool), typeof(BinaryGridView), new PropertyMetadata(false));
+        public static readonly DependencyProperty CanFirstPageProperty = CanFirstPagePropertyKey.DependencyProperty;
+
+        public static readonly DependencyPropertyKey CanLastPagePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(CanLastPage), typeof(bool), typeof(BinaryGridView), new PropertyMetadata(false));
+        public static readonly DependencyProperty CanLastPageProperty = CanLastPagePropertyKey.DependencyProperty;
+
+        public static readonly DependencyPropertyKey CanNextPagePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(CanNextPage), typeof(bool), typeof(BinaryGridView), new PropertyMetadata(false));
+        public static readonly DependencyProperty CanNextPageProperty = CanNextPagePropertyKey.DependencyProperty;
+
+        public static readonly DependencyPropertyKey CanPrevPagePropertyKey =
+            DependencyProperty.RegisterReadOnly(nameof(CanPrevPage), typeof(bool), typeof(BinaryGridView), new PropertyMetadata(false));
+        public static readonly DependencyProperty CanPrevPageProperty = CanPrevPagePropertyKey.DependencyProperty;
+
         public object StreamSource
         {
             get => GetValue(StreamSourceProperty);
@@ -104,11 +120,59 @@ namespace Final.CPU8086.Controls
             set => SetCurrentValue(BytesPerPageProperty, value);
         }
 
+        public bool CanFirstPage
+        {
+            get => (bool)GetValue(CanFirstPageProperty);
+            private set => SetValue(CanFirstPagePropertyKey, value);
+        }
+
+        public bool CanLastPage
+        {
+            get => (bool)GetValue(CanLastPageProperty);
+            private set => SetValue(CanLastPagePropertyKey, value);
+        }
+
+        public bool CanNextPage
+        {
+            get => (bool)GetValue(CanNextPageProperty);
+            private set => SetValue(CanNextPagePropertyKey, value);
+        }
+
+        public bool CanPrevPage
+        {
+            get => (bool)GetValue(CanPrevPageProperty);
+            private set => SetValue(CanPrevPagePropertyKey, value);
+        }
+
         public BinaryGridViewModel ViewModel => mainGrid?.DataContext as BinaryGridViewModel;
 
         public BinaryGridView()
         {
             InitializeComponent();
+
+            mainGrid.DataContextChanged += OnMainGridDataContextChanged;
         }
+
+        private void OnMainGridDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            if (e.OldValue is BinaryGridViewModel oldVM)
+                oldVM.PropertyChanged -= OnViewModelPropertyChanged;
+            if (e.NewValue is BinaryGridViewModel newVM)
+                newVM.PropertyChanged += OnViewModelPropertyChanged;
+        }
+
+        private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (nameof(BinaryGridViewModel.CanFirstPage).Equals(e.PropertyName))
+                CanFirstPage = ViewModel.CanFirstPage;
+            else if (nameof(BinaryGridViewModel.CanLastPage).Equals(e.PropertyName))
+                CanLastPage = ViewModel.CanLastPage;
+            else if (nameof(BinaryGridViewModel.CanNextPage).Equals(e.PropertyName))
+                CanNextPage = ViewModel.CanNextPage;
+            else if (nameof(BinaryGridViewModel.CanPrevPage).Equals(e.PropertyName))
+                CanPrevPage = ViewModel.CanPrevPage;
+        }
+
+        public IAutoService GetAutoService() => ViewModel;
     }
 }

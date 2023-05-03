@@ -13,6 +13,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Final.CPU8086
 {
@@ -25,6 +26,7 @@ namespace Final.CPU8086
         // A 8086 can execute rougly 4770 instructions per second, resulting in ~0.2 Milliseconds per cycle
         public const double Hz = 4.77 * 1000.0;
         public const double MillisecondPerCycle = 1000.0 / Hz;
+        public const double InstructionDecodeMilliseconds = MillisecondPerCycle * 10;
 
         //
         // Default segmented memory layout
@@ -34,35 +36,35 @@ namespace Final.CPU8086
         // Unknown: 128 KB 0x00000 to 0x1FFFF
 
         // Data Segment: 64 KB 0x20000 to 0x2FFFF
-        public const int DataSegmentStart = 0x20000;
-        public const int DataSegmentEnd = 0x2FFFF;
-        public const int DataSegmentLength = DataSegmentEnd - DataSegmentStart;
+        public const uint DataSegmentStart = 0x20000;
+        public const uint DataSegmentEnd = 0x2FFFF;
+        public const uint DataSegmentLength = DataSegmentEnd - DataSegmentStart;
 
         // Code Segment: 64 KB 0x30000 to 0x3FFFF
-        public const int CodeSegmentStart = 0x30000;
-        public const int CodeSegmentEnd = 0x3FFFF;
-        public const int CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
+        public const uint CodeSegmentStart = 0x30000;
+        public const uint CodeSegmentEnd = 0x3FFFF;
+        public const uint CodeSegmentLength = CodeSegmentEnd - CodeSegmentStart;
 
         // Unknown: 64 KB 0x40000 to 0x4FFFF
 
         // Stack Segment: 64 KB 0x50000 to 0x5FFFF
-        public const int StackSegmentStart = 0x50000;
-        public const int StackSegmentEnd = 0x5FFFF;
-        public const int StackSegmentLength = StackSegmentEnd - StackSegmentStart;
+        public const uint StackSegmentStart = 0x50000;
+        public const uint StackSegmentEnd = 0x5FFFF;
+        public const uint StackSegmentLength = StackSegmentEnd - StackSegmentStart;
 
         // Unknown: 64 KB 0x60000 to 0x6FFFF
 
         // Extra Segment: 64 KB 0x70000 to 0x7FFFF
-        public const int ExtraSegmentStart = 0x70000;
-        public const int ExtraSegmentEnd = 0x7FFFF;
-        public const int ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
+        public const uint ExtraSegmentStart = 0x70000;
+        public const uint ExtraSegmentEnd = 0x7FFFF;
+        public const uint ExtraSegmentLength = ExtraSegmentEnd - ExtraSegmentStart;
 
         // Unknown: 512 KB 0x80000 to 0xFFFFF
 
         // The 8086 had 1 MB of total memory available, divided up into several 64 KB segments
-        public const int HighestMemoryAddress = 0xFFFFF;
+        public const uint HighestMemoryAddress = 0xFFFFF;
 
-        private const int MaxInstructionLength = 6;
+        private const uint MaxInstructionLength = 6;
 
         private static readonly REGMappingTable _regTable = new REGMappingTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
@@ -156,6 +158,272 @@ namespace Final.CPU8086
             RaisePropertyChanged(nameof(Memory));
 
             return program.Length;
+        }
+
+        public uint ComputeCycles(Instruction instruction)
+        {
+            byte ea = 0;
+            foreach (var op in instruction.Operands)
+            {
+                if (op.Type == OperandType.Address)
+                {
+                    ea = _effectiveAddressCalculationTable.GetCycles(op.Memory.EAC);
+                    break;
+                }
+            }
+
+            switch (instruction.Type)
+            {
+                case InstructionType.AAA:
+                    break;
+                case InstructionType.AAD:
+                    break;
+                case InstructionType.AAM:
+                    break;
+                case InstructionType.AAS:
+                    break;
+                case InstructionType.ADC:
+                    break;
+                case InstructionType.ADD:
+                    break;
+                case InstructionType.AND:
+                    break;
+                case InstructionType.CALL:
+                    break;
+                case InstructionType.CBW:
+                    break;
+                case InstructionType.CLC:
+                    break;
+                case InstructionType.CLD:
+                    break;
+                case InstructionType.CLI:
+                    break;
+                case InstructionType.CMC:
+                    break;
+                case InstructionType.CMP:
+                    break;
+                case InstructionType.CMPSB:
+                    break;
+                case InstructionType.CMPSW:
+                    break;
+                case InstructionType.CWD:
+                    break;
+                case InstructionType.DAA:
+                    break;
+                case InstructionType.DAS:
+                    break;
+                case InstructionType.DEC:
+                    break;
+                case InstructionType.DIV:
+                    break;
+                case InstructionType.HLT:
+                    break;
+                case InstructionType.IDIV:
+                    break;
+                case InstructionType.IMUL:
+                    break;
+                case InstructionType.IN:
+                    break;
+                case InstructionType.INC:
+                    break;
+                case InstructionType.INT:
+                    break;
+                case InstructionType.INTO:
+                    break;
+                case InstructionType.IRET:
+                    break;
+                case InstructionType.JA:
+                    break;
+                case InstructionType.JAE:
+                    break;
+                case InstructionType.JB:
+                    break;
+                case InstructionType.JBE:
+                    break;
+                case InstructionType.JC:
+                    break;
+                case InstructionType.JCXZ:
+                    break;
+                case InstructionType.JE:
+                    break;
+                case InstructionType.JG:
+                    break;
+                case InstructionType.JGE:
+                    break;
+                case InstructionType.JL:
+                    break;
+                case InstructionType.JLE:
+                    break;
+                case InstructionType.JMP:
+                    break;
+                case InstructionType.JNC:
+                    break;
+                case InstructionType.JNE:
+                    break;
+                case InstructionType.JNO:
+                    break;
+                case InstructionType.JNS:
+                    break;
+                case InstructionType.JNP:
+                    break;
+                case InstructionType.JO:
+                    break;
+                case InstructionType.JP:
+                    break;
+                case InstructionType.JS:
+                    break;
+                case InstructionType.LAHF:
+                    break;
+                case InstructionType.LDS:
+                    break;
+                case InstructionType.LEA:
+                    break;
+                case InstructionType.LES:
+                    break;
+                case InstructionType.LODSB:
+                    break;
+                case InstructionType.LODSW:
+                    break;
+                case InstructionType.LOOP:
+                    break;
+                case InstructionType.LOOPE:
+                    break;
+                case InstructionType.LOOPNZ:
+                    break;
+                case InstructionType.MOV:
+                    {
+                        // https://www.oocities.org/mc_introtocomputers/Instruction_Timing.PDF
+                        if (instruction.Operands.Length == 2)
+                        {
+                            InstructionOperand destOperand = instruction.Operands[0];
+                            InstructionOperand sourceOperand = instruction.Operands[1];
+                            if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Register && sourceOperand.Register == RegisterType.AX)
+                                return 10U; // ACC -> MEM
+                            else if (destOperand.Type == OperandType.Register && destOperand.Register == RegisterType.AX && sourceOperand.Type == OperandType.Address)
+                                return 10U; // MEM -> ACC
+                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Register)
+                                return 2U; // REG -> REG
+                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Address)
+                                return 8U + ea; // MEM -> REG + EA
+                            else if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Register)
+                                return 9U + ea; // REG -> MEM + EA
+                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Immediate)
+                                return 4U; // IMM -> REG
+                            else if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Immediate)
+                                return 10U + ea; // IMM -> MEM + EA
+                            else if (destOperand.Type == OperandType.Register && (destOperand.Register == RegisterType.SS || destOperand.Register == RegisterType.DS || destOperand.Register == RegisterType.ES) && sourceOperand.Type == OperandType.Register)
+                                return 2U; // REG -> SS, DS, ES
+                            else if (destOperand.Type == OperandType.Register && (destOperand.Register == RegisterType.SS || destOperand.Register == RegisterType.DS || destOperand.Register == RegisterType.ES) && sourceOperand.Type == OperandType.Address)
+                                return 8U + ea; // MEM -> SS, DS, ES
+                        }
+                    }
+                    break;
+                case InstructionType.MOVSB:
+                    break;
+                case InstructionType.MOVSW:
+                    break;
+                case InstructionType.MUL:
+                    break;
+                case InstructionType.NEG:
+                    break;
+                case InstructionType.NOP:
+                    break;
+                case InstructionType.NOT:
+                    break;
+                case InstructionType.OR:
+                    break;
+                case InstructionType.OUT:
+                    break;
+                case InstructionType.POP:
+                    break;
+                case InstructionType.POPF:
+                    break;
+                case InstructionType.PUSH:
+                    break;
+                case InstructionType.PUSHF:
+                    break;
+                case InstructionType.RCL:
+                    break;
+                case InstructionType.RCR:
+                    break;
+                case InstructionType.REPE:
+                    break;
+                case InstructionType.RET:
+                    break;
+                case InstructionType.RETF:
+                    break;
+                case InstructionType.ROL:
+                    break;
+                case InstructionType.ROR:
+                    break;
+                case InstructionType.SAHF:
+                    break;
+                case InstructionType.SAL:
+                    break;
+                case InstructionType.SHL:
+                    break;
+                case InstructionType.SAR:
+                    break;
+                case InstructionType.SBB:
+                    break;
+                case InstructionType.SCASB:
+                    break;
+                case InstructionType.SCASW:
+                    break;
+                case InstructionType.SHR:
+                    break;
+                case InstructionType.STC:
+                    break;
+                case InstructionType.STD:
+                    break;
+                case InstructionType.STI:
+                    break;
+                case InstructionType.STOSB:
+                    break;
+                case InstructionType.STOSW:
+                    break;
+                case InstructionType.SUB:
+                    break;
+                case InstructionType.TEST:
+                    break;
+                case InstructionType.WAIT:
+                    break;
+                case InstructionType.XCHG:
+                    break;
+                case InstructionType.XLAT:
+                    break;
+                case InstructionType.XOR:
+                    break;
+                case InstructionType.LOCK:
+                    break;
+                case InstructionType.REPNE:
+                    break;
+                case InstructionType.REP:
+                    break;
+                case InstructionType.CS:
+                    break;
+                case InstructionType.SS:
+                    break;
+                case InstructionType.DS:
+                    break;
+                case InstructionType.ES:
+                    break;
+                case InstructionType.FS:
+                    break;
+                case InstructionType.GS:
+                    break;
+                case InstructionType.DATA8:
+                    break;
+                case InstructionType.DATA16:
+                    break;
+                case InstructionType.ADDR8:
+                    break;
+                case InstructionType.ADDR16:
+                    break;
+                default:
+                    break;
+            }
+            return 0;
         }
 
         public OneOf<Immediate, Error> LoadRegister(RegisterType type)
@@ -403,8 +671,6 @@ namespace Final.CPU8086
 
         private uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
-            
-
             byte u8 = (byte)(address.Displacement & 0xFF);
             ushort u16 = (ushort)(address.Displacement & 0xFFFF);
             int d8 = (u8 & 0b10000000) == 0b10000000 ? (-u8) : u8;
@@ -1501,29 +1767,12 @@ namespace Final.CPU8086
         {
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
+
+            uint cycles = ComputeCycles(instruction);
+            int ms = (int)Math.Round(cycles * MillisecondPerCycle) + 1;
+            Thread.Sleep(ms);
+
             return _executer.Execute(instruction, state);
-        }
-
-        public OneOf<uint, Error> BeginStep()
-        {
-            if (ActiveProgram == null)
-                return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
-
-            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed))
-                return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(BeginStep)}", 0);
-
-            ExecutionState = ExecutionState.Halted;
-
-            if (ActiveProgram.Register != null)
-                Register.Assign(ActiveProgram.Register);
-            else
-                Register.Reset();
-
-            CurrentIP = Register.IP;
-            CurrentInstruction = null;
-            PreviousIP = CurrentIP;
-
-            return CurrentIP;
         }
 
         private static bool IsFinishedInstruction(Instruction instruction)
@@ -1536,6 +1785,71 @@ namespace Final.CPU8086
                 InstructionType.HLT => true,
                 _ => false
             };
+        }
+
+        private static uint GetCodeEnd(uint length)
+        {
+            uint codeStart = CodeSegmentStart;
+            uint codeEnd = codeStart + length;
+            return codeEnd;
+        }
+
+        private ReadOnlySpan<byte> GetCodeStream(uint ip, uint length)
+        {
+            uint codeEnd = GetCodeEnd(length);
+            uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)ip, SegmentType.CS, 0));
+            if (codeEnd > codeOffset)
+            {
+                uint codeLen = codeEnd - codeOffset;
+                ReadOnlySpan<byte> stream = Memory.Get(codeOffset, codeLen);
+                return stream;
+            }
+            return ReadOnlySpan<byte>.Empty;
+        }
+
+        public OneOf<uint, Error> BeginStepping()
+        {
+            if (ActiveProgram == null)
+                return new Error(ErrorCode.ProgramNotLoaded, $"No program was loaded", 0);
+
+            if (!(ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed))
+                return new Error(ErrorCode.InvalidExecutionState, $"The execution state '{ExecutionState}' is not valid for {nameof(BeginStepping)}", 0);
+
+            ExecutionState = ExecutionState.Halted;
+
+            if (ActiveProgram.Register != null)
+                Register.Assign(ActiveProgram.Register);
+            else
+                Register.Reset();
+
+            CurrentIP = PreviousIP = Register.IP;
+            CurrentInstruction = null;
+
+            ReadOnlySpan<byte> stream = GetCodeStream(CurrentIP, (uint)ActiveProgram.Length);
+            if (stream.Length == 0)
+                return new Error(ErrorCode.EndOfStream, $"The code stream at IP '{CurrentIP}' is empty", CurrentIP);
+
+            Thread.Sleep((int)InstructionDecodeMilliseconds);
+            OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, CurrentIP);
+            if (decodeRes.IsT1)
+            {
+                ExecutionState = ExecutionState.Failed;
+                return decodeRes.AsT1;
+            }
+
+            CurrentInstruction = decodeRes.AsT0;
+
+            return CurrentIP;
+        }
+
+        public void StopStepping()
+        {
+            if (ExecutionState == ExecutionState.Halted)
+            {
+                ExecutionState = ExecutionState.Stopped;
+                PreviousIP = CurrentIP = uint.MaxValue;
+                CurrentInstruction = null;
+            }
         }
 
         public OneOf<Instruction, Error> Step(RunState state)
@@ -1551,18 +1865,13 @@ namespace Final.CPU8086
 
             PreviousIP = CurrentIP;
 
-            Contract.Assert(CurrentIP < ActiveProgram.Length);
-
-            int codeStart = CodeSegmentStart;
-            int codeEnd = codeStart + ActiveProgram.Length;
-            uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, 0, SegmentType.CS, CurrentIP));
-            int codeLen = codeEnd - (int)codeOffset;
-
-            ReadOnlySpan<byte> stream = Memory.Get((int)codeStart, (int)codeLen);
-
             ExecutionState = ExecutionState.Running;
 
-            Thread.Sleep(100);
+            ReadOnlySpan<byte> stream = GetCodeStream(CurrentIP, (uint)ActiveProgram.Length);
+            if (stream.Length == 0)
+                return new Error(ErrorCode.EndOfStream, $"The code stream at IP '{CurrentIP}' is empty", CurrentIP);
+
+            Thread.Sleep((int)InstructionDecodeMilliseconds);
             OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, CurrentIP);
             if (decodeRes.IsT1)
             {
@@ -1570,15 +1879,15 @@ namespace Final.CPU8086
                 return decodeRes.AsT1;
             }
 
+            uint programEnd = (uint)ActiveProgram.Length;
+
             Instruction instruction = decodeRes.AsT0;
 
             CurrentIP += instruction.Length;
-            Contract.Assert(CurrentIP < ushort.MaxValue);
             Register.IP = (ushort)CurrentIP;
 
             CurrentInstruction = instruction;
 
-            Thread.Sleep(500);
             OneOf<int, Error> executionRes = ExecuteInstruction(instruction, state);
             if (executionRes.IsT1)
             {
@@ -1588,10 +1897,9 @@ namespace Final.CPU8086
 
             uint newIp = (ushort)(CurrentIP + executionRes.AsT0);
             CurrentIP = newIp;
-            Contract.Assert(CurrentIP < ushort.MaxValue);
             Register.IP = (ushort)CurrentIP;
 
-            if ((CurrentIP == (uint)ActiveProgram.Length) || IsFinishedInstruction(instruction))
+            if ((CurrentIP == programEnd) || IsFinishedInstruction(instruction))
             {
                 ExecutionState = ExecutionState.Finished;
                 CurrentIP = uint.MaxValue;
@@ -1626,27 +1934,24 @@ namespace Final.CPU8086
             else
                 Register.Reset();
 
-            CurrentIP = Register.IP;
+            CurrentIP = PreviousIP = Register.IP;
             CurrentInstruction = null;
-            PreviousIP = CurrentIP;
 
-            int codeStart = CodeSegmentStart;
-            int codeEnd = codeStart + ActiveProgram.Length;
+            uint ipEnd = (uint)ActiveProgram.Length;
 
             while (!state.IsStopped)
             {
-                if ((CurrentIP == (uint)ActiveProgram.Length) || IsFinishedInstruction(CurrentInstruction))
+                if ((CurrentIP == ipEnd) || IsFinishedInstruction(CurrentInstruction))
                     break;
 
                 uint ip = PreviousIP = CurrentIP;
                 Contract.Assert(ip < ActiveProgram.Length);
 
-                uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, 0, SegmentType.CS, ip));
-                int codeLen = codeEnd - (int)codeOffset;
+                ReadOnlySpan<byte> stream = GetCodeStream(CurrentIP, (uint)ActiveProgram.Length);
+                if (stream.Length == 0)
+                    return new Error(ErrorCode.EndOfStream, $"The code stream at IP '{CurrentIP}' is empty", CurrentIP);
 
-                ReadOnlySpan<byte> stream = Memory.Get(codeStart, codeLen);
-
-                Thread.Sleep(100);
+                Thread.Sleep((int)InstructionDecodeMilliseconds);
                 OneOf<Instruction, Error> decodeRes = TryDecodeNext(stream, ActiveProgram.Name, ip);
                 if (decodeRes.IsT1)
                 {
@@ -1662,7 +1967,6 @@ namespace Final.CPU8086
 
                 CurrentInstruction = instruction;
 
-                Thread.Sleep(500);
                 OneOf<int, Error> executionRes = ExecuteInstruction(instruction, state);
                 if (executionRes.IsT1)
                 {

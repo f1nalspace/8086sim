@@ -25,9 +25,15 @@
         ProgramNotLoaded,
 
         // Execution errors
+        ExecutionStopped,
         ExecutionFailed,
         MissingExecutionFunction,
         MismatchInstructionOperands,
+        InvalidExecutionState,
+        InvalidSegmentAddress,
+        EndOfProgram,
+        MissingStateParameter,
+        UnsupportedInstruction,
 
         // Type errors
         UnsupportedOperandType,
@@ -50,12 +56,5 @@
         // Load/Store errors
         FailedToLoadRegister,
         FailedToLoadMemory,
-
-        // Execute errors
-        InvalidExecutionState,
-        InvalidSegmentAddress,
-        EndOfProgram,
-        MissingStateParameter,
-        UnsupportedInstruction,
     }
 }

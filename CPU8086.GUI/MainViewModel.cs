@@ -1,5 +1,6 @@
 ﻿using DevExpress.Mvvm;
 using DevExpress.Mvvm.Native;
+using Final.CPU8086.Controls;
 using Final.CPU8086.Execution;
 using Final.CPU8086.Instructions;
 using Final.CPU8086.Types;
@@ -23,6 +24,8 @@ namespace Final.CPU8086
         private IDispatcherService _dispatcherService => GetService<IDispatcherService>();
 
         private readonly CPU _cpu;
+
+        private IBinaryGridService MemoryGridService => GetService<IBinaryGridService>("MemoryGridService");
 
         public IProgram[] Programs { get; }
 
@@ -73,14 +76,13 @@ namespace Final.CPU8086
 
         public RegisterState Register => _cpu.Register;
 
-        public ImmutableArray<byte> MemoryPage { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
-        public int MemoryPageIndex { get => GetValue<int>(); set => SetValue(value, () => MemoryPageIndexChanged(value)); }
-        public int MemoryPageOffset { get => GetValue<int>(); private set => SetValue(value); }
+        public MemoryState Memory => _cpu.Memory;
 
         public int SelectedStreamOrMemoryTabIndex { get => GetValue<int>(); set => SetValue(value); }
 
         public bool CanChangeStream => ExecutionState != ExecutionState.Running;
 
+        public DelegateCommand OnLoadedCommand { get; }
         public DelegateCommand RunCommand { get; }
         public DelegateCommand StopCommand { get; }
         public DelegateCommand StepCommand { get; }
@@ -95,6 +97,7 @@ namespace Final.CPU8086
             _cpu = new CPU();
             _cpu.PropertyChanged += OnCPUPropertyChanged;
 
+            OnLoadedCommand = new DelegateCommand(OnLoaded);
             RunCommand = new DelegateCommand(Run, CanRun);
             StopCommand = new DelegateCommand(Stop, CanStop);
             StepCommand = new DelegateCommand(Step, CanStep);
@@ -119,10 +122,16 @@ namespace Final.CPU8086
                 .ToArray();
 
             CurrentProgram = Programs[0];
+        }
 
-            MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
-            MemoryPageIndex = 0;
-            MemoryPageOffset = MemoryPageIndex * MemoryState.PageSize;
+        private void OnLoaded()
+        {
+            MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
+        }
+
+        private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
+        {
+            MemoryPageChanged();
         }
 
         private void AddLog(uint position, string message)
@@ -133,34 +142,32 @@ namespace Final.CPU8086
                 Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now));
         }
 
-        private bool CanJumpToFirstMemoryPage() => MemoryPageIndex > 0;
+        private bool CanJumpToFirstMemoryPage() => MemoryGridService?.CanFirstPage ?? false;
         private void JumpToFirstMemoryPage()
         {
             SelectedStreamOrMemoryTabIndex = 1;
-            MemoryPageIndex = 0;
+            MemoryGridService.FirstPage();
         }
 
-        private bool CanJumpToLastMemoryPage() => MemoryPageIndex < (_cpu.Memory.PageCount - 1);
+        private bool CanJumpToLastMemoryPage() => MemoryGridService?.CanLastPage ?? false;
         private void JumpToLastMemoryPage()
         {
             SelectedStreamOrMemoryTabIndex = 1;
-            MemoryPageIndex = _cpu.Memory.PageCount - 1;
+            MemoryGridService.LastPage();
         }
 
-        private void MemoryPageIndexChanged(int index)
+        private void MemoryPageChanged()
         {
-            MemoryPageOffset = index * MemoryState.PageSize;
             JumpToFirstMemoryPageCommand.RaiseCanExecuteChanged();
             JumpToLastMemoryPageCommand.RaiseCanExecuteChanged();
         }
-
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
             if (nameof(CPU.Register).Equals(e.PropertyName))
                 RaisePropertyChanged(nameof(Register));
             else if (nameof(CPU.Memory).Equals(e.PropertyName))
-                MemoryPage = _cpu.Memory.ReadPage(MemoryPageIndex);
+                RaisePropertyChanged(nameof(Memory));
             else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
                 RaisePropertyChanged(nameof(CurrentStreamPosition));
             else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
@@ -200,20 +207,17 @@ namespace Final.CPU8086
 
         private void RefreshCommands()
         {
-            _dispatcherService?.Invoke(() =>
-            {
-                RunCommand.RaiseCanExecuteChanged();
-                StopCommand.RaiseCanExecuteChanged();
-                StepCommand.RaiseCanExecuteChanged();
-                RaisePropertyChanged(nameof(CanChangeStream));
-            });
+            RunCommand.RaiseCanExecuteChanged();
+            StopCommand.RaiseCanExecuteChanged();
+            StepCommand.RaiseCanExecuteChanged();
+            RaisePropertyChanged(nameof(CanChangeStream));
         }
 
         private bool CanRun() =>
             DecodeState == DecodeState.Success &&
             (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed) &&
             (_executionTask == null || _executionTask.IsCompleted);
-        private void Run()
+        private async void Run()
         {
             Contract.Assert(CanRun());
 
@@ -231,6 +235,9 @@ namespace Final.CPU8086
             }
 
             _executionTask = Task.Run(() => ExecuteAsync());
+            await _executionTask;
+
+            RefreshCommands();
         }
 
         private Task ExecuteAsync() => Task.Run(() =>
@@ -270,7 +277,6 @@ namespace Final.CPU8086
             finally
             {
                 Interlocked.Exchange(ref _isStopping, 0);
-                RefreshCommands();
             }
         });
 
@@ -282,6 +288,7 @@ namespace Final.CPU8086
             Contract.Assert(CanStop());
             AddLog(CurrentStreamPosition, $"Stopping program '{CurrentProgram}'");
             await StopAsync();
+            RefreshCommands();
         }
 
         private async Task StopAsync()
@@ -289,17 +296,21 @@ namespace Final.CPU8086
             Interlocked.Exchange(ref _isStopping, 1);
             try
             {
-                while (Interlocked.CompareExchange(ref _isStopping, 0, 0) == 0)
+                if (ExecutionState == ExecutionState.Halted)
+                    _cpu.StopStepping();
+                else
                 {
-                    if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed)
-                        break;
-                    await Task.Delay(50);
+                    while (Interlocked.CompareExchange(ref _isStopping, 0, 0) == 0)
+                    {
+                        if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed)
+                            break;
+                        await Task.Delay(50);
+                    }
                 }
             }
             finally
             {
                 Interlocked.Exchange(ref _isStopping, 0);
-                RefreshCommands();
             }
         }
 
@@ -310,7 +321,7 @@ namespace Final.CPU8086
             DecodeState == DecodeState.Success &&
             (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted || ExecutionState == ExecutionState.Finished) &&
             (_executionTask == null || _executionTask.IsCompleted);
-        private void Step()
+        private async void Step()
         {
             Contract.Assert(CanStep());
             if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished)
@@ -327,25 +338,32 @@ namespace Final.CPU8086
                 AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}'");
                 Interlocked.Exchange(ref _isStopping, 0);
 
-                _cpu.BeginStep();
+                _cpu.BeginStepping();
             }
             else if (ExecutionState == ExecutionState.Halted)
             {
                 AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}'");
                 Interlocked.Exchange(ref _isStopping, 0);
                 _executionTask = Task.Run(() => StepAsync());
+                await _executionTask;
             }
+
+            RefreshCommands();
         }
 
         private Task StepAsync() => Task.Run(() =>
         {
             RunState state = new RunState();
+            if (_isStopping == 1)
+                state.IsStopped = true;
             try
             {
                 OneOf<Instruction, Error> stepRes = _cpu.Step(state);
                 if (stepRes.IsT1)
                 {
-                    _dispatcherService.Invoke(() => Errors.Add(stepRes.AsT1));
+                    Error err = stepRes.AsT1;
+                    if (err.Code != ErrorCode.ExecutionStopped)
+                        _dispatcherService.Invoke(() => Errors.Add(err));
                 }
             }
             catch (Exception e)
@@ -355,7 +373,6 @@ namespace Final.CPU8086
             finally
             {
                 Interlocked.Exchange(ref _isStopping, 0);
-                RefreshCommands();
             }
         });
 

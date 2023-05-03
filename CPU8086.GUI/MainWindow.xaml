@@ -17,12 +17,13 @@
         DataContext="{dxmvvm:ViewModelSource local:MainViewModel}">
     <dxmvvm:Interaction.Behaviors>
         <dxmvvm:DispatcherService DispatcherPriority="DataBind" />
+        <dxmvvm:EventToCommand EventName="Loaded" Command="{Binding OnLoadedCommand}" />
     </dxmvvm:Interaction.Behaviors>
     <Window.Resources>
         <s:Boolean x:Key="trueValue">True</s:Boolean>
         <s:Boolean x:Key="falseValue">False</s:Boolean>
         <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
-        
+
         <local:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" IsDirectPosition="False" />
         <local:IsInsideInstructionRangeConverter x:Key="isOnInstructionConverter" IsDirectPosition="True" />
 
@@ -125,7 +126,7 @@
 
                                 <!-- Separator -->
                                 <RowDefinition Height="20" />
-                                
+
                                 <!-- IP -->
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
@@ -491,9 +492,14 @@
                     <TabItem Header="Memory">
                         <ctrls:BinaryGridView 
                             Width="560" 
-                            StreamSource="{Binding MemoryPage, UpdateSourceTrigger=PropertyChanged}" 
+                            BytesPerPage="128"
+                            StreamSource="{Binding Memory, UpdateSourceTrigger=PropertyChanged}" 
                             ShowAsHex="{Binding ShowMemoryAsHex, UpdateSourceTrigger=PropertyChanged}"
-                            />
+                            >
+                            <dxmvvm:Interaction.Behaviors>
+                                <ctrls:BinaryGridServiceBehavior Key="MemoryGridService" />
+                            </dxmvvm:Interaction.Behaviors>
+                        </ctrls:BinaryGridView>
                     </TabItem>
                 </TabControl>
 
@@ -504,7 +510,7 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <TabControl Grid.Column="0">
-                        
+
                         <!-- Assembly Lines -->
                         <TabItem Header="Assembly">
                             <ScrollViewer>
@@ -524,7 +530,7 @@
                                                                 <DataTrigger.Binding>
                                                                     <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                                                                         <Binding Path="Position" />
-                                                                        <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                       <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
                                                                     </MultiBinding>
                                                                 </DataTrigger.Binding>
                                                                 <Setter Property="Background" Value="LightBlue" />

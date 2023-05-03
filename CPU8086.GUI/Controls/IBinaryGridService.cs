@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 
 namespace Final.CPU8086.Controls
 {
@@ -27,7 +28,12 @@ namespace Final.CPU8086.Controls
 
         void PageFromByte(uint byteIndex);
 
+        void ReloadStream(ReadOnlySpan<byte> stream, uint offset);
+
+        (uint Offset, uint Length) ComputePageRange(uint pageOffset, uint pageCount, uint bytesPerPage);
+
         event BinaryGridCellClickEventHandler CellClicked;
         event BinaryGridPageChangedEventHandler PageChanged;
+        event BinaryGridPageChangedEventHandler PageChanging;
     }
 }

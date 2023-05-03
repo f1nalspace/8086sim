@@ -75,6 +75,8 @@ namespace Final.CPU8086
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public event MemoryChangedEventHandler MemoryChanged;
+
         private static readonly DataWidth FarPointerDataWidth = new DataWidth(DataWidthType.Word);
         private static readonly DataWidth NearPointerDataWidth = new DataWidth(DataWidthType.Byte);
 
@@ -801,6 +803,9 @@ namespace Final.CPU8086
                     {
                         Immediate oldValue = new Immediate(Memory[absoluteAddress]);
                         Memory[absoluteAddress] = value.U8;
+
+                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 1));
+
                         state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldValue), new ExecutedValue(address, value))));
                     }
                     return 1;
@@ -815,6 +820,8 @@ namespace Final.CPU8086
                         Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
 
                         state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+
+                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 2));
 
                         return 2;
                     }
@@ -840,6 +847,8 @@ namespace Final.CPU8086
                         Memory[absoluteAddress + 3] = (byte)((newValue >> 24) & 0xFF);
 
                         state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+
+                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 4));
 
                         return 4;
                     }

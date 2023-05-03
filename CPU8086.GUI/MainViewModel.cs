@@ -96,6 +96,7 @@ namespace Final.CPU8086
         {
             _cpu = new CPU();
             _cpu.PropertyChanged += OnCPUPropertyChanged;
+            _cpu.MemoryChanged += OnCPUMemoryChanged;
 
             OnLoadedCommand = new DelegateCommand(OnLoaded);
             RunCommand = new DelegateCommand(Run, CanRun);
@@ -124,6 +125,12 @@ namespace Final.CPU8086
             CurrentProgram = Programs[0];
         }
 
+        private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
+        {
+            ReadOnlySpan<byte> stream = Memory.Get(args.Offset, args.Length);
+            MemoryGridService.ReloadStream(stream, args.Offset);
+        }
+
         private void OnLoaded()
         {
             MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
@@ -131,7 +138,7 @@ namespace Final.CPU8086
 
         private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
         {
-            MemoryPageChanged();
+            MemoryPageChanged(args.PageOffset, args.PageCount, args.BytesPerPage);
         }
 
         private void AddLog(uint position, string message)
@@ -156,10 +163,16 @@ namespace Final.CPU8086
             MemoryGridService.LastPage();
         }
 
-        private void MemoryPageChanged()
+        private void MemoryPageChanged(uint pageOffset, uint pageCount, uint bytesPerPage)
         {
             JumpToFirstMemoryPageCommand.RaiseCanExecuteChanged();
             JumpToLastMemoryPageCommand.RaiseCanExecuteChanged();
+
+            (uint Offset, uint Length) range = MemoryGridService.ComputePageRange(pageOffset, pageCount, bytesPerPage);
+
+            ReadOnlySpan<byte> stream = Memory.Get(range.Offset, range.Length);
+
+            MemoryGridService.ReloadStream(stream, range.Offset);
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -300,10 +313,8 @@ namespace Final.CPU8086
                     _cpu.StopStepping();
                 else
                 {
-                    while (Interlocked.CompareExchange(ref _isStopping, 0, 0) == 0)
+                    while (ExecutionState == ExecutionState.Running || ExecutionState == ExecutionState.Halted)
                     {
-                        if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Failed)
-                            break;
                         await Task.Delay(50);
                     }
                 }

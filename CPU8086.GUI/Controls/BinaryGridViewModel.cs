@@ -92,6 +92,7 @@ namespace Final.CPU8086.Controls
 
         public event BinaryGridCellClickEventHandler CellClicked;
         public event BinaryGridPageChangedEventHandler PageChanged;
+        public event BinaryGridPageChangedEventHandler PageChanging;
 
         public string JumpAddress
         {
@@ -191,7 +192,7 @@ namespace Final.CPU8086.Controls
         private void PageCountChanged(uint count)
         {
             RefreshPagingProperties();
-            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, count, PageOffset));
+            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, PageOffset, count, BytesPerPage));
         }
 
         private void BytesPerPageChanged(StreamByte[] stream, uint bytesPerPage)
@@ -232,7 +233,7 @@ namespace Final.CPU8086.Controls
             SelectionLength = 0;
         }
 
-        private void PageOffsetChanged(StreamByte[] stream, uint pageOffset, uint pageCount, uint bytesPerPage)
+        private void ReloadPage(StreamByte[] stream, uint pageOffset, uint pageCount, uint bytesPerPage)
         {
             int streamLength = stream.Length;
             if (streamLength > 0 && pageCount > 0 && bytesPerPage > 0)
@@ -240,13 +241,12 @@ namespace Final.CPU8086.Controls
                 uint byteIndex = Math.Max(0, Math.Min(pageOffset, pageCount - 1)) * bytesPerPage;
 
                 uint byteCount = Math.Min(bytesPerPage, (uint)(streamLength - byteIndex));
+
                 Page = stream
                     .AsSpan()
                     .Slice((int)byteIndex, (int)byteCount)
                     .ToArray();
-
                 StreamStart = (uint)byteIndex;
-
                 UpdateLines((uint)byteIndex, (uint)byteCount);
             }
             else
@@ -255,10 +255,14 @@ namespace Final.CPU8086.Controls
                 StreamStart = 0;
                 UpdateLines(0, (uint)stream.Length);
             }
+        }
 
+        private void PageOffsetChanged(StreamByte[] stream, uint pageOffset, uint pageCount, uint bytesPerPage)
+        {
+            PageChanging?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageOffset, pageCount, bytesPerPage));
+            ReloadPage(stream, pageOffset, pageCount, bytesPerPage);
             RefreshPagingProperties();
-
-            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageCount, pageOffset));
+            PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageOffset, pageCount, bytesPerPage));
         }
 
         public bool AllowPaging => PageCount > 0 && BytesPerPage > 0;
@@ -282,7 +286,7 @@ namespace Final.CPU8086.Controls
         public void PageFromByte(uint byteIndex)
         {
             if (AllowPaging)
-                PageOffset = byteIndex / BytesPerPage;
+                PageOffset = Math.Min(Math.Max(0, byteIndex / BytesPerPage), PageCount - 1);
             else
                 PageOffset = 0;
         }
@@ -300,6 +304,34 @@ namespace Final.CPU8086.Controls
             }
             else
                 Stream = Array.Empty<StreamByte>();
+        }
+
+        public void ReloadStream(ReadOnlySpan<byte> stream, uint offset)
+        {
+            if (offset + stream.Length <= Stream.Length)
+            {
+                for (uint index = offset; index < offset + stream.Length; ++index)
+                    Stream[index] = new StreamByte(index, stream[(int)(index - offset)]);
+            }
+            else
+            {
+                uint count = 0;
+                Stream = stream.ToArray().Select(b => new StreamByte(Interlocked.Increment(ref count) - 1, b))
+                    .ToArray();
+            }
+            ReloadPage(Stream, PageOffset, PageCount, BytesPerPage);
+        }
+
+        public (uint Offset, uint Length) ComputePageRange(uint pageOffset, uint pageCount, uint bytesPerPage)
+        {
+            uint streamLen = (uint)Stream.Length;
+            if (streamLen > 0 && pageCount > 0 && bytesPerPage > 0)
+            {
+                uint byteIndex = Math.Max(0, Math.Min(pageOffset, pageCount - 1)) * bytesPerPage;
+                uint byteCount = Math.Min(bytesPerPage, streamLen - byteIndex);
+                return (byteIndex, byteCount);
+            }
+            return (0, streamLen);
         }
 
         public IAutoService GetAutoService() => throw new NotSupportedException();

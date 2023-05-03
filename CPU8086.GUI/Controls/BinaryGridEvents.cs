@@ -57,19 +57,22 @@ namespace Final.CPU8086.Controls
 
     public class BinaryGridPageChangedEventArgs : BinaryGridEventArgs
     {
-        public uint PageCount { get; }
         public uint PageOffset { get; }
+        public uint PageCount { get; }
+        public uint BytesPerPage { get; }
 
-        public BinaryGridPageChangedEventArgs(BinaryGridViewModel view, uint pageCount, uint pageOffset) : base(view)
+        public BinaryGridPageChangedEventArgs(BinaryGridViewModel view, uint pageOffset, uint pageCount, uint bytesPerPage) : base(view)
         {
-            PageCount = pageCount;
             PageOffset = pageOffset;
+            PageCount = pageCount;
+            BytesPerPage = bytesPerPage;
         }
 
-        public BinaryGridPageChangedEventArgs(RoutedEvent routedEvent, object source, BinaryGridViewModel view, uint pageCount, uint pageOffset) : base(routedEvent, source, view)
+        public BinaryGridPageChangedEventArgs(RoutedEvent routedEvent, object source, BinaryGridViewModel view, uint pageOffset, uint pageCount, uint bytesPerPage) : base(routedEvent, source, view)
         {
-            PageCount = pageCount;
             PageOffset = pageOffset;
+            PageCount = pageCount;
+            BytesPerPage = bytesPerPage;
         }
     }
 

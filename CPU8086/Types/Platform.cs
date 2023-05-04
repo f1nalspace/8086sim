@@ -6,6 +6,7 @@ namespace Final.CPU8086.Types
     {
         _8086 = 0,
         _8087,
+        _8088,
         _186,
         _286,
         _386,
@@ -43,6 +44,7 @@ namespace Final.CPU8086.Types
             return value.ToLower() switch
             {
                 "8087" => new Platform(PlatformType._8087),
+                "8088" => new Platform(PlatformType._8088),
                 "186" => new Platform(PlatformType._186),
                 "286" => new Platform(PlatformType._286),
                 "386" => new Platform(PlatformType._386),
@@ -60,6 +62,7 @@ namespace Final.CPU8086.Types
             {
                 PlatformType._8086 => "8086",
                 PlatformType._8087 => "8087",
+                PlatformType._8088 => "8088",
                 PlatformType._186 => "186",
                 PlatformType._286 => "286",
                 PlatformType._386 => "386",
@@ -72,5 +75,6 @@ namespace Final.CPU8086.Types
         }
 
         public static readonly Platform Platform8086 = new Platform(PlatformType._8086);
+        public static readonly Platform Platform8088 = new Platform(PlatformType._8088);
     }
 }

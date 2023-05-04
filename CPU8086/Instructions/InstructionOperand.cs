@@ -21,29 +21,39 @@ namespace Final.CPU8086.Instructions
         [FieldOffset(0)]
         public readonly OperandType Type;
         [FieldOffset(1)]
+        public readonly DataType DataType;
+        [FieldOffset(2)]
         public readonly MemoryAddress Memory;
-        [FieldOffset(1)]
+        [FieldOffset(2)]
         public readonly RegisterType Register;
-        [FieldOffset(1)]
+        [FieldOffset(2)]
         public readonly Immediate Immediate;
-        [FieldOffset(1)]
+        [FieldOffset(2)]
         public readonly int Value;
 
-        public InstructionOperand(RegisterType register)
+        public InstructionOperand(RegisterType register, DataType dataType = DataType.None)
         {
             Type = Types.Register.IsAccumulator(register) ? OperandType.Accumulator : Types.Register.IsSegment(register) ? OperandType.Segment : OperandType.Register;
+            DataType = dataType != DataType.None ? dataType : Types.Register.GetDataType(register);
             Memory = new MemoryAddress();
             Immediate = new Immediate();
             Value = 0;
             Register = register;
         }
 
-        public InstructionOperand(Register register)
-            : this(register?.Type ?? RegisterType.Unknown) { }
+        public InstructionOperand(Register register, DataType dataType)
+            : this(register?.Type ?? RegisterType.Unknown, dataType) { }
 
         public InstructionOperand(Immediate immediate)
         {
             Type = OperandType.Immediate;
+            DataType = immediate.Type switch
+            {
+                ImmediateType.Byte or ImmediateType.SignedByte => DataType.Byte,
+                ImmediateType.Word or ImmediateType.SignedWord => DataType.Word,
+                ImmediateType.DoubleWord or ImmediateType.Int => DataType.DoubleWord,
+                _ => DataType.None,
+            };
             Memory = new MemoryAddress();
             Register = RegisterType.Unknown;
             Value = 0;
@@ -68,18 +78,20 @@ namespace Final.CPU8086.Instructions
         public InstructionOperand(int s32, ImmediateFlag flags = ImmediateFlag.None)
             : this(new Immediate(s32, flags)) { }
 
-        public InstructionOperand(MemoryAddress address)
+        public InstructionOperand(MemoryAddress address, DataType dataType)
         {
             Type = OperandType.Memory;
+            DataType = dataType;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Value = 0;
             Memory = address;
         }
 
-        public InstructionOperand(int value)
+        public InstructionOperand(int value, DataType dataType)
         {
             Type = OperandType.Memory;
+            DataType = dataType;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Memory = new MemoryAddress();
@@ -89,6 +101,7 @@ namespace Final.CPU8086.Instructions
         public bool Equals(InstructionOperand other)
         {
             if (Type != other.Type) return false;
+            if (DataType != other.DataType) return false;
             switch (Type)
             {
                 case OperandType.Register:
@@ -119,11 +132,11 @@ namespace Final.CPU8086.Instructions
             {
                 OperandType.Register or
                 OperandType.Accumulator or
-                OperandType.Segment => HashCode.Combine(Type, Register),
-                OperandType.Memory => HashCode.Combine(Type, Memory),
-                OperandType.Immediate => HashCode.Combine(Type, Immediate),
-                OperandType.Value => HashCode.Combine(Type, Value),
-                _ => HashCode.Combine(Type),
+                OperandType.Segment => HashCode.Combine(Type, DataType, Register),
+                OperandType.Memory => HashCode.Combine(Type, DataType, Memory),
+                OperandType.Immediate => HashCode.Combine(Type, DataType, Immediate),
+                OperandType.Value => HashCode.Combine(Type, DataType, Value),
+                _ => HashCode.Combine(Type, DataType),
             };
         }
 
@@ -133,12 +146,12 @@ namespace Final.CPU8086.Instructions
         {
             return Type switch
             {
-                OperandType.Register => $"Reg: {Types.Register.GetName(Register)}",
-                OperandType.Accumulator => $"Acc: {Types.Register.GetName(Register)}",
-                OperandType.Segment => $"Seg: {Types.Register.GetName(Register)}",
-                OperandType.Immediate => $"Imm: {Immediate}",
-                OperandType.Memory => $"Mem: {Memory}",
-                OperandType.Value => $"Value: {Value}",
+                OperandType.Register => $"Reg[{DataType}]: {Types.Register.GetName(Register)}",
+                OperandType.Accumulator => $"Acc[{DataType}]: {Types.Register.GetName(Register)}",
+                OperandType.Segment => $"Seg[{DataType}]: {Types.Register.GetName(Register)}",
+                OperandType.Immediate => $"Imm[{DataType}]: {Immediate}",
+                OperandType.Memory => $"Mem[{DataType}]: {Memory}",
+                OperandType.Value => $"Value[{DataType}]: {Value}",
                 _ => string.Empty
             };
         }

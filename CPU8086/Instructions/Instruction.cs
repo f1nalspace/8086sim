@@ -107,10 +107,16 @@ namespace Final.CPU8086.Instructions
                             MemoryAddress mem = op.Memory;
                             if (Flags.HasFlag(InstructionFlags.Far))
                                 s.Append(" FAR");
+                            else if (Flags.HasFlag(InstructionFlags.Near))
+                                s.Append(" NEAR");
 
                             if (!hadRegister)
                             {
-                                if (Width.Type == DataWidthType.Word)
+                                if (Width.Type == DataWidthType.QuadWord)
+                                    s.Append(" QWORD");
+                                else if (Width.Type == DataWidthType.DoubleWord)
+                                    s.Append(" DWORD");
+                                else if (Width.Type == DataWidthType.Word)
                                     s.Append(" WORD");
                                 else
                                     s.Append(" BYTE");

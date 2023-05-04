@@ -399,6 +399,7 @@ namespace Final.ITP
 
                                 case OperandDefinitionKind.NearPointer:
                                     dataType |= DataType.Pointer;
+                                    flags |= InstructionFlags.Near;
                                     break;
 
                                 case OperandDefinitionKind.TypePointer:

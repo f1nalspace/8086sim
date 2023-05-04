@@ -35,6 +35,65 @@
             };
         }
 
+        public static DataType GetDataType(RegisterType name)
+        {
+            return name switch
+            {
+                RegisterType.RAX => DataType.QuadWord,
+                RegisterType.EAX => DataType.DoubleWord,
+                RegisterType.AX => DataType.Word,
+                RegisterType.AL => DataType.Byte,
+                RegisterType.AH => DataType.Byte,
+
+                RegisterType.RBX => DataType.QuadWord,
+                RegisterType.EBX => DataType.DoubleWord,
+                RegisterType.BX => DataType.Word,
+                RegisterType.BL => DataType.Byte,
+                RegisterType.BH => DataType.Byte,
+
+                RegisterType.RCX => DataType.QuadWord,
+                RegisterType.ECX => DataType.DoubleWord,
+                RegisterType.CX => DataType.Word,
+                RegisterType.CL => DataType.Byte,
+                RegisterType.CH => DataType.Byte,
+
+                RegisterType.RDX => DataType.QuadWord,
+                RegisterType.EDX => DataType.DoubleWord,
+                RegisterType.DX => DataType.Word,
+                RegisterType.DL => DataType.Byte,
+                RegisterType.DH => DataType.Byte,
+
+                RegisterType.RSP => DataType.QuadWord,
+                RegisterType.ESP => DataType.DoubleWord,
+                RegisterType.SP => DataType.Word,
+
+                RegisterType.RBP => DataType.QuadWord,
+                RegisterType.EBP => DataType.DoubleWord,
+                RegisterType.BP => DataType.Word,
+
+                RegisterType.RSI => DataType.QuadWord,
+                RegisterType.ESI => DataType.DoubleWord,
+                RegisterType.SI => DataType.Word,
+
+                RegisterType.RDI => DataType.QuadWord,
+                RegisterType.EDI => DataType.DoubleWord,
+                RegisterType.DI => DataType.Word,
+
+                RegisterType.CS => DataType.Word,
+                RegisterType.DS => DataType.Word,
+                RegisterType.SS => DataType.Word,
+                RegisterType.ES => DataType.Word,
+
+                RegisterType.CR => DataType.Word,
+                RegisterType.DR => DataType.Word,
+                RegisterType.TR => DataType.Word,
+                RegisterType.FS => DataType.Word,
+                RegisterType.GS => DataType.Word,
+
+                _ => 0
+            };
+        }
+
         public static byte GetLength(RegisterType name)
         {
             return name switch

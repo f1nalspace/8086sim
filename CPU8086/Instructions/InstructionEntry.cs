@@ -40,6 +40,7 @@ namespace Final.CPU8086.Instructions
             InstructionFlags.Lock,
             InstructionFlags.Rep,
             InstructionFlags.Segment,
+            InstructionFlags.Near,
             InstructionFlags.Far,
             InstructionFlags.SignExtendedImm8,
             InstructionFlags.Prefix,

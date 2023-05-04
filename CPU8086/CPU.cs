@@ -180,7 +180,44 @@ namespace Final.CPU8086
             InstructionOperand first = instruction.FirstOperand;
             InstructionOperand second = instruction.SecondOperand;
 
-            CyclesTable.Cycles cycles = _cycleTable.Get(instruction.Type, first.Type, second.Type);
+            CyclesTable.Cycles cycles = new CyclesTable.Cycles();
+
+            switch (instruction.Type)
+            {
+                case InstructionType.CALL:
+                    {
+                        if (first.Type == OperandType.Register || first.Type == OperandType.Segment || first.Type == OperandType.Accumulator)
+                            cycles = new CyclesTable.Cycles(16, 1);
+                        else if (first.Type == OperandType.Memory)
+                        {
+                            DataType dataType = first.DataType;
+                            if (dataType == DataType.Byte)
+                                cycles = new CyclesTable.Cycles(13, 1, true);
+                            else if (dataType == DataType.Word)
+                                cycles = new CyclesTable.Cycles(21, 2, true);
+                            else if (dataType == DataType.DoubleWord)
+                                cycles = new CyclesTable.Cycles(37, 2, true);
+                            else
+                                throw new NotSupportedException($"Operand data type '{dataType}' is not supported");
+                        }
+                        else if (first.Type == OperandType.Immediate)
+                        {
+                            if (instruction.Flags.HasFlag(InstructionFlags.Near))
+                                cycles = new CyclesTable.Cycles(19, 1);
+                            else if (instruction.Flags.HasFlag(InstructionFlags.Far))
+                                cycles = new CyclesTable.Cycles(28, 2);
+                            else
+                                throw new NotSupportedException($"Instruction flags '{instruction.Flags}' is not supported");
+                        } else
+                            throw new NotSupportedException($"Instruction type '{instruction.Type}' is not supported");
+                    }
+                    break;
+                default:
+                    cycles = _cycleTable.Get(instruction.Type, first.Type, second.Type);
+                    break;
+            }
+
+            
 
             uint result = cycles.Value;
             if (cycles.EA == 1)
@@ -665,16 +702,16 @@ namespace Final.CPU8086
                     return new InstructionOperand(s32: sourceOp.Value);
 
                 case OperandDefinitionKind.MemoryByte:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.Byte);
 
                 case OperandDefinitionKind.MemoryWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.Word);
 
                 case OperandDefinitionKind.MemoryDoubleWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.DoubleWord);
 
                 case OperandDefinitionKind.MemoryQuadWord:
-                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.QuadWord);
 
                 case OperandDefinitionKind.MemoryWordReal:
                 case OperandDefinitionKind.MemoryDoubleWordReal:
@@ -685,30 +722,30 @@ namespace Final.CPU8086
                 case OperandDefinitionKind.SourceRegister:
                     {
                         if (type == DataType.Byte)
-                            return new InstructionOperand(_regTable.GetByte(registerBits));
+                            return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
                         else if (type == DataType.Word)
-                            return new InstructionOperand(_regTable.GetWord(registerBits));
+                            return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
                         else
                             throw new NotSupportedException($"Unsupported type of '{type}' for source register");
                     }
 
                 case OperandDefinitionKind.RegisterByte:
-                    return new InstructionOperand(_regTable.GetByte(registerBits));
+                    return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
                 case OperandDefinitionKind.RegisterWord:
-                    return new InstructionOperand(_regTable.GetWord(registerBits));
+                    return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
                 case OperandDefinitionKind.RegisterDoubleWord:
                     break;
 
                 case OperandDefinitionKind.RegisterOrMemoryByte:
                     if (mode == ModType.RegisterMode)
-                        return new InstructionOperand(_regTable.GetByte(registerBits));
+                        return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
                     else
-                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.Byte);
                 case OperandDefinitionKind.RegisterOrMemoryWord:
                     if (mode == ModType.RegisterMode)
-                        return new InstructionOperand(_regTable.GetWord(registerBits));
+                        return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
                     else
-                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress));
+                        return new InstructionOperand(new MemoryAddress(eac, displacement, segmentType, segmentAddress), DataType.Word);
                 case OperandDefinitionKind.RegisterOrMemoryDoubleWord:
                 case OperandDefinitionKind.RegisterOrMemoryQuadWord:
                     break;
@@ -750,10 +787,10 @@ namespace Final.CPU8086
                         return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
 
                 case OperandDefinitionKind.FarPointer:
-                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (short)(offset & 0xFFFF), segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (short)(offset & 0xFFFF), segmentType, segmentAddress), DataType.Word);
 
                 case OperandDefinitionKind.NearPointer:
-                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (sbyte)(offset & 0xFF), segmentType, segmentAddress));
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (sbyte)(offset & 0xFF), segmentType, segmentAddress), DataType.Byte);
 
                 case OperandDefinitionKind.ST:
                     break;
@@ -765,96 +802,96 @@ namespace Final.CPU8086
                     break;
 
                 case OperandDefinitionKind.RAX:
-                    return new InstructionOperand(RegisterType.RAX);
+                    return new InstructionOperand(RegisterType.RAX, DataType.QuadWord);
                 case OperandDefinitionKind.EAX:
-                    return new InstructionOperand(RegisterType.EAX);
+                    return new InstructionOperand(RegisterType.EAX, DataType.DoubleWord);
                 case OperandDefinitionKind.AX:
-                    return new InstructionOperand(RegisterType.AX);
+                    return new InstructionOperand(RegisterType.AX, DataType.Word);
                 case OperandDefinitionKind.AL:
-                    return new InstructionOperand(RegisterType.AL);
+                    return new InstructionOperand(RegisterType.AL, DataType.Byte);
                 case OperandDefinitionKind.AH:
-                    return new InstructionOperand(RegisterType.AH);
+                    return new InstructionOperand(RegisterType.AH, DataType.Byte);
 
                 case OperandDefinitionKind.RBX:
-                    return new InstructionOperand(RegisterType.RBX);
+                    return new InstructionOperand(RegisterType.RBX, DataType.QuadWord);
                 case OperandDefinitionKind.EBX:
-                    return new InstructionOperand(RegisterType.EBX);
+                    return new InstructionOperand(RegisterType.EBX, DataType.DoubleWord);
                 case OperandDefinitionKind.BX:
-                    return new InstructionOperand(RegisterType.BX);
+                    return new InstructionOperand(RegisterType.BX, DataType.Word);
                 case OperandDefinitionKind.BL:
-                    return new InstructionOperand(RegisterType.BL);
+                    return new InstructionOperand(RegisterType.BL, DataType.Byte);
                 case OperandDefinitionKind.BH:
-                    return new InstructionOperand(RegisterType.BH);
+                    return new InstructionOperand(RegisterType.BH, DataType.Byte);
 
                 case OperandDefinitionKind.RCX:
-                    return new InstructionOperand(RegisterType.RCX);
+                    return new InstructionOperand(RegisterType.RCX, DataType.QuadWord);
                 case OperandDefinitionKind.ECX:
-                    return new InstructionOperand(RegisterType.ECX);
+                    return new InstructionOperand(RegisterType.ECX, DataType.DoubleWord);
                 case OperandDefinitionKind.CX:
-                    return new InstructionOperand(RegisterType.CX);
+                    return new InstructionOperand(RegisterType.CX, DataType.Word);
                 case OperandDefinitionKind.CL:
-                    return new InstructionOperand(RegisterType.CL);
+                    return new InstructionOperand(RegisterType.CL, DataType.Byte);
                 case OperandDefinitionKind.CH:
-                    return new InstructionOperand(RegisterType.CH);
+                    return new InstructionOperand(RegisterType.CH, DataType.Byte);
 
                 case OperandDefinitionKind.RDX:
-                    return new InstructionOperand(RegisterType.RDX);
+                    return new InstructionOperand(RegisterType.RDX, DataType.QuadWord);
                 case OperandDefinitionKind.EDX:
-                    return new InstructionOperand(RegisterType.EDX);
+                    return new InstructionOperand(RegisterType.EDX, DataType.DoubleWord);
                 case OperandDefinitionKind.DX:
-                    return new InstructionOperand(RegisterType.DX);
+                    return new InstructionOperand(RegisterType.DX, DataType.Word);
                 case OperandDefinitionKind.DL:
-                    return new InstructionOperand(RegisterType.DL);
+                    return new InstructionOperand(RegisterType.DL, DataType.Byte);
                 case OperandDefinitionKind.DH:
-                    return new InstructionOperand(RegisterType.DH);
+                    return new InstructionOperand(RegisterType.DH, DataType.Byte);
 
                 case OperandDefinitionKind.RSP:
-                    return new InstructionOperand(RegisterType.RSP);
+                    return new InstructionOperand(RegisterType.RSP, DataType.QuadWord);
                 case OperandDefinitionKind.ESP:
-                    return new InstructionOperand(RegisterType.ESP);
+                    return new InstructionOperand(RegisterType.ESP, DataType.DoubleWord);
                 case OperandDefinitionKind.SP:
-                    return new InstructionOperand(RegisterType.SP);
+                    return new InstructionOperand(RegisterType.SP, DataType.Word);
 
                 case OperandDefinitionKind.RBP:
-                    return new InstructionOperand(RegisterType.RBP);
+                    return new InstructionOperand(RegisterType.RBP, DataType.QuadWord);
                 case OperandDefinitionKind.EBP:
-                    return new InstructionOperand(RegisterType.EBP);
+                    return new InstructionOperand(RegisterType.EBP, DataType.DoubleWord);
                 case OperandDefinitionKind.BP:
-                    return new InstructionOperand(RegisterType.BP);
+                    return new InstructionOperand(RegisterType.BP, DataType.Word);
 
                 case OperandDefinitionKind.RSI:
-                    return new InstructionOperand(RegisterType.RSI);
+                    return new InstructionOperand(RegisterType.RSI, DataType.QuadWord);
                 case OperandDefinitionKind.ESI:
-                    return new InstructionOperand(RegisterType.ESI);
+                    return new InstructionOperand(RegisterType.ESI, DataType.DoubleWord);
                 case OperandDefinitionKind.SI:
-                    return new InstructionOperand(RegisterType.SI);
+                    return new InstructionOperand(RegisterType.SI, DataType.Word);
 
                 case OperandDefinitionKind.RDI:
-                    return new InstructionOperand(RegisterType.RDI);
+                    return new InstructionOperand(RegisterType.RDI, DataType.QuadWord);
                 case OperandDefinitionKind.EDI:
-                    return new InstructionOperand(RegisterType.EDI);
+                    return new InstructionOperand(RegisterType.EDI, DataType.DoubleWord);
                 case OperandDefinitionKind.DI:
-                    return new InstructionOperand(RegisterType.DI);
+                    return new InstructionOperand(RegisterType.DI, DataType.Word);
 
                 case OperandDefinitionKind.CS:
-                    return new InstructionOperand(RegisterType.CS);
+                    return new InstructionOperand(RegisterType.CS, DataType.Word);
                 case OperandDefinitionKind.DS:
-                    return new InstructionOperand(RegisterType.DS);
+                    return new InstructionOperand(RegisterType.DS, DataType.Word);
                 case OperandDefinitionKind.SS:
-                    return new InstructionOperand(RegisterType.SS);
+                    return new InstructionOperand(RegisterType.SS, DataType.Word);
                 case OperandDefinitionKind.ES:
-                    return new InstructionOperand(RegisterType.ES);
+                    return new InstructionOperand(RegisterType.ES, DataType.Word);
 
                 case OperandDefinitionKind.CR:
-                    return new InstructionOperand(RegisterType.CR);
+                    return new InstructionOperand(RegisterType.CR, DataType.Word);
                 case OperandDefinitionKind.DR:
-                    return new InstructionOperand(RegisterType.DR);
+                    return new InstructionOperand(RegisterType.DR, DataType.Word);
                 case OperandDefinitionKind.TR:
-                    return new InstructionOperand(RegisterType.TR);
+                    return new InstructionOperand(RegisterType.TR, DataType.Word);
                 case OperandDefinitionKind.FS:
-                    return new InstructionOperand(RegisterType.FS);
+                    return new InstructionOperand(RegisterType.FS, DataType.Word);
                 case OperandDefinitionKind.GS:
-                    return new InstructionOperand(RegisterType.GS);
+                    return new InstructionOperand(RegisterType.GS, DataType.Word);
 
                 default:
                     break;
@@ -1246,7 +1283,7 @@ namespace Final.CPU8086
                         continue;
 
                     case OperandDefinitionKind.NearPointer:
-                        Contract.Assert(!entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
+                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Near) && entry.DataType.HasFlag(DataType.Pointer));
                         explicitType |= entry.DataType;
                         break; // We want to create an operand for this
 

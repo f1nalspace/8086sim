@@ -9,9 +9,10 @@ namespace Final.CPU8086.Instructions
         Lock = 1 << 0,
         Rep = 1 << 1,
         Segment = 1 << 2,
-        Far = 1 << 3,
-        SignExtendedImm8 = 1 << 4,
-        Prefix = 1 << 5,
-        Override = 1 << 6,
+        Near = 1 << 3,
+        Far = 1 << 4,
+        SignExtendedImm8 = 1 << 5,
+        Prefix = 1 << 6,
+        Override = 1 << 7,
     }
 }

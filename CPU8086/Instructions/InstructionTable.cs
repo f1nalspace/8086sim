@@ -38,8 +38,8 @@ namespace Final.CPU8086.Instructions
             // | 1 1 0 |  DH   | SI    |
             // | 1 1 1 |  BH   | DI    |
             _opToList[0] = new IL(0b00000000,
-                new IE(0x00, new MNE(IT.ADD, "ADD"), "B", IF.None, DT.None, "o---szap", "8086", 2, 4, new FieldDefinition[] { "mr", "d0", "d1" }, new OperandDefinition[] { "rmb", "rb" })
-            );
+            new IE(0x00, new MNE(IT.ADD, "ADD"), "B", IF.None, DT.None, "o---szap", "8086", 2, 4, new FieldDefinition[] { "mr", "d0", "d1" }, new OperandDefinition[] { "rmb", "rb" })
+        );
             _opToList[1] = new IL(0b00000001,
                 new IE(0x01, new MNE(IT.ADD, "ADD"), "W", IF.None, DT.None, "o---szap", "8086", 2, 4, new FieldDefinition[] { "mr", "d0", "d1" }, new OperandDefinition[] { "rmw", "rw" })
             );
@@ -718,10 +718,10 @@ namespace Final.CPU8086.Instructions
                 new IE(0xE7, new MNE(IT.OUT, "OUT"), "W", IF.None, DT.None, "--------", "8086", 2, 2, new FieldDefinition[] { "i0" }, new OperandDefinition[] { "ib", "ax" })
             );
             _opToList[232] = new IL(0b11101000,
-                new IE(0xE8, new MNE(IT.CALL, "CALL"), "", IF.None, DT.Pointer, "--------", "8086", 3, 3, new FieldDefinition[] { "o0", "o1" }, new OperandDefinition[] { "np" })
+                new IE(0xE8, new MNE(IT.CALL, "CALL"), "", IF.Near, DT.Pointer, "--------", "8086", 3, 3, new FieldDefinition[] { "o0", "o1" }, new OperandDefinition[] { "np" })
             );
             _opToList[233] = new IL(0b11101001,
-                new IE(0xE9, new MNE(IT.JMP, "JMP"), "", IF.None, DT.Pointer, "--------", "8086", 3, 3, new FieldDefinition[] { "o0", "o1" }, new OperandDefinition[] { "np" })
+                new IE(0xE9, new MNE(IT.JMP, "JMP"), "", IF.Near, DT.Pointer, "--------", "8086", 3, 3, new FieldDefinition[] { "o0", "o1" }, new OperandDefinition[] { "np" })
             );
             _opToList[234] = new IL(0b11101010,
                 new IE(0xEA, new MNE(IT.JMP, "JMP"), "", IF.Far, DT.Pointer, "--------", "8086", 5, 5, new FieldDefinition[] { "o0", "o1", "s0", "s1" }, new OperandDefinition[] { "far", "ptr", "fp" })

@@ -18,18 +18,18 @@ namespace Final.CPU8086.Instructions
             }
         }
 
-        public Cycles[,,] _cycles = new Cycles[0xFF, 6, 6];
+        public Cycles[,,] _cyclesFromOperand = new Cycles[0xFF, 6, 6];
 
         private void Set(InstructionType type, OperandType a, OperandType b, Cycles cycles)
         {
-            _cycles[(int)type, (int)a, (int)b] = cycles;
+            _cyclesFromOperand[(int)type, (int)a, (int)b] = cycles;
         }
 
-        public Cycles Get(InstructionType type, OperandType a, OperandType b) => _cycles[(int)type, (int)a, (int)b];
+        public Cycles Get(InstructionType type, OperandType a, OperandType b) => _cyclesFromOperand[(int)type, (int)a, (int)b];
 
         public CyclesTable()
         {
-            Array.Clear(_cycles);
+            Array.Clear(_cyclesFromOperand);
 
             Set(InstructionType.AAA, OperandType.None, OperandType.None, new Cycles(4));
             Set(InstructionType.AAD, OperandType.None, OperandType.None, new Cycles(60));
@@ -61,9 +61,11 @@ namespace Final.CPU8086.Instructions
             Set(InstructionType.MOV, OperandType.Accumulator, OperandType.Memory, new Cycles(10, 1));
             Set(InstructionType.MOV, OperandType.Register, OperandType.Register, new Cycles(2));
             Set(InstructionType.MOV, OperandType.Register, OperandType.Accumulator, new Cycles(2));
+            Set(InstructionType.MOV, OperandType.Accumulator, OperandType.Register, new Cycles(2));
             Set(InstructionType.MOV, OperandType.Register, OperandType.Memory, new Cycles(8, 1, true));
             Set(InstructionType.MOV, OperandType.Memory, OperandType.Register, new Cycles(9, 1, true));
             Set(InstructionType.MOV, OperandType.Register, OperandType.Immediate, new Cycles(4));
+            Set(InstructionType.MOV, OperandType.Accumulator, OperandType.Immediate, new Cycles(4));
             Set(InstructionType.MOV, OperandType.Memory, OperandType.Immediate, new Cycles(10, 1, true));
             Set(InstructionType.MOV, OperandType.Segment, OperandType.Register, new Cycles(2));
             Set(InstructionType.MOV, OperandType.Segment, OperandType.Memory, new Cycles(8, 1, true));

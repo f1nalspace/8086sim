@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 using Final.CPU8086.Instructions;
+using Final.CPU8086.Types;
 
 namespace Final.CPU8086
 {
@@ -15,17 +16,34 @@ namespace Final.CPU8086
             {
                 if (IsDirectPosition)
                 {
+                    if (values.Length >= 3 && values[2] is AssemblyLine line)
+                    {
+                        if (line.Type == AssemblyLineType.SourceLabel)
+                            return false;
+                    }
                     return testIndex == streamIndex;
                 }
                 else
                 {
                     Instruction instruction = null;
-                    if (values.Length >= 3 && values[2] is Instruction valueInstruction)
-                        instruction = valueInstruction;
+                    AssemblyLine line = null;
+                    if (values.Length >= 3)
+                    {
+                        if (values[2] is Instruction valueInstruction)
+                            instruction = valueInstruction;
+                        else if (values[2] is AssemblyLine valueLine)
+                            line = valueLine;
+                    }
 
                     uint len = 0;
                     if (values.Length >= 4 && values[3] is uint maxLen)
                         len = maxLen;
+
+                    if (line != null)
+                    {
+                        if (line.Type == AssemblyLineType.SourceLabel)
+                            return false;
+                    }
 
                     if (instruction != null)
                     {

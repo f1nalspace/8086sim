@@ -36,6 +36,7 @@
                         <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                             <Binding Path="Position" />
                             <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                            <Binding />
                         </MultiBinding>
                     </DataTrigger.Binding>
                     <Setter Property="Source" Value="Resources/Forward_16x16.png" />
@@ -530,7 +531,8 @@
                                                                 <DataTrigger.Binding>
                                                                     <MultiBinding Converter="{StaticResource isOnInstructionConverter}">
                                                                         <Binding Path="Position" />
-                                                                       <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                        <Binding Path="DataContext.CurrentStreamPosition" UpdateSourceTrigger="PropertyChanged" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Window}" />
+                                                                        <Binding />
                                                                     </MultiBinding>
                                                                 </DataTrigger.Binding>
                                                                 <Setter Property="Background" Value="LightBlue" />
@@ -544,7 +546,17 @@
                                                     <ColumnDefinition Width="*" />
                                                 </Grid.ColumnDefinitions>
                                                 <Image Grid.Column="0" Width="16" Height="16" Style="{StaticResource imgPositionIcon}" />
-                                                <TextBlock Grid.Column="2" Text="{Binding}" />
+                                                <TextBlock Grid.Column="2" Text="{Binding}">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Type}" Value="SourceLabel">
+                                                                    <Setter Property="Foreground" Value="DarkGray" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
                                             </Grid>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

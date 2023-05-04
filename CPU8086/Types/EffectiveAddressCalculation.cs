@@ -109,18 +109,19 @@
             // Direct
             _cycles[(byte)EffectiveAddressCalculation.DirectAddress] = 6;
             // Register indirect
+            _cycles[(byte)EffectiveAddressCalculation.BX] = 5;
+            //_cycles[(byte)EffectiveAddressCalculation.BP] = 5;
             _cycles[(byte)EffectiveAddressCalculation.SI] = 5;
             _cycles[(byte)EffectiveAddressCalculation.DI] = 5;
-            _cycles[(byte)EffectiveAddressCalculation.BX] = 5;
             // Register relative
-            _cycles[(byte)EffectiveAddressCalculation.SI_D8] = 9;
-            _cycles[(byte)EffectiveAddressCalculation.SI_D16] = 9;
-            _cycles[(byte)EffectiveAddressCalculation.DI_D8] = 9;
-            _cycles[(byte)EffectiveAddressCalculation.DI_D16] = 9;
             _cycles[(byte)EffectiveAddressCalculation.BX_D8] = 9;
             _cycles[(byte)EffectiveAddressCalculation.BX_D16] = 9;
             _cycles[(byte)EffectiveAddressCalculation.BP_D8] = 9;
             _cycles[(byte)EffectiveAddressCalculation.BP_D16] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.SI_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.SI_D16] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.DI_D8] = 9;
+            _cycles[(byte)EffectiveAddressCalculation.DI_D16] = 9;
             // Based indexed
             _cycles[(byte)EffectiveAddressCalculation.BP_DI] = 7;
             _cycles[(byte)EffectiveAddressCalculation.BX_SI] = 7;

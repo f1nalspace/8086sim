@@ -8,7 +8,9 @@ namespace Final.CPU8086.Instructions
     {
         None = 0,
         Register,
-        Address,
+        Accumulator,
+        Segment,
+        Memory,
         Immediate,
         Value,
     }
@@ -29,7 +31,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(RegisterType register)
         {
-            Type = OperandType.Register;
+            Type = Types.Register.IsAccumulator(register) ? OperandType.Accumulator : Types.Register.IsSegment(register) ? OperandType.Segment : OperandType.Register;
             Memory = new MemoryAddress();
             Immediate = new Immediate();
             Value = 0;
@@ -68,7 +70,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(MemoryAddress address)
         {
-            Type = OperandType.Address;
+            Type = OperandType.Memory;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Value = 0;
@@ -77,7 +79,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionOperand(int value)
         {
-            Type = OperandType.Address;
+            Type = OperandType.Memory;
             Register = RegisterType.Unknown;
             Immediate = new Immediate();
             Memory = new MemoryAddress();
@@ -90,10 +92,12 @@ namespace Final.CPU8086.Instructions
             switch (Type)
             {
                 case OperandType.Register:
+                case OperandType.Accumulator:
+                case OperandType.Segment:
                     if (!Register.Equals(other.Register))
                         return false;
                     break;
-                case OperandType.Address:
+                case OperandType.Memory:
                     if (!Memory.Equals(other.Memory))
                         return false;
                     break;
@@ -113,8 +117,10 @@ namespace Final.CPU8086.Instructions
         {
             return Type switch
             {
-                OperandType.Register => HashCode.Combine(Type, Register),
-                OperandType.Address => HashCode.Combine(Type, Memory),
+                OperandType.Register or
+                OperandType.Accumulator or
+                OperandType.Segment => HashCode.Combine(Type, Register),
+                OperandType.Memory => HashCode.Combine(Type, Memory),
                 OperandType.Immediate => HashCode.Combine(Type, Immediate),
                 OperandType.Value => HashCode.Combine(Type, Value),
                 _ => HashCode.Combine(Type),
@@ -128,8 +134,10 @@ namespace Final.CPU8086.Instructions
             return Type switch
             {
                 OperandType.Register => $"Reg: {Types.Register.GetName(Register)}",
+                OperandType.Accumulator => $"Acc: {Types.Register.GetName(Register)}",
+                OperandType.Segment => $"Seg: {Types.Register.GetName(Register)}",
                 OperandType.Immediate => $"Imm: {Immediate}",
-                OperandType.Address => $"Mem: {Memory}",
+                OperandType.Memory => $"Mem: {Memory}",
                 OperandType.Value => $"Value: {Value}",
                 _ => string.Empty
             };

@@ -570,6 +570,7 @@
                                     <DataGridTextColumn Header="Length" Binding="{Binding Length}" />
                                     <DataGridTextColumn Header="Flags" Binding="{Binding Flags}" />
                                     <DataGridTextColumn Header="Width" Binding="{Binding Width.Type}" />
+                                    <DataGridTextColumn Header="Cycles" Binding="{Binding Cycles}" />
                                     <DataGridTextColumn Header="Op-0" Binding="{Binding FirstOperand}" />
                                     <DataGridTextColumn Header="Op-1" Binding="{Binding SecondOperand}" />
                                 </DataGrid.Columns>

@@ -7,6 +7,7 @@ namespace Final.CPU8086.Instructions
     public class Instruction : IEquatable<Instruction>
     {
         public uint Position { get; }
+        public uint Cycles { get; internal set; }
         public byte OpCode { get; }
         public byte Length { get; }
         public Mnemonic Mnemonic { get; }
@@ -21,6 +22,7 @@ namespace Final.CPU8086.Instructions
         public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, InstructionOperand[] operands)
         {
             Position = position;
+            Cycles = 0;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
@@ -32,6 +34,7 @@ namespace Final.CPU8086.Instructions
         public Instruction(uint position, byte opCode, byte length, Mnemonic mnemonic, DataWidth width, InstructionFlags flags, ReadOnlySpan<InstructionOperand> operands)
         {
             Position = position;
+            Cycles = 0;
             OpCode = opCode;
             Mnemonic = mnemonic;
             Width = width;
@@ -76,7 +79,7 @@ namespace Final.CPU8086.Instructions
             bool hadRegister = false;
             foreach (InstructionOperand op in Operands)
             {
-                if (op.Type == OperandType.Register)
+                if (op.Type == OperandType.Register || op.Type == OperandType.Accumulator || op.Type == OperandType.Segment)
                     hadRegister |= true;
             }
 
@@ -92,12 +95,14 @@ namespace Final.CPU8086.Instructions
                 switch (op.Type)
                 {
                     case OperandType.Register:
+                    case OperandType.Accumulator:
+                    case OperandType.Segment:
                         {
                             s.Append(' ');
                             s.Append(Register.GetName(op.Register));
                         }
                         break;
-                    case OperandType.Address:
+                    case OperandType.Memory:
                         {
                             MemoryAddress mem = op.Memory;
                             if (Flags.HasFlag(InstructionFlags.Far))

@@ -11,6 +11,30 @@
             Type = type;
         }
 
+        public static bool IsAccumulator(RegisterType type)
+        {
+            return type switch
+            {
+                RegisterType.RAX or
+                RegisterType.EAX or
+                RegisterType.AX or
+                RegisterType.AL => true,
+                _ => false
+            };
+        }
+
+        public static bool IsSegment(RegisterType type)
+        {
+            return type switch
+            {
+                RegisterType.SS or
+                RegisterType.DS or
+                RegisterType.ES or
+                RegisterType.CS => true,
+                _ => false
+            };
+        }
+
         public static byte GetLength(RegisterType name)
         {
             return name switch

@@ -124,6 +124,8 @@ namespace Final.CPU8086.Execution
             switch (operand.Type)
             {
                 case OperandType.Register:
+                case OperandType.Accumulator:
+                case OperandType.Segment:
                     {
                         OneOf<Immediate, Error> ilr = cpu.LoadRegister(operand.Register);
                         if (ilr.IsT1)
@@ -131,7 +133,7 @@ namespace Final.CPU8086.Execution
                         result = ilr.AsT0;
                     }
                     break;
-                case OperandType.Address:
+                case OperandType.Memory:
                     {
                         DataType dataType = WidthToType(instruction.Width);
                         OneOf<Immediate, Error> alr = cpu.LoadMemory(operand.Memory, dataType);
@@ -159,6 +161,8 @@ namespace Final.CPU8086.Execution
             switch (operand.Type)
             {
                 case OperandType.Register:
+                case OperandType.Accumulator:
+                case OperandType.Segment:
                     {
                         OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, operand.Register, source);
                         if (storeRes.IsT1)
@@ -166,7 +170,7 @@ namespace Final.CPU8086.Execution
 
                         return storeRes.AsT0;
                     }
-                case OperandType.Address:
+                case OperandType.Memory:
                     {
                         DataType dataType = WidthToType(instruction.Width);
                         OneOf<byte, Error> storeRes = cpu.StoreMemory(instruction, state, operand.Memory, dataType, source);
@@ -190,10 +194,9 @@ namespace Final.CPU8086.Execution
                 case InstructionType.PUSH:
                 case InstructionType.POP:
                     {
-                        const OperandType expectedOperandType = OperandType.Register;
                         InstructionOperand op = instruction.Operands[0];
-                        if (op.Type != expectedOperandType)
-                            return new Error(ErrorCode.MismatchInstructionOperands, $"Expect operand type '{expectedOperandType}', but got '{op.Type}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+                        if (!(op.Type == OperandType.Register || op.Type == OperandType.Accumulator || op.Type == OperandType.Segment))
+                            return new Error(ErrorCode.MismatchInstructionOperands, $"Expect operand type '{OperandType.Register}' or '{OperandType.Accumulator}' or '{OperandType.Segment}', but got '{op.Type}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
 
                         DataType dataType = WidthToType(instruction.Width);
                         byte dataLen = WidthToLength(instruction.Width);
@@ -344,60 +347,13 @@ namespace Final.CPU8086.Execution
             }
             short initialCX = cx;
 
+            // Based on Table 2-15 (Page 61)
             bool canJump;
             switch (type)
             {
-                // Jump if Zero, Jump if Equal (ZF == 1)
-                case InstructionType.JE:
-                    canJump = isZero; break;
-                // Jump if Not Zero, Jump if Not Equal (ZF == 0)
-                case InstructionType.JNE:
-                    canJump = !isZero; break;
-                // Jump if Carry (CF == 1)
-                case InstructionType.JC:
-                    canJump = isCarry; break;
-                // Jump if No Carry (CF == 0)
-                case InstructionType.JNC:
-                    canJump = !isCarry; break;
-                // Jump if Overflow (OF == 1)
-                case InstructionType.JO:
-                    canJump = isOverflow; break;
-                // Jump if No Overflow (OF == 0)
-                case InstructionType.JNO:
-                    canJump = !isOverflow; break;
-                // Jump if Signed (SF == 1)
-                case InstructionType.JS:
-                    canJump = isSign; break;
-                // Jump if No Signed (SF == 0)
-                case InstructionType.JNS:
-                    canJump = !isSign; break;
-                // Jump if Parity, Jump if Parity is Even (PF == 1)
-                case InstructionType.JP:
-                    canJump = isParity; break;
-                // Jump if Not Parity, Jump if Parity is Odd (PF == 0)
-                case InstructionType.JNP:
-                    canJump = !isParity; break;
-
-                // Jump if CX Register is zero (CX == 0)
-                case InstructionType.JCXZ:
-                    canJump = cx == 0; break;
-
-                // Jump if Greater, Jump if Not Less or Equal (ZF == 0 && SF == OF)
-                case InstructionType.JG:
-                    canJump = !isZero && isSign == isOverflow; break;
-                // Jump if Greater or Equal, Jump if Not Less (SF == OF)
-                case InstructionType.JGE:
-                    canJump = isSign == isOverflow; break;
-                // Jump if Less, Jump if Not Greater or Equal (SF != OF)
-                case InstructionType.JL:
-                    canJump = isSign != isOverflow; break;
-                // Jump if Less or Equal, Jump if Not Greater (ZF == 1 || SF != OF)
-                case InstructionType.JLE:
-                    canJump = isZero || isSign != isOverflow; break;
-
                 // Jump if Above, Jump if Not Below or Equal (ZF == 0 && CF == 0)
                 case InstructionType.JA:
-                    canJump = !isZero && !isCarry; break;
+                    canJump = (isZero || isCarry) == false; break;
                 // Jump if Above or Equal, Jump if Not Below (CF == 0)
                 case InstructionType.JAE:
                     canJump = !isCarry; break;
@@ -406,7 +362,53 @@ namespace Final.CPU8086.Execution
                     canJump = isCarry; break;
                 // Jump if Below or Equal, Jump if Not Above  (ZF == 1 || CF == 1)
                 case InstructionType.JBE:
-                    canJump = isZero || isCarry; break;
+                    canJump = (isZero || isCarry) == true; break;
+                // Jump if Carry (CF == 1)
+                case InstructionType.JC:
+                    canJump = isCarry; break;
+                // Jump if Zero, Jump if Equal (ZF == 1)
+                case InstructionType.JE:
+                    canJump = isZero; break;
+                // Jump if Greater, Jump if Not Less or Equal (ZF == 0 && SF == OF)
+                case InstructionType.JG:
+                    canJump = ((isSign ^ isOverflow) | isZero) == false; break;
+                // Jump if Greater or Equal, Jump if Not Less (SF == OF)
+                case InstructionType.JGE:
+                    canJump = (isSign ^ isOverflow) == false; break;
+                // Jump if Less, Jump if Not Greater or Equal (SF != OF)
+                case InstructionType.JL:
+                    canJump = (isSign ^ isOverflow) == true; break;
+                // Jump if Less or Equal, Jump if Not Greater (ZF == 1 || SF != OF)
+                case InstructionType.JLE:
+                    canJump = ((isSign ^ isOverflow) | isZero) == true; break;
+                // Jump if No Carry (CF == 0)
+                case InstructionType.JNC:
+                    canJump = !isCarry; break;
+                // Jump if Not Zero, Jump if Not Equal (ZF == 0)
+                case InstructionType.JNE:
+                    canJump = !isZero; break;
+                // Jump if No Overflow (OF == 0)
+                case InstructionType.JNO:
+                    canJump = !isOverflow; break;
+                // Jump if Not Parity, Jump if Parity is Odd (PF == 0)
+                case InstructionType.JNP:
+                    canJump = !isParity; break;
+                // Jump if No Signed (SF == 0)
+                case InstructionType.JNS:
+                    canJump = !isSign; break;
+                // Jump if Overflow (OF == 1)
+                case InstructionType.JO:
+                    canJump = isOverflow; break;
+                // Jump if Parity, Jump if Parity is Even (PF == 1)
+                case InstructionType.JP:
+                    canJump = isParity; break;
+                // Jump if Signed (SF == 1)
+                case InstructionType.JS:
+                    canJump = isSign; break;
+
+                // Jump if CX Register is zero (CX == 0)
+                case InstructionType.JCXZ:
+                    canJump = cx == 0; break;
 
                 // Decrement CX and Loop if CX == 0
                 case InstructionType.LOOP:

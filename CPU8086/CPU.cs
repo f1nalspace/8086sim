@@ -68,6 +68,7 @@ namespace Final.CPU8086
 
         private static readonly REGMappingTable _regTable = new REGMappingTable();
         private static readonly EffectiveAddressCalculationTable _effectiveAddressCalculationTable = new EffectiveAddressCalculationTable();
+        private static readonly CyclesTable _cycleTable = new CyclesTable();
 
         private readonly InstructionTable _entryTable = new InstructionTable();
 
@@ -162,270 +163,43 @@ namespace Final.CPU8086
             return program.Length;
         }
 
-        public uint ComputeCycles(Instruction instruction)
+        public static uint ComputeCycles(Instruction instruction)
         {
             byte ea = 0;
-            foreach (var op in instruction.Operands)
+            bool isEvenAddress = false;
+            foreach (InstructionOperand op in instruction.Operands)
             {
-                if (op.Type == OperandType.Address)
+                if (op.Type == OperandType.Memory)
                 {
                     ea = _effectiveAddressCalculationTable.GetCycles(op.Memory.EAC);
+                    isEvenAddress = op.Memory.Displacement % 2 == 0;
                     break;
                 }
             }
 
-            switch (instruction.Type)
+            InstructionOperand first = instruction.FirstOperand;
+            InstructionOperand second = instruction.SecondOperand;
+
+            CyclesTable.Cycles cycles = _cycleTable.Get(instruction.Type, first.Type, second.Type);
+
+            uint result = cycles.Value;
+            if (cycles.EA == 1)
             {
-                case InstructionType.AAA:
-                    break;
-                case InstructionType.AAD:
-                    break;
-                case InstructionType.AAM:
-                    break;
-                case InstructionType.AAS:
-                    break;
-                case InstructionType.ADC:
-                    break;
-                case InstructionType.ADD:
-                    break;
-                case InstructionType.AND:
-                    break;
-                case InstructionType.CALL:
-                    break;
-                case InstructionType.CBW:
-                    break;
-                case InstructionType.CLC:
-                    break;
-                case InstructionType.CLD:
-                    break;
-                case InstructionType.CLI:
-                    break;
-                case InstructionType.CMC:
-                    break;
-                case InstructionType.CMP:
-                    break;
-                case InstructionType.CMPSB:
-                    break;
-                case InstructionType.CMPSW:
-                    break;
-                case InstructionType.CWD:
-                    break;
-                case InstructionType.DAA:
-                    break;
-                case InstructionType.DAS:
-                    break;
-                case InstructionType.DEC:
-                    break;
-                case InstructionType.DIV:
-                    break;
-                case InstructionType.HLT:
-                    break;
-                case InstructionType.IDIV:
-                    break;
-                case InstructionType.IMUL:
-                    break;
-                case InstructionType.IN:
-                    break;
-                case InstructionType.INC:
-                    break;
-                case InstructionType.INT:
-                    break;
-                case InstructionType.INTO:
-                    break;
-                case InstructionType.IRET:
-                    break;
-                case InstructionType.JA:
-                    break;
-                case InstructionType.JAE:
-                    break;
-                case InstructionType.JB:
-                    break;
-                case InstructionType.JBE:
-                    break;
-                case InstructionType.JC:
-                    break;
-                case InstructionType.JCXZ:
-                    break;
-                case InstructionType.JE:
-                    break;
-                case InstructionType.JG:
-                    break;
-                case InstructionType.JGE:
-                    break;
-                case InstructionType.JL:
-                    break;
-                case InstructionType.JLE:
-                    break;
-                case InstructionType.JMP:
-                    break;
-                case InstructionType.JNC:
-                    break;
-                case InstructionType.JNE:
-                    break;
-                case InstructionType.JNO:
-                    break;
-                case InstructionType.JNS:
-                    break;
-                case InstructionType.JNP:
-                    break;
-                case InstructionType.JO:
-                    break;
-                case InstructionType.JP:
-                    break;
-                case InstructionType.JS:
-                    break;
-                case InstructionType.LAHF:
-                    break;
-                case InstructionType.LDS:
-                    break;
-                case InstructionType.LEA:
-                    break;
-                case InstructionType.LES:
-                    break;
-                case InstructionType.LODSB:
-                    break;
-                case InstructionType.LODSW:
-                    break;
-                case InstructionType.LOOP:
-                    break;
-                case InstructionType.LOOPE:
-                    break;
-                case InstructionType.LOOPNZ:
-                    break;
-                case InstructionType.MOV:
-                    {
-                        // https://www.oocities.org/mc_introtocomputers/Instruction_Timing.PDF
-                        if (instruction.Operands.Length == 2)
-                        {
-                            InstructionOperand destOperand = instruction.Operands[0];
-                            InstructionOperand sourceOperand = instruction.Operands[1];
-                            if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Register && sourceOperand.Register == RegisterType.AX)
-                                return 10U; // ACC -> MEM
-                            else if (destOperand.Type == OperandType.Register && destOperand.Register == RegisterType.AX && sourceOperand.Type == OperandType.Address)
-                                return 10U; // MEM -> ACC
-                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Register)
-                                return 2U; // REG -> REG
-                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Address)
-                                return 8U + ea; // MEM -> REG + EA
-                            else if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Register)
-                                return 9U + ea; // REG -> MEM + EA
-                            else if (destOperand.Type == OperandType.Register && sourceOperand.Type == OperandType.Immediate)
-                                return 4U; // IMM -> REG
-                            else if (destOperand.Type == OperandType.Address && sourceOperand.Type == OperandType.Immediate)
-                                return 10U + ea; // IMM -> MEM + EA
-                            else if (destOperand.Type == OperandType.Register && (destOperand.Register == RegisterType.SS || destOperand.Register == RegisterType.DS || destOperand.Register == RegisterType.ES) && sourceOperand.Type == OperandType.Register)
-                                return 2U; // REG -> SS, DS, ES
-                            else if (destOperand.Type == OperandType.Register && (destOperand.Register == RegisterType.SS || destOperand.Register == RegisterType.DS || destOperand.Register == RegisterType.ES) && sourceOperand.Type == OperandType.Address)
-                                return 8U + ea; // MEM -> SS, DS, ES
-                        }
-                    }
-                    break;
-                case InstructionType.MOVSB:
-                    break;
-                case InstructionType.MOVSW:
-                    break;
-                case InstructionType.MUL:
-                    break;
-                case InstructionType.NEG:
-                    break;
-                case InstructionType.NOP:
-                    break;
-                case InstructionType.NOT:
-                    break;
-                case InstructionType.OR:
-                    break;
-                case InstructionType.OUT:
-                    break;
-                case InstructionType.POP:
-                    break;
-                case InstructionType.POPF:
-                    break;
-                case InstructionType.PUSH:
-                    break;
-                case InstructionType.PUSHF:
-                    break;
-                case InstructionType.RCL:
-                    break;
-                case InstructionType.RCR:
-                    break;
-                case InstructionType.REPE:
-                    break;
-                case InstructionType.RET:
-                    break;
-                case InstructionType.RETF:
-                    break;
-                case InstructionType.ROL:
-                    break;
-                case InstructionType.ROR:
-                    break;
-                case InstructionType.SAHF:
-                    break;
-                case InstructionType.SAL:
-                    break;
-                case InstructionType.SHL:
-                    break;
-                case InstructionType.SAR:
-                    break;
-                case InstructionType.SBB:
-                    break;
-                case InstructionType.SCASB:
-                    break;
-                case InstructionType.SCASW:
-                    break;
-                case InstructionType.SHR:
-                    break;
-                case InstructionType.STC:
-                    break;
-                case InstructionType.STD:
-                    break;
-                case InstructionType.STI:
-                    break;
-                case InstructionType.STOSB:
-                    break;
-                case InstructionType.STOSW:
-                    break;
-                case InstructionType.SUB:
-                    break;
-                case InstructionType.TEST:
-                    break;
-                case InstructionType.WAIT:
-                    break;
-                case InstructionType.XCHG:
-                    break;
-                case InstructionType.XLAT:
-                    break;
-                case InstructionType.XOR:
-                    break;
-                case InstructionType.LOCK:
-                    break;
-                case InstructionType.REPNE:
-                    break;
-                case InstructionType.REP:
-                    break;
-                case InstructionType.CS:
-                    break;
-                case InstructionType.SS:
-                    break;
-                case InstructionType.DS:
-                    break;
-                case InstructionType.ES:
-                    break;
-                case InstructionType.FS:
-                    break;
-                case InstructionType.GS:
-                    break;
-                case InstructionType.DATA8:
-                    break;
-                case InstructionType.DATA16:
-                    break;
-                case InstructionType.ADDR8:
-                    break;
-                case InstructionType.ADDR16:
-                    break;
-                default:
-                    break;
+                result += ea;
+
+                if (!isEvenAddress)
+                {
+                    if (cycles.Transfers > 0)
+                        result *= (cycles.Transfers + 1U);
+                    else
+                        result += 4;
+                }
             }
-            return 0;
+
+            if (instruction.Flags.HasFlag(InstructionFlags.Segment))
+                result += 2; // 2 Clocks for a segment override
+
+            return result;
         }
 
         public OneOf<Immediate, Error> LoadRegister(RegisterType type)
@@ -627,7 +401,7 @@ namespace Final.CPU8086
             return result;
         }
 
-        
+
 
         static RegisterType SegmentToRegister(SegmentType type)
         {
@@ -747,7 +521,7 @@ namespace Final.CPU8086
                 case DataType.Word:
                     {
                         ushort u16 = (ushort)(
-                            (Memory[absoluteAddress + 0] << 0) | 
+                            (Memory[absoluteAddress + 0] << 0) |
                             (Memory[absoluteAddress + 1] << 8));
                         return new Immediate(u16);
                     }
@@ -830,9 +604,9 @@ namespace Final.CPU8086
                 case DataType.DoubleWord:
                     {
                         uint oldValue = (uint)(
-                            (Memory[absoluteAddress + 0] << 0) | 
-                            (Memory[absoluteAddress + 1] << 8) | 
-                            (Memory[absoluteAddress + 2] << 16) | 
+                            (Memory[absoluteAddress + 0] << 0) |
+                            (Memory[absoluteAddress + 1] << 8) |
+                            (Memory[absoluteAddress + 2] << 16) |
                             (Memory[absoluteAddress + 3] << 24));
                         Immediate oldMemory;
                         if (type == DataType.Int)
@@ -1543,7 +1317,12 @@ namespace Final.CPU8086
                 return new Error(ErrorCode.InstructionLengthTooLarge, $"The instruction length '{length}' of '{entry}' exceeds the max length of '{entry.MaxLength}' bytes", position);
 
             Span<InstructionOperand> actualOps = targetOps.Slice(0, opCount);
-            return new Instruction(position, entry.Op, (byte)length, entry.Type, dataWidth, flags, actualOps);
+
+            Instruction instruction = new Instruction(position, entry.Op, (byte)length, entry.Type, dataWidth, flags, actualOps);
+
+            instruction.Cycles = ComputeCycles(instruction);
+
+            return instruction;
         }
 
         public OneOf<Instruction, Error> TryDecodeNext(ReadOnlySpan<byte> stream, string streamName, uint position = 0)
@@ -1777,8 +1556,8 @@ namespace Final.CPU8086
             if (instruction == null)
                 return new Error(ErrorCode.MissingInstructionParameter, $"The instruction parameter is missing!", 0);
 
-            uint cycles = ComputeCycles(instruction);
-            int ms = (int)Math.Round(cycles * MillisecondPerCycle) + 1;
+
+            int ms = (int)Math.Round(instruction.Cycles * MillisecondPerCycle) + 1;
             Thread.Sleep(ms);
 
             return _executer.Execute(instruction, state);

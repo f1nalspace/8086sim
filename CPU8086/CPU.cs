@@ -18,7 +18,7 @@ namespace Final.CPU8086
 {
     /// <summary>
     /// <para>Simulates a 8086 CPU with support for decoding instructions, as well as executing them.</para>
-    /// <para>It is *not* cycle exact, but to simulate performance some delays are built-in.</para>
+    /// <para>It is *not* cycle exact, but to simulate performance the cycles for most instructions are computed, even with EA and transfer penality.</para>
     /// </summary>
     public class CPU : INotifyPropertyChanged
     {
@@ -73,19 +73,16 @@ namespace Final.CPU8086
 
         private readonly InstructionExecuter _executer;
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public event MemoryChangedEventHandler MemoryChanged;
-
         private static readonly DataWidth FarPointerDataWidth = new DataWidth(DataWidthType.Word);
         private static readonly DataWidth NearPointerDataWidth = new DataWidth(DataWidthType.Byte);
 
         private static readonly DataType FarPointerDataType = DataType.Word;
         private static readonly DataType NearPointerDataType = DataType.Byte;
 
+        #region Property Changed
+        public event PropertyChangedEventHandler PropertyChanged;
         private void RaisePropertyChanged(string propertyName)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-
         private void SetValue<T>(ref T target, T value, [CallerMemberName] string propertyName = null)
         {
             if (!object.Equals(target, value))
@@ -94,8 +91,10 @@ namespace Final.CPU8086
                 RaisePropertyChanged(propertyName);
             }
         }
+        #endregion
 
         public MemoryState Memory { get; }
+        public event MemoryChangedEventHandler MemoryChanged;
 
         public RegisterState Register { get; }
 

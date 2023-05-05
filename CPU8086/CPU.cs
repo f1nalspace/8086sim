@@ -13,7 +13,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Final.CPU8086
 {
@@ -24,7 +23,7 @@ namespace Final.CPU8086
     public class CPU : INotifyPropertyChanged
     {
         // A 8086 can execute rougly 4770 instructions per second, resulting in ~0.2 Milliseconds per cycle
-        public const double Hz = 4.77 * 1000.0;
+        public const double Hz = 4.770 * 1000.0;
         public const double MillisecondPerCycle = 1000.0 / Hz;
         public const double InstructionDecodeMilliseconds = MillisecondPerCycle * 10;
 

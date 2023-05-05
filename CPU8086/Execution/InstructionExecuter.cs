@@ -410,19 +410,19 @@ namespace Final.CPU8086.Execution
                 case InstructionType.JCXZ:
                     canJump = cx == 0; break;
 
-                // Decrement CX and Loop if CX == 0
+                // Decrement CX and Loop if CX != 0
                 case InstructionType.LOOP:
                     {
                         --cx;
-                        canJump = cx == 0;
+                        canJump = cx != 0;
                     }
                     break;
 
-                // Decrement CX and Loop if CX == 0 && ZF == 1
+                // Decrement CX and Loop if CX != 0 && ZF == 1
                 case InstructionType.LOOPE:
                     {
                         --cx;
-                        canJump = cx == 0 && isZero;
+                        canJump = cx != 0 && isZero;
                     }
                     break;
 
@@ -430,7 +430,7 @@ namespace Final.CPU8086.Execution
                 case InstructionType.LOOPNZ:
                     {
                         --cx;
-                        canJump = cx == 0 && !isZero;
+                        canJump = cx != 0 && !isZero;
                     }
                     break;
 
@@ -480,10 +480,12 @@ namespace Final.CPU8086.Execution
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
 
-            int oldValue = previosDest.Value;
-            int appendValue = source.Value;
-            int sum = oldValue + appendValue;
+            int value = previosDest.Value;
+            int addend = source.Value;
+            int sum = value + addend;
 
+            bool isCarry;
+            bool isAuxiliary;
             bool isZero;
             bool isSign;
             bool isParity;
@@ -496,6 +498,8 @@ namespace Final.CPU8086.Execution
                     finalDest = new Immediate((byte)sum);
                     isZero = (byte)sum == 0;
                     isSign = (sbyte)sum < 0;
+                    isCarry = sum > 0xFF;
+                    isAuxiliary = ((value & 0xF) + (addend & 0xF) > 0xF);
                     isParity = IsParity((byte)sum);
                     isOverflow = IsOverflow8(sum);
                     break;
@@ -504,6 +508,8 @@ namespace Final.CPU8086.Execution
                     finalDest = new Immediate((ushort)sum);
                     isZero = (ushort)sum == 0;
                     isSign = (short)sum < 0;
+                    isCarry = sum > 0xFFFF;
+                    isAuxiliary = false;
                     isParity = IsParity((ushort)sum);
                     isOverflow = IsOverflow16(sum);
                     break;
@@ -518,8 +524,9 @@ namespace Final.CPU8086.Execution
                 return storeRes.AsT1;
 
             FlagsDefinition oldFlags = new FlagsDefinition(
+                carry: cpu.Register.CarryFlag ? FlagDefinitionValue.One : Types.FlagDefinitionValue.Zero,
                 parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: cpu.Register.AuxiliaryCarryFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -529,8 +536,9 @@ namespace Final.CPU8086.Execution
             );
 
             FlagsDefinition newFlags = new FlagsDefinition(
+                carry: isCarry ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: isAuxiliary ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -539,9 +547,11 @@ namespace Final.CPU8086.Execution
                 overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
+            cpu.Register.CarryFlag = isCarry;
+            cpu.Register.AuxiliaryCarryFlag = isAuxiliary;
+            cpu.Register.ParityFlag = isParity;
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
-            cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
@@ -571,10 +581,12 @@ namespace Final.CPU8086.Execution
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
 
-            int oldValue = previosDest.Value;
-            int appendValue = source.Value;
-            int sub = oldValue - appendValue;
+            int value = previosDest.Value;
+            int subtrahend = source.Value;
+            int difference = value - subtrahend;
 
+            bool isCarry;
+            bool isAuxiliary;
             bool isZero;
             bool isSign;
             bool isParity;
@@ -584,19 +596,23 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    finalDest = new Immediate((byte)sub);
-                    isZero = (byte)sub == 0;
-                    isSign = (sbyte)sub < 0;
-                    isParity = IsParity((byte)sub);
-                    isOverflow = IsOverflow8(sub);
+                    finalDest = new Immediate((byte)difference);
+                    isZero = (byte)difference == 0;
+                    isSign = (sbyte)difference < 0;
+                    isCarry = value < subtrahend;
+                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
+                    isParity = IsParity((byte)difference);
+                    isOverflow = IsOverflow8(difference);
                     break;
 
                 case DataWidthType.Word:
-                    finalDest = new Immediate((ushort)sub);
-                    isZero = (ushort)sub == 0;
-                    isSign = (short)sub < 0;
-                    isParity = IsParity((ushort)sub);
-                    isOverflow = IsOverflow16(sub);
+                    finalDest = new Immediate((ushort)difference);
+                    isZero = (ushort)difference == 0;
+                    isSign = (short)difference < 0;
+                    isCarry = value < subtrahend;
+                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
+                    isParity = IsParity((ushort)difference);
+                    isOverflow = IsOverflow16(difference);
                     break;
 
                 default:
@@ -608,8 +624,9 @@ namespace Final.CPU8086.Execution
                 return storeRes.AsT1;
 
             FlagsDefinition oldFlags = new FlagsDefinition(
+                carry: cpu.Register.CarryFlag ? FlagDefinitionValue.One : Types.FlagDefinitionValue.Zero,
                 parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: cpu.Register.AuxiliaryCarryFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -619,8 +636,9 @@ namespace Final.CPU8086.Execution
             );
 
             FlagsDefinition newFlags = new FlagsDefinition(
+                carry: isCarry ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: isAuxiliary ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -629,9 +647,11 @@ namespace Final.CPU8086.Execution
                 overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
+            cpu.Register.CarryFlag = isCarry;
+            cpu.Register.AuxiliaryCarryFlag = isAuxiliary;
+            cpu.Register.ParityFlag = isParity;
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
-            cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
@@ -660,10 +680,12 @@ namespace Final.CPU8086.Execution
                 return destRes.AsT1;
             Immediate previosDest = destRes.AsT0;
 
-            int oldValue = previosDest.Value;
-            int appendValue = source.Value;
-            int cmp = oldValue - appendValue;
+            int value = previosDest.Value;
+            int subtrahend = source.Value;
+            int difference = value - subtrahend;
 
+            bool isCarry;
+            bool isAuxiliary;
             bool isZero;
             bool isSign;
             bool isParity;
@@ -672,17 +694,21 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    isZero = (byte)cmp == 0;
-                    isSign = (sbyte)cmp < 0;
-                    isParity = IsParity((byte)cmp);
-                    isOverflow = IsOverflow8(cmp);
+                    isZero = (byte)difference == 0;
+                    isSign = (sbyte)difference < 0;
+                    isCarry = value < subtrahend;
+                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
+                    isParity = IsParity((byte)difference);
+                    isOverflow = IsOverflow8(difference);
                     break;
 
                 case DataWidthType.Word:
-                    isZero = (ushort)cmp == 0;
-                    isSign = (short)cmp < 0;
-                    isParity = IsParity((ushort)cmp);
-                    isOverflow = IsOverflow16(cmp);
+                    isZero = (ushort)difference == 0;
+                    isSign = (short)difference < 0;
+                    isCarry = value < subtrahend;
+                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
+                    isParity = IsParity((ushort)difference);
+                    isOverflow = IsOverflow16(difference);
                     break;
 
                 default:
@@ -690,8 +716,9 @@ namespace Final.CPU8086.Execution
             }
 
             FlagsDefinition oldFlags = new FlagsDefinition(
+                carry: cpu.Register.CarryFlag ? FlagDefinitionValue.One : Types.FlagDefinitionValue.Zero,
                 parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: cpu.Register.AuxiliaryCarryFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -701,8 +728,9 @@ namespace Final.CPU8086.Execution
             );
 
             FlagsDefinition newFlags = new FlagsDefinition(
+                carry: isCarry ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
+                auxiliary: isAuxiliary ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
                 trap: FlagDefinitionValue.Ignore,
@@ -711,9 +739,11 @@ namespace Final.CPU8086.Execution
                 overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
             );
 
+            cpu.Register.CarryFlag = isCarry;
+            cpu.Register.AuxiliaryCarryFlag = isAuxiliary;
+            cpu.Register.ParityFlag = isParity;
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
-            cpu.Register.ParityFlag = isParity;
             cpu.Register.OverflowFlag = isOverflow;
 
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));

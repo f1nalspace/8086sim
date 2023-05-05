@@ -14,6 +14,7 @@ namespace Final.CPU8086.Types
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public readonly struct FlagsDefinition
     {
+        public FlagDefinitionValue Carry { get; }
         public FlagDefinitionValue Parity { get; }
         public FlagDefinitionValue Auxiliary { get; }
         public FlagDefinitionValue Zero { get; }
@@ -23,8 +24,9 @@ namespace Final.CPU8086.Types
         public FlagDefinitionValue Direction { get; }
         public FlagDefinitionValue Overflow { get; }
 
-        public FlagsDefinition(FlagDefinitionValue parity, FlagDefinitionValue auxiliary, FlagDefinitionValue zero, FlagDefinitionValue sign, FlagDefinitionValue trap, FlagDefinitionValue interrupt, FlagDefinitionValue direction, FlagDefinitionValue overflow)
+        public FlagsDefinition(FlagDefinitionValue carry, FlagDefinitionValue parity, FlagDefinitionValue auxiliary, FlagDefinitionValue zero, FlagDefinitionValue sign, FlagDefinitionValue trap, FlagDefinitionValue interrupt, FlagDefinitionValue direction, FlagDefinitionValue overflow)
         {
+            Carry = carry;
             Parity = parity;
             Auxiliary = auxiliary;
             Zero = zero;
@@ -35,10 +37,15 @@ namespace Final.CPU8086.Types
             Overflow = overflow;
         }
 
+        public FlagsDefinition(FlagDefinitionValue parity, FlagDefinitionValue auxiliary, FlagDefinitionValue zero, FlagDefinitionValue sign, FlagDefinitionValue trap, FlagDefinitionValue interrupt, FlagDefinitionValue direction, FlagDefinitionValue overflow) :
+            this(FlagDefinitionValue.Ignore, parity, auxiliary, zero, sign, trap, interrupt, direction, overflow)
+        { }
+
         public FlagsDefinition(ReadOnlySpan<char> data)
         {
-            if (data.Length != 8)
-                throw new ArgumentException($"Expect the state flags to be a length of 8, but got {data.Length}");
+            if (data.Length < 8)
+                throw new ArgumentException($"Expect the state flags to be at least length of 8, but got {data.Length}");
+            Carry = (data.Length == 9) ? Parse(data[8], 'c') : FlagDefinitionValue.Ignore;
             Parity = Parse(data[7], 'p');
             Auxiliary = Parse(data[6], 'a');
             Zero = Parse(data[5], 'z');
@@ -82,7 +89,8 @@ namespace Final.CPU8086.Types
 
         public override string ToString()
         {
-            Span<char> s = stackalloc char[8];
+            Span<char> s = stackalloc char[9];
+            s[8] = ToChar(Carry, 'c');
             s[7] = ToChar(Parity, 'p');
             s[6] = ToChar(Auxiliary, 'a');
             s[5] = ToChar(Zero, 'z');

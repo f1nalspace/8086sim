@@ -513,7 +513,7 @@
                     <TabControl Grid.Column="0">
 
                         <!-- Assembly Lines -->
-                        <TabItem Header="Assembly">
+                        <TabItem Header="Assembly Output">
                             <ScrollViewer>
                                 <ItemsControl ItemsSource="{Binding AssemblyLines}">
                                     <ItemsControl.ItemsPanel>
@@ -552,6 +552,7 @@
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding Type}" Value="SourceLabel">
                                                                     <Setter Property="Foreground" Value="DarkGray" />
+                                                                    <Setter Property="Margin" Value="-18 0 0 0" />
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>

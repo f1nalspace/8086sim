@@ -14,13 +14,13 @@ namespace Final.CPU8086
         [TestMethod]
         public void IsParity()
         {
-            Assert.AreEqual(false, InstructionExecuter.IsParity(0b00011010));
-            Assert.AreEqual(false, InstructionExecuter.IsParity((byte)26));
-            Assert.AreEqual(false, InstructionExecuter.IsParity((ushort)26));
+            Assert.AreEqual(false, InstructionExecuter.IsParity8(0b00011010));
+            Assert.AreEqual(false, InstructionExecuter.IsParity8((byte)26));
+            Assert.AreEqual(false, InstructionExecuter.IsParity16((ushort)26));
 
-            Assert.AreEqual(true, InstructionExecuter.IsParity(0b00001010));
-            Assert.AreEqual(true, InstructionExecuter.IsParity((byte)10));
-            Assert.AreEqual(true, InstructionExecuter.IsParity((ushort)10));
+            Assert.AreEqual(true, InstructionExecuter.IsParity8(0b00001010));
+            Assert.AreEqual(true, InstructionExecuter.IsParity8((byte)10));
+            Assert.AreEqual(true, InstructionExecuter.IsParity16((ushort)10));
         }
     }
 }

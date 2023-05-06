@@ -99,7 +99,13 @@ namespace Final.CPU8086.Execution
             };
         }
 
-        public static bool IsParity(byte value)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsAuxiliaryOverflow(int value, int addend) => ((value & 0xF) + (addend & 0xF) > 0xF);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsAuxiliaryUnderflow(int value, int subtrahend) => (value & 0xF) - (subtrahend & 0xF) < 0;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        public static bool IsParity8(byte value)
         {
             uint count = 0;
             for (int i = 0; i < 8; ++i)
@@ -111,12 +117,28 @@ namespace Final.CPU8086.Execution
             return count % 2 == 0;
         }
 
-        public static bool IsParity(ushort value) => IsParity((byte)(value & 0xFF));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsParity16(ushort value) => IsParity8((byte)(value & 0xFF));
 
-        public static bool IsOverflow8(int value)
-            => value > sbyte.MaxValue || value < sbyte.MinValue;
-        public static bool IsOverflow16(int value)
-            => value > short.MaxValue || value < short.MinValue;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsZero(int value) => value == 0;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsCarry8(int value) => value > 0xFF;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsCarry16(int value) => value > 0xFFFF;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsBorrow(int value, int subtrahend) => value < subtrahend;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverflow8(int value) => value > sbyte.MaxValue || value < sbyte.MinValue;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsOverflow16(int value) => value > short.MaxValue || value < short.MinValue;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsSign8(int value) => (sbyte)value < 0;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsSign16(int value) => (short)value < 0;
 
         private static OneOf<Immediate, Error> LoadOperand(CPU cpu, Instruction instruction, InstructionOperand operand)
         {
@@ -258,7 +280,8 @@ namespace Final.CPU8086.Execution
 
                             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(register, regValue), new ExecutedValue(register, newValue))));
                         }
-                    } break;
+                    }
+                    break;
 
                 case InstructionType.PUSHF:
                     throw new NotImplementedException();
@@ -484,11 +507,11 @@ namespace Final.CPU8086.Execution
             int addend = source.Value;
             int sum = value + addend;
 
+            bool isAuxiliary = IsAuxiliaryOverflow(value, addend);
+            bool isZero = IsZero(sum);
             bool isCarry;
-            bool isAuxiliary;
-            bool isZero;
-            bool isSign;
             bool isParity;
+            bool isSign;
             bool isOverflow;
 
             Immediate finalDest;
@@ -496,21 +519,17 @@ namespace Final.CPU8086.Execution
             {
                 case DataWidthType.Byte:
                     finalDest = new Immediate((byte)sum);
-                    isZero = (byte)sum == 0;
-                    isSign = (sbyte)sum < 0;
-                    isCarry = sum > 0xFF;
-                    isAuxiliary = ((value & 0xF) + (addend & 0xF) > 0xF);
-                    isParity = IsParity((byte)sum);
+                    isCarry = IsCarry8(sum);
+                    isParity = IsParity8((byte)sum);
+                    isSign = IsSign8(sum);
                     isOverflow = IsOverflow8(sum);
                     break;
 
                 case DataWidthType.Word:
                     finalDest = new Immediate((ushort)sum);
-                    isZero = (ushort)sum == 0;
-                    isSign = (short)sum < 0;
-                    isCarry = sum > 0xFFFF;
-                    isAuxiliary = false;
-                    isParity = IsParity((ushort)sum);
+                    isCarry = IsCarry16(sum);
+                    isParity = IsParity16((ushort)sum);
+                    isSign = IsSign16(sum);
                     isOverflow = IsOverflow16(sum);
                     break;
 
@@ -585,11 +604,11 @@ namespace Final.CPU8086.Execution
             int subtrahend = source.Value;
             int difference = value - subtrahend;
 
-            bool isCarry;
-            bool isAuxiliary;
-            bool isZero;
-            bool isSign;
+            bool isCarry = IsBorrow(value, subtrahend);
+            bool isAuxiliary = IsAuxiliaryUnderflow(value, subtrahend);
+            bool isZero = IsZero(difference);
             bool isParity;
+            bool isSign;
             bool isOverflow;
 
             Immediate finalDest;
@@ -597,21 +616,15 @@ namespace Final.CPU8086.Execution
             {
                 case DataWidthType.Byte:
                     finalDest = new Immediate((byte)difference);
-                    isZero = (byte)difference == 0;
-                    isSign = (sbyte)difference < 0;
-                    isCarry = value < subtrahend;
-                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
-                    isParity = IsParity((byte)difference);
+                    isParity = IsParity8((byte)difference);
+                    isSign = IsSign8(difference);
                     isOverflow = IsOverflow8(difference);
                     break;
 
                 case DataWidthType.Word:
                     finalDest = new Immediate((ushort)difference);
-                    isZero = (ushort)difference == 0;
-                    isSign = (short)difference < 0;
-                    isCarry = value < subtrahend;
-                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
-                    isParity = IsParity((ushort)difference);
+                    isParity = IsParity16((ushort)difference);
+                    isSign = IsSign16(difference);
                     isOverflow = IsOverflow16(difference);
                     break;
 
@@ -684,30 +697,24 @@ namespace Final.CPU8086.Execution
             int subtrahend = source.Value;
             int difference = value - subtrahend;
 
-            bool isCarry;
-            bool isAuxiliary;
-            bool isZero;
-            bool isSign;
+            bool isCarry = IsBorrow(value, subtrahend);
+            bool isAuxiliary = IsAuxiliaryUnderflow(value, subtrahend);
+            bool isZero = IsZero(difference);
             bool isParity;
+            bool isSign;
             bool isOverflow;
 
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    isZero = (byte)difference == 0;
-                    isSign = (sbyte)difference < 0;
-                    isCarry = value < subtrahend;
-                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
-                    isParity = IsParity((byte)difference);
+                    isParity = IsParity8((byte)difference);
+                    isSign = IsSign8(difference);
                     isOverflow = IsOverflow8(difference);
                     break;
 
                 case DataWidthType.Word:
-                    isZero = (ushort)difference == 0;
-                    isSign = (short)difference < 0;
-                    isCarry = value < subtrahend;
-                    isAuxiliary = (value & 0xF) - (subtrahend & 0xF) < 0;
-                    isParity = IsParity((ushort)difference);
+                    isParity = IsParity16((ushort)difference);
+                    isSign = IsSign16(difference);
                     isOverflow = IsOverflow16(difference);
                     break;
 

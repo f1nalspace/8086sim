@@ -1004,7 +1004,7 @@ namespace Final.CPU8086
                             if (value.IsT1)
                                 return value.AsT1;
                             byte mrm = value.AsT0;
-                            modField = (byte)(mrm >> 6 & 0b111);
+                            modField = (byte)(mrm >> 6 & 0b11);
                             regField = (byte)(mrm >> 3 & 0b111);
                             rmField = (byte)(mrm >> 0 & 0b111);
                             if (field.Type != FieldDefinitionType.ModRegRM)

@@ -158,7 +158,20 @@ namespace Final.CPU8086.Instructions
                 return true;
             }
 
-            OperandDefinitionKind type = value.ToLower() switch
+            OperandDefinitionKind kind = StringToKind(value);
+
+            if (dataType == DataType.None)
+                dataType = KindToDataType(kind);
+
+            operand = new OperandDefinition(kind, dataType);
+            return kind != OperandDefinitionKind.Unknown;
+        }
+
+        public static OperandDefinitionKind StringToKind(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return OperandDefinitionKind.Unknown;
+            return value.ToLower() switch
             {
                 "mb" => OperandDefinitionKind.MemoryByte,
                 "mw" => OperandDefinitionKind.MemoryWord,
@@ -254,8 +267,78 @@ namespace Final.CPU8086.Instructions
 
                 _ => OperandDefinitionKind.Unknown
             };
-            operand = new OperandDefinition(type, dataType);
-            return type != OperandDefinitionKind.Unknown;
+        }
+
+        public static DataType KindToDataType(OperandDefinitionKind kind)
+        {
+            return kind switch
+            {
+                OperandDefinitionKind.MemoryByte => DataType.Byte,
+                OperandDefinitionKind.MemoryWord => DataType.Word,
+                OperandDefinitionKind.MemoryDoubleWord => DataType.DoubleWord,
+                OperandDefinitionKind.MemoryQuadWord => DataType.QuadWord,
+                OperandDefinitionKind.MemoryWordReal => DataType.Word,
+                OperandDefinitionKind.MemoryDoubleWordReal => DataType.DoubleWord,
+                OperandDefinitionKind.MemoryQuadWordReal => DataType.QuadWord,
+                OperandDefinitionKind.RegisterByte => DataType.Byte,
+                OperandDefinitionKind.RegisterWord => DataType.Word,
+                OperandDefinitionKind.RegisterDoubleWord => DataType.DoubleWord,
+                OperandDefinitionKind.RegisterOrMemoryByte => DataType.Byte,
+                OperandDefinitionKind.RegisterOrMemoryWord => DataType.Word,
+                OperandDefinitionKind.RegisterOrMemoryDoubleWord => DataType.DoubleWord,
+                OperandDefinitionKind.RegisterOrMemoryQuadWord => DataType.QuadWord,
+                OperandDefinitionKind.ImmediateByte => DataType.Byte,
+                OperandDefinitionKind.ImmediateWord => DataType.Word,
+                OperandDefinitionKind.ImmediateDoubleWord => DataType.DoubleWord,
+                OperandDefinitionKind.TypeDoubleWord => DataType.DoubleWord,
+                OperandDefinitionKind.TypeShort => DataType.Word,
+                OperandDefinitionKind.TypeInt => DataType.Int,
+                OperandDefinitionKind.TypePointer => DataType.Pointer,
+                OperandDefinitionKind.ShortLabel => DataType.Byte,
+                OperandDefinitionKind.LongLabel => DataType.Word,
+                OperandDefinitionKind.RAX => DataType.QuadWord,
+                OperandDefinitionKind.EAX => DataType.DoubleWord,
+                OperandDefinitionKind.AX => DataType.Word,
+                OperandDefinitionKind.AL => DataType.Byte,
+                OperandDefinitionKind.AH => DataType.Byte,
+                OperandDefinitionKind.RBX => DataType.QuadWord,
+                OperandDefinitionKind.EBX => DataType.DoubleWord,
+                OperandDefinitionKind.BX => DataType.Word,
+                OperandDefinitionKind.BL => DataType.Byte,
+                OperandDefinitionKind.BH => DataType.Byte,
+                OperandDefinitionKind.RCX => DataType.QuadWord,
+                OperandDefinitionKind.ECX => DataType.DoubleWord,
+                OperandDefinitionKind.CX => DataType.Word,
+                OperandDefinitionKind.CL => DataType.Byte,
+                OperandDefinitionKind.CH => DataType.Byte,
+                OperandDefinitionKind.RDX => DataType.QuadWord,
+                OperandDefinitionKind.EDX => DataType.DoubleWord,
+                OperandDefinitionKind.DX => DataType.Word,
+                OperandDefinitionKind.DL => DataType.Byte,
+                OperandDefinitionKind.DH => DataType.Byte,
+                OperandDefinitionKind.RSP => DataType.QuadWord,
+                OperandDefinitionKind.ESP => DataType.DoubleWord,
+                OperandDefinitionKind.SP => DataType.Word,
+                OperandDefinitionKind.RBP => DataType.QuadWord,
+                OperandDefinitionKind.EBP => DataType.DoubleWord,
+                OperandDefinitionKind.BP => DataType.Word,
+                OperandDefinitionKind.RSI => DataType.QuadWord,
+                OperandDefinitionKind.ESI => DataType.DoubleWord,
+                OperandDefinitionKind.SI => DataType.Word,
+                OperandDefinitionKind.RDI => DataType.QuadWord,
+                OperandDefinitionKind.EDI => DataType.DoubleWord,
+                OperandDefinitionKind.DI => DataType.Word,
+                OperandDefinitionKind.CS => DataType.Word,
+                OperandDefinitionKind.DS => DataType.Word,
+                OperandDefinitionKind.SS => DataType.Word,
+                OperandDefinitionKind.ES => DataType.Word,
+                OperandDefinitionKind.CR => DataType.Word,
+                OperandDefinitionKind.DR => DataType.Word,
+                OperandDefinitionKind.TR => DataType.Word,
+                OperandDefinitionKind.FS => DataType.Word,
+                OperandDefinitionKind.GS => DataType.Word,
+                _ => DataType.None,
+            };
         }
 
         public static OperandDefinition Parse(string value)
@@ -267,7 +350,7 @@ namespace Final.CPU8086.Instructions
             return operand;
         }
 
-        public static string TypeToString(OperandDefinitionKind type)
+        public static string KindToString(OperandDefinitionKind type)
         {
             return type switch
             {
@@ -429,7 +512,7 @@ namespace Final.CPU8086.Instructions
             else if (Kind == OperandDefinitionKind.M_Number)
                 s.Append($"M{Value:D}");
             else
-                s.Append(TypeToString(Kind));
+                s.Append(KindToString(Kind));
             return s.ToString();
         }
 

@@ -35,19 +35,19 @@ namespace Final.ITP
     static class AdditionalInstructions
     {
         // See: https://wiki.osdev.org/X86-64_Instruction_Encoding#Legacy_Prefixes
-        public static readonly InstructionEntry[] PrefixInstructions = new InstructionEntry[] {
+        public static readonly InstructionDefinition[] PrefixInstructions = new InstructionDefinition[] {
             // Lock/Repeat
-            new InstructionEntry(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Lock Prefix" },
-            new InstructionEntry(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Not Equal Prefix" },
-            new InstructionEntry(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Prefix" },
+            new InstructionDefinition(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Lock Prefix" },
+            new InstructionDefinition(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Not Equal Prefix" },
+            new InstructionDefinition(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Prefix" },
 
             // Segment override
-            new InstructionEntry(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
-            new InstructionEntry(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
-            new InstructionEntry(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
-            new InstructionEntry(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.ES, DataType.None)}) { Description = "ES Segment Override Prefix" },
-            new InstructionEntry(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
-            new InstructionEntry(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
+            new InstructionDefinition(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
+            new InstructionDefinition(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
+            new InstructionDefinition(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
+            new InstructionDefinition(0x26, new Mnemonic("ES"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.ES, DataType.None)}) { Description = "ES Segment Override Prefix" },
+            new InstructionDefinition(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
+            new InstructionDefinition(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
 
 #if false
             // Branch not taken/taken
@@ -56,12 +56,12 @@ namespace Final.ITP
 #endif
 
             // Operand size override (Changes size of operand size expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
-            new InstructionEntry(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 8-bit Override Prefix" },
-            new InstructionEntry(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 16-bit Override Prefix" },
+            new InstructionDefinition(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 8-bit Override Prefix" },
+            new InstructionDefinition(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 16-bit Override Prefix" },
 
             // Address size override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
-            new InstructionEntry(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 8-bit Override Prefix" },
-            new InstructionEntry(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 16-bit Override Prefix" },
+            new InstructionDefinition(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 8-bit Override Prefix" },
+            new InstructionDefinition(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 16-bit Override Prefix" },
         };
     }
 
@@ -147,7 +147,7 @@ namespace Final.ITP
 #if GENERATE_CS
 
 #if !GENERATE_INSTRUCTION_CLASSES
-            List<InstructionEntry> allInstructions = new List<InstructionEntry>();
+            List<InstructionDefinition> allInstructions = new List<InstructionDefinition>();
 #endif
             Dictionary<InstructionFamily, List<string>> familyOpTypeListMap = new Dictionary<InstructionFamily, List<string>>();
             List<InstructionFamily> orderedFamilies = new List<InstructionFamily>();
@@ -416,7 +416,7 @@ namespace Final.ITP
                         if (dataWidth == DataWidth.None)
                             dataWidth = DataWidth.DataTypeToWidth(dataType);
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
+                        InstructionDefinition instruction = new InstructionDefinition(op, type, dataWidth, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
                         allInstructions.Add(instruction);
                     }
 
@@ -533,22 +533,22 @@ namespace Final.ITP
             Debug.WriteLine(string.Empty);
 #else
             // Replace/Add prefix instructions
-            InstructionEntry[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
-            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+            InstructionDefinition[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
+            foreach (InstructionDefinition prefixInstruction in prefixInstructions)
                 allInstructions.RemoveAll(i => i.Op == prefixInstruction.Op);
 
-            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+            foreach (InstructionDefinition prefixInstruction in prefixInstructions)
                 allInstructions.Add(prefixInstruction);
 
             // Fill instruction table, but skip all non 8086 platforms
             InstructionTable newTable = new InstructionTable();
-            InstructionEntry[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
-            foreach (InstructionEntry instruction in sortedInstructions)
+            InstructionDefinition[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
+            foreach (InstructionDefinition instruction in sortedInstructions)
             {
                 if (instruction.Platform.Type != PlatformType._8086)
                     continue;
                 byte op = instruction.Op;
-                InstructionList list = newTable.GetOrCreate(op);
+                InstructionDefinitionList list = newTable.GetOrCreate(op);
                 list.Add(instruction);
             }
 
@@ -564,8 +564,8 @@ namespace Final.ITP
             string varName = "_opToList";
 
             StringBuilder instructionsTableText = new StringBuilder();
-            instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionList).FullName};");
-            instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionEntry).FullName};");
+            instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionDefinitionList).FullName};");
+            instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionDefinition).FullName};");
             instructionsTableText.AppendLine($"using {instructionTypeName} = {typeof(InstructionType).FullName};");
             instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
             instructionsTableText.AppendLine($"using {dataTypeName} = {typeof(DataType).FullName};");
@@ -582,7 +582,7 @@ namespace Final.ITP
             InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>().Where(d => d != InstructionFlags.None).ToArray();
             DataType[] allDataTypes = Enum.GetValues<DataType>().Where(d => d != DataType.None).ToArray();
 
-            foreach (InstructionList list in newTable)
+            foreach (InstructionDefinitionList list in newTable)
             {
                 if (list != null)
                 {
@@ -591,7 +591,7 @@ namespace Final.ITP
                     string listOpHex = list.Op.ToString("X2");
 
                     StringBuilder entriesText = new StringBuilder();
-                    foreach (InstructionEntry entry in list)
+                    foreach (InstructionDefinition entry in list)
                     {
                         string entryOpHex = entry.Op.ToString("X2");
 

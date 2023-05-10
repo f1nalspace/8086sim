@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Final.CPU8086.Instructions
 {
-    public class InstructionEntry
+    public class InstructionDefinition
     {
         public byte Op { get; }
         public Mnemonic Mnemonic { get; }
@@ -21,7 +21,7 @@ namespace Final.CPU8086.Instructions
 
         public InstructionType Type => Mnemonic.Type;
 
-        public InstructionEntry(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, DataType dataType, FlagsDefinition usedFlags, Platform platform, int minLength, int maxLength, FieldDefinition[] fields, OperandDefinition[] operands)
+        public InstructionDefinition(byte op, Mnemonic mnemonic, DataWidth dataWidth, InstructionFlags flags, DataType dataType, FlagsDefinition usedFlags, Platform platform, int minLength, int maxLength, FieldDefinition[] fields, OperandDefinition[] operands)
         {
             Op = op;
             DataWidth = dataWidth;

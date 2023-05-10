@@ -2,8 +2,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
-using IL = Final.CPU8086.Instructions.InstructionList;
-using IE = Final.CPU8086.Instructions.InstructionEntry;
+using IL = Final.CPU8086.Instructions.InstructionDefinitionList;
+using IE = Final.CPU8086.Instructions.InstructionDefinition;
 using IT = Final.CPU8086.Instructions.InstructionType;
 using IF = Final.CPU8086.Instructions.InstructionFlags;
 using DT = Final.CPU8086.Types.DataType;

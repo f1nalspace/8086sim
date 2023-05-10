@@ -935,7 +935,7 @@ namespace Final.CPU8086
             };
         }
 
-        static OneOf<Instruction, Error> DecodeInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionEntry entry)
+        static OneOf<Instruction, Error> DecodeInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionDefinition entry)
         {
             if (stream.Length == 0)
                 return new Error(ErrorCode.EndOfStream, $"Expect at least one byte of stream length!", position);
@@ -1296,7 +1296,7 @@ namespace Final.CPU8086
                 return opCodeRes.AsT1;
 
             byte opCode = opCodeRes.AsT0;
-            InstructionList instructionList = _entryTable[opCode];
+            InstructionDefinitionList instructionList = _entryTable[opCode];
             if (instructionList == null)
                 return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'", position);
             else if ((byte)instructionList.Op != opCode)
@@ -1304,7 +1304,7 @@ namespace Final.CPU8086
 
             if (instructionList.Count == 1)
             {
-                InstructionEntry entry = instructionList.First();
+                InstructionDefinition entry = instructionList.First();
                 OneOf<Instruction, Error> loadRes = DecodeInstruction(stream, streamName, position, entry);
                 if (loadRes.TryPickT1(out Error error, out _))
                     return new Error(error, $"Failed to decode instruction '{entry}'", position);
@@ -1313,7 +1313,7 @@ namespace Final.CPU8086
             else
             {
                 // Expect that there is at least one more byte
-                foreach (InstructionEntry instructionEntry in instructionList)
+                foreach (InstructionDefinition instructionEntry in instructionList)
                 {
                     OneOf<Instruction, Error> loadRes = DecodeInstruction(stream, streamName, position, instructionEntry);
                     if (loadRes.TryPickT0(out Instruction instruction, out _))

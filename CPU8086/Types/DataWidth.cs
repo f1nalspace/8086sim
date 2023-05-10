@@ -68,9 +68,34 @@ namespace Final.CPU8086.Types
             };
         }
 
+        public static readonly DataWidth None = new DataWidth(DataWidthType.None);
         public static readonly DataWidth Byte = new DataWidth(DataWidthType.Byte);
         public static readonly DataWidth Word = new DataWidth(DataWidthType.Word);
         public static readonly DataWidth DoubleWord = new DataWidth(DataWidthType.DoubleWord);
         public static readonly DataWidth QuadWord = new DataWidth(DataWidthType.QuadWord);
+
+        public static DataWidth DataTypeToWidth(DataType type)
+        {
+            if (type == DataType.Byte)
+                return Byte;
+            else if (type == DataType.Word || type == DataType.Short)
+                return Word;
+            else if (type == DataType.DoubleWord || type == DataType.Int)
+                return DoubleWord;
+            else if (type == DataType.QuadWord)
+                return QuadWord;
+            else if (type == DataType.Pointer)
+                return CPU.PointerDataWidth;
+            else if (type.HasFlag(DataType.Pointer) && type.HasFlag(DataType.Byte))
+                return Byte;
+            else if (type.HasFlag(DataType.Pointer) && (type.HasFlag(DataType.Word) || type.HasFlag(DataType.Short)))
+                return Word;
+            else if (type.HasFlag(DataType.Pointer) && (type.HasFlag(DataType.DoubleWord) || type.HasFlag(DataType.Int)))
+                return DoubleWord;
+            else if (type.HasFlag(DataType.Pointer) && type.HasFlag(DataType.QuadWord))
+                return QuadWord;
+            else
+                return None;
+        }
     }
 }

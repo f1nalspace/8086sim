@@ -73,11 +73,8 @@ namespace Final.CPU8086
 
         private readonly InstructionExecuter _executer;
 
-        private static readonly DataWidth FarPointerDataWidth = new DataWidth(DataWidthType.Word);
-        private static readonly DataWidth NearPointerDataWidth = new DataWidth(DataWidthType.Byte);
-
-        private static readonly DataType FarPointerDataType = DataType.Word;
-        private static readonly DataType NearPointerDataType = DataType.Byte;
+        public static readonly DataWidth PointerDataWidth = new DataWidth(DataWidthType.Word);
+        public static readonly DataType PointerDataType = DataType.Word;
 
         #region Property Changed
         public event PropertyChangedEventHandler PropertyChanged;
@@ -191,9 +188,9 @@ namespace Final.CPU8086
                             DataType dataType = first.DataType;
                             if (dataType == DataType.Byte)
                                 cycles = new CyclesTable.Cycles(13, 1, true);
-                            else if (dataType == DataType.Word)
+                            else if (dataType == DataType.Word || dataType == DataType.Short)
                                 cycles = new CyclesTable.Cycles(21, 2, true);
-                            else if (dataType == DataType.DoubleWord)
+                            else if (dataType == DataType.DoubleWord || dataType == DataType.Int)
                                 cycles = new CyclesTable.Cycles(37, 2, true);
                             else
                                 throw new NotSupportedException($"Operand data type '{dataType}' is not supported");
@@ -206,7 +203,8 @@ namespace Final.CPU8086
                                 cycles = new CyclesTable.Cycles(28, 2);
                             else
                                 throw new NotSupportedException($"Instruction flags '{instruction.Flags}' is not supported");
-                        } else
+                        }
+                        else
                             throw new NotSupportedException($"Instruction type '{instruction.Type}' is not supported");
                     }
                     break;
@@ -215,7 +213,7 @@ namespace Final.CPU8086
                     break;
             }
 
-            
+
 
             uint result = cycles.Value;
             if (cycles.EA == 1)
@@ -275,13 +273,14 @@ namespace Final.CPU8086
         {
             // NOTE(final): We either have a pointer or a type with a pointer, so we strip out the pointer and we are left with the actual type
             if (type == DataType.Pointer)
-                type = FarPointerDataType;
+                type = PointerDataType;
             else if (type.HasFlag(DataType.Pointer))
                 type ^= ~DataType.Pointer;
             return type switch
             {
                 DataType.Byte => 1,
-                DataType.Word => 2,
+                DataType.Word or
+                DataType.Short => 2,
                 DataType.DoubleWord or
                 DataType.Int => 4,
                 DataType.QuadWord => 8,
@@ -530,7 +529,7 @@ namespace Final.CPU8086
             if (!type.HasFlag(DataType.Pointer))
                 return DataType.None;
             if (type == DataType.Pointer)
-                return FarPointerDataType;
+                return PointerDataType;
             return type ^ ~DataType.Pointer;
         }
 
@@ -554,11 +553,15 @@ namespace Final.CPU8086
                     return new Immediate(Memory[absoluteAddress]);
 
                 case DataType.Word:
+                case DataType.Short:
                     {
                         ushort u16 = (ushort)(
                             (Memory[absoluteAddress + 0] << 0) |
                             (Memory[absoluteAddress + 1] << 8));
-                        return new Immediate(u16);
+                        if (type == DataType.Short)
+                            return new Immediate((short)u16);
+                        else
+                            return new Immediate(u16);
                     }
 
                 case DataType.Int:
@@ -619,10 +622,15 @@ namespace Final.CPU8086
                     }
                     return 1;
 
+                case DataType.Short:
                 case DataType.Word:
                     {
                         ushort oldValue = (ushort)((Memory[absoluteAddress + 0] << 0) | (Memory[absoluteAddress + 1] << 8));
-                        Immediate oldMemory = new Immediate(oldValue);
+                        Immediate oldMemory;
+                        if (type == DataType.Short)
+                            oldMemory = new Immediate((short)oldValue);
+                        else
+                            oldMemory = new Immediate(oldValue);
 
                         ushort newValue = value.U16;
                         Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
@@ -721,7 +729,7 @@ namespace Final.CPU8086
                     {
                         if (type == DataType.Byte)
                             return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
-                        else if (type == DataType.Word)
+                        else if (type == DataType.Word || type == DataType.Short)
                             return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
                         else
                             throw new NotSupportedException($"Unsupported type of '{type}' for source register");
@@ -767,6 +775,8 @@ namespace Final.CPU8086
                 case OperandDefinitionKind.TypeDoubleWord:
                     break;
                 case OperandDefinitionKind.TypeShort:
+                    break;
+                case OperandDefinitionKind.TypeWord:
                     break;
                 case OperandDefinitionKind.TypeInt:
                     break;
@@ -903,11 +913,12 @@ namespace Final.CPU8086
             return type switch
             {
                 DataType.Byte => new DataWidth(DataWidthType.Byte),
-                DataType.Word => new DataWidth(DataWidthType.Word),
-                DataType.DoubleWord => new DataWidth(DataWidthType.DoubleWord),
+                DataType.Word or
+                DataType.Short => new DataWidth(DataWidthType.Word),
+                DataType.DoubleWord or
                 DataType.Int => new DataWidth(DataWidthType.DoubleWord),
                 DataType.QuadWord => new DataWidth(DataWidthType.QuadWord),
-                DataType.Pointer => FarPointerDataWidth,
+                DataType.Pointer => PointerDataWidth,
                 _ => new DataWidth()
             };
         }
@@ -1149,95 +1160,7 @@ namespace Final.CPU8086
             {
                 foreach (OperandDefinition sourceOp in entry.Operands)
                 {
-                    DataType inferredType = sourceOp.Kind switch
-                    {
-                        OperandDefinitionKind.MemoryByte => DataType.Byte,
-                        OperandDefinitionKind.MemoryWord => DataType.Word,
-                        OperandDefinitionKind.MemoryDoubleWord => DataType.DoubleWord,
-                        OperandDefinitionKind.MemoryQuadWord => DataType.QuadWord,
-
-                        OperandDefinitionKind.MemoryWordReal => DataType.Word,
-                        OperandDefinitionKind.MemoryDoubleWordReal => DataType.DoubleWord,
-                        OperandDefinitionKind.MemoryQuadWordReal => DataType.QuadWord,
-                        OperandDefinitionKind.MemoryTenByteReal => throw new NotImplementedException(),
-
-                        OperandDefinitionKind.RegisterByte => DataType.Byte,
-                        OperandDefinitionKind.RegisterWord => DataType.Word,
-                        OperandDefinitionKind.RegisterDoubleWord => DataType.DoubleWord,
-                        OperandDefinitionKind.RegisterOrMemoryByte => DataType.Byte,
-                        OperandDefinitionKind.RegisterOrMemoryWord => DataType.Word,
-                        OperandDefinitionKind.RegisterOrMemoryDoubleWord => DataType.DoubleWord,
-                        OperandDefinitionKind.RegisterOrMemoryQuadWord => DataType.QuadWord,
-
-                        OperandDefinitionKind.ImmediateByte => DataType.Byte,
-                        OperandDefinitionKind.ImmediateWord => DataType.Word,
-                        OperandDefinitionKind.ImmediateDoubleWord => DataType.DoubleWord,
-
-                        OperandDefinitionKind.TypePointer => FarPointerDataType | DataType.Pointer,
-
-                        OperandDefinitionKind.TypeShort => DataType.Word,
-                        OperandDefinitionKind.TypeDoubleWord => DataType.DoubleWord,
-                        OperandDefinitionKind.TypeInt => DataType.DoubleWord,
-
-                        OperandDefinitionKind.NearPointer => NearPointerDataType | DataType.Pointer,
-                        OperandDefinitionKind.FarPointer => FarPointerDataType | DataType.Pointer,
-
-                        OperandDefinitionKind.ShortLabel => DataType.Byte,
-                        OperandDefinitionKind.LongLabel => DataType.Word,
-
-                        OperandDefinitionKind.RAX => DataType.QuadWord,
-                        OperandDefinitionKind.EAX => DataType.DoubleWord,
-                        OperandDefinitionKind.AX => DataType.Word,
-                        OperandDefinitionKind.AL => DataType.Byte,
-                        OperandDefinitionKind.AH => DataType.Byte,
-
-                        OperandDefinitionKind.RBX => DataType.QuadWord,
-                        OperandDefinitionKind.EBX => DataType.DoubleWord,
-                        OperandDefinitionKind.BX => DataType.Word,
-                        OperandDefinitionKind.BL => DataType.Byte,
-                        OperandDefinitionKind.BH => DataType.Byte,
-
-                        OperandDefinitionKind.RCX => DataType.QuadWord,
-                        OperandDefinitionKind.ECX => DataType.DoubleWord,
-                        OperandDefinitionKind.CX => DataType.Word,
-                        OperandDefinitionKind.CL => DataType.Byte,
-                        OperandDefinitionKind.CH => DataType.Byte,
-
-                        OperandDefinitionKind.RDX => DataType.QuadWord,
-                        OperandDefinitionKind.EDX => DataType.DoubleWord,
-                        OperandDefinitionKind.DX => DataType.Word,
-                        OperandDefinitionKind.DL => DataType.Byte,
-                        OperandDefinitionKind.DH => DataType.Byte,
-
-                        OperandDefinitionKind.RSP => DataType.QuadWord,
-                        OperandDefinitionKind.ESP => DataType.DoubleWord,
-                        OperandDefinitionKind.SP => DataType.Word,
-
-                        OperandDefinitionKind.RBP => DataType.QuadWord,
-                        OperandDefinitionKind.EBP => DataType.DoubleWord,
-                        OperandDefinitionKind.BP => DataType.Word,
-
-                        OperandDefinitionKind.RSI => DataType.QuadWord,
-                        OperandDefinitionKind.ESI => DataType.DoubleWord,
-                        OperandDefinitionKind.SI => DataType.Word,
-
-                        OperandDefinitionKind.RDI => DataType.QuadWord,
-                        OperandDefinitionKind.EDI => DataType.DoubleWord,
-                        OperandDefinitionKind.DI => DataType.Word,
-
-                        OperandDefinitionKind.CS or
-                        OperandDefinitionKind.DS or
-                        OperandDefinitionKind.SS or
-                        OperandDefinitionKind.ES or
-                        OperandDefinitionKind.CR => DataType.Word,
-
-                        OperandDefinitionKind.DR or
-                        OperandDefinitionKind.TR or
-                        OperandDefinitionKind.FS or
-                        OperandDefinitionKind.GS => DataType.Word,
-
-                        _ => DataType.None,
-                    };
+                    DataType inferredType = sourceOp.DataType;
                     if (inferredType > bestInferredType)
                         bestInferredType = inferredType;
                 }
@@ -1261,33 +1184,38 @@ namespace Final.CPU8086
                         continue;
 
                     case OperandDefinitionKind.TypePointer:
-                        Contract.Assert(entry.DataType.HasFlag(DataType.Pointer));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(sourceOp.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= sourceOp.DataType;
                         continue;
 
                     case OperandDefinitionKind.TypeDoubleWord:
-                        Contract.Assert(entry.DataType.HasFlag(DataType.DoubleWord));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(sourceOp.DataType.HasFlag(DataType.DoubleWord));
+                        explicitType |= sourceOp.DataType;
                         continue;
 
                     case OperandDefinitionKind.TypeInt:
-                        Contract.Assert(entry.DataType.HasFlag(DataType.Int));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(sourceOp.DataType.HasFlag(DataType.Int));
+                        explicitType |= sourceOp.DataType;
+                        continue;
+
+                    case OperandDefinitionKind.TypeWord:
+                        Contract.Assert(sourceOp.DataType.HasFlag(DataType.Word));
+                        explicitType |= sourceOp.DataType;
                         continue;
 
                     case OperandDefinitionKind.TypeShort:
-                        Contract.Assert(entry.DataType.HasFlag(DataType.Word));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(sourceOp.DataType.HasFlag(DataType.Short));
+                        explicitType |= sourceOp.DataType;
                         continue;
 
                     case OperandDefinitionKind.NearPointer:
-                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Near) && entry.DataType.HasFlag(DataType.Pointer));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Near) && sourceOp.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= sourceOp.DataType;
                         break; // We want to create an operand for this
 
                     case OperandDefinitionKind.FarPointer:
-                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far) && entry.DataType.HasFlag(DataType.Pointer));
-                        explicitType |= entry.DataType;
+                        Contract.Assert(entry.Flags.HasFlag(InstructionFlags.Far) && sourceOp.DataType.HasFlag(DataType.Pointer));
+                        explicitType |= sourceOp.DataType;
                         break; // We want to create an operand for this
 
                     default:

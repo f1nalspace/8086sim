@@ -9,7 +9,6 @@ using IO = Final.CPU8086.Instructions.InstructionOperand;
 using IF = Final.CPU8086.Instructions.InstructionFlags;
 using RT = Final.CPU8086.Types.RegisterType;
 using DWT = Final.CPU8086.Types.DataWidthType;
-using System.Diagnostics.SymbolStore;
 using Final.CPU8086.Types;
 
 namespace Final.CPU8086

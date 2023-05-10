@@ -41,6 +41,7 @@ namespace Final.CPU8086.Instructions
         FarPointer,
 
         TypeDoubleWord,
+        TypeWord,
         TypeShort,
         TypeInt,
         TypePointer,
@@ -167,6 +168,15 @@ namespace Final.CPU8086.Instructions
             return kind != OperandDefinitionKind.Unknown;
         }
 
+        public static OperandDefinition Parse(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                throw new ArgumentNullException(nameof(value));
+            if (!TryParse(value, out OperandDefinition operand))
+                throw new NotImplementedException($"The operand '{value}' is not implemented!");
+            return operand;
+        }
+
         public static OperandDefinitionKind StringToKind(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -201,6 +211,7 @@ namespace Final.CPU8086.Instructions
 
                 "dword" => OperandDefinitionKind.TypeDoubleWord,
                 "short" => OperandDefinitionKind.TypeShort,
+                "word" => OperandDefinitionKind.TypeWord,
                 "int" => OperandDefinitionKind.TypeInt,
                 "ptr" => OperandDefinitionKind.TypePointer,
 
@@ -291,9 +302,12 @@ namespace Final.CPU8086.Instructions
                 OperandDefinitionKind.ImmediateWord => DataType.Word,
                 OperandDefinitionKind.ImmediateDoubleWord => DataType.DoubleWord,
                 OperandDefinitionKind.TypeDoubleWord => DataType.DoubleWord,
-                OperandDefinitionKind.TypeShort => DataType.Word,
+                OperandDefinitionKind.TypeWord => DataType.Word,
+                OperandDefinitionKind.TypeShort => DataType.Short,
                 OperandDefinitionKind.TypeInt => DataType.Int,
                 OperandDefinitionKind.TypePointer => DataType.Pointer,
+                OperandDefinitionKind.NearPointer => DataType.Pointer,
+                OperandDefinitionKind.FarPointer => DataType.Pointer,
                 OperandDefinitionKind.ShortLabel => DataType.Byte,
                 OperandDefinitionKind.LongLabel => DataType.Word,
                 OperandDefinitionKind.RAX => DataType.QuadWord,
@@ -341,15 +355,6 @@ namespace Final.CPU8086.Instructions
             };
         }
 
-        public static OperandDefinition Parse(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value))
-                throw new ArgumentNullException(nameof(value));
-            if (!TryParse(value, out OperandDefinition operand))
-                throw new NotImplementedException($"The operand '{value}' is not implemented!");
-            return operand;
-        }
-
         public static string KindToString(OperandDefinitionKind type)
         {
             return type switch
@@ -382,6 +387,7 @@ namespace Final.CPU8086.Instructions
                 OperandDefinitionKind.FarPointer => "fp",
 
                 OperandDefinitionKind.TypeDoubleWord => "dword",
+                OperandDefinitionKind.TypeWord => "word",
                 OperandDefinitionKind.TypeShort => "short",
                 OperandDefinitionKind.TypeInt => "int",
                 OperandDefinitionKind.TypePointer => "ptr",
@@ -456,13 +462,15 @@ namespace Final.CPU8086.Instructions
             return value switch
             {
                 "(byte)" => DataType.Byte,
-                "(short)" => DataType.Word,
+                "(word)" => DataType.Word,
+                "(short)" => DataType.Short,
                 "(int)" => DataType.Int,
                 "(dword)" => DataType.DoubleWord,
                 "(qword)" => DataType.QuadWord,
                 "(ptr)" => DataType.Pointer,
                 "(byte ptr)" => DataType.Byte | DataType.Pointer,
-                "(short ptr)" => DataType.Word | DataType.Pointer,
+                "(word ptr)" => DataType.Word | DataType.Pointer,
+                "(short ptr)" => DataType.Short | DataType.Pointer,
                 "(int ptr)" => DataType.Int | DataType.Pointer,
                 "(dword ptr)" => DataType.DoubleWord | DataType.Pointer,
                 "(qword ptr)" => DataType.QuadWord | DataType.Pointer,
@@ -477,6 +485,8 @@ namespace Final.CPU8086.Instructions
                 if (dataType == DataType.Byte)
                     return "(byte)";
                 else if (dataType == DataType.Word)
+                    return "(word)";
+                else if (dataType == DataType.Short)
                     return "(short)";
                 else if (dataType == DataType.Int)
                     return "(int)";
@@ -489,6 +499,8 @@ namespace Final.CPU8086.Instructions
                 else if (dataType.HasFlag(DataType.Byte) && dataType.HasFlag(DataType.Pointer))
                     return "(byte ptr)";
                 else if (dataType.HasFlag(DataType.Word) && dataType.HasFlag(DataType.Pointer))
+                    return "(word ptr)";
+                else if (dataType.HasFlag(DataType.Short) && dataType.HasFlag(DataType.Pointer))
                     return "(short ptr)";
                 else if (dataType.HasFlag(DataType.Int) && dataType.HasFlag(DataType.Pointer))
                     return "(int ptr)";

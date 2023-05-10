@@ -655,7 +655,7 @@
             </TabControl>
 
             <TabControl Grid.Row="3" MinHeight="90">
-                <TabItem Header="Status">
+                <TabItem Header="Flags">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -681,134 +681,18 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
 
-                        <TextBlock Grid.Row="0" Grid.Column="0" Text="0" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="0" Text="CF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="CF = Carry Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="15" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="14" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+                        <TextBlock Grid.Row="0" Grid.Column="2" Text="13" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="2" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+                        <TextBlock Grid.Row="0" Grid.Column="3" Text="12" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="3" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
 
-                        <TextBlock Grid.Row="0" Grid.Column="1" Text="1" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-
-                        <TextBlock Grid.Row="0" Grid.Column="2" Text="2" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="2" Text="PF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="2" Text="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="PF = Parity Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="3" Text="3" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-
-                        <TextBlock Grid.Row="0" Grid.Column="4" Text="4" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="4" Text="AF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="4" Text="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="AF = Auxiliary Carry Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="5" Text="5" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-
-                        <TextBlock Grid.Row="0" Grid.Column="6" Text="6" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="6" Text="ZF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="6" Text="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="ZF = Zero Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="7" Text="7" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="7" Text="SF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="7" Text="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="SF = Sign Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="8" Text="8" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="8" Text="TF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="8" Text="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="TF = Trap Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style></TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="9" Text="9" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="9" Text="IF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="9" Text="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="IF = Interrupt Enable Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="10" Text="10" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="10" Text="DF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="10" Text="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="DF = Direction Flag" HorizontalAlignment="Center" Padding="4 0">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Background" Value="PaleVioletRed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
-                                            <Setter Property="Background" Value="GreenYellow" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-
-                        <TextBlock Grid.Row="0" Grid.Column="11" Text="11" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="11" Text="OF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="11" Text="{Binding Register.OverflowFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="OF = Overflow Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="0" Grid.Column="4" Text="11" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="4" Text="OF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="4" Text="{Binding Register.OverflowFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="OF = Overflow Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -821,21 +705,134 @@
                             </TextBlock.Style>
                         </TextBlock>
 
-                        <TextBlock Grid.Row="0" Grid.Column="12" Text="12" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="12" Text="IO" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="12" Text="0" HorizontalAlignment="Center" Padding="4 0" Background="PaleVioletRed" />
+                        <TextBlock Grid.Row="0" Grid.Column="5" Text="10" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="5" Text="DF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="DF = Direction Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
-                        <TextBlock Grid.Row="0" Grid.Column="13" Text="13" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="13" Text="IO" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="13" Text="0" HorizontalAlignment="Center" Padding="4 0" Background="PaleVioletRed" />
+                        <TextBlock Grid.Row="0" Grid.Column="6" Text="9" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="6" Text="IF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="6" Text="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="IF = Interrupt Enable Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
-                        <TextBlock Grid.Row="0" Grid.Column="14" Text="14" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="14" Text="NT" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="14" Text="0" HorizontalAlignment="Center" Padding="4 0" Background="PaleVioletRed" />
+                        <TextBlock Grid.Row="0" Grid.Column="7" Text="8" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="7" Text="TF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="7" Text="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="TF = Trap Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
 
-                        <TextBlock Grid.Row="0" Grid.Column="15" Text="15" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
-                        <TextBlock Grid.Row="1" Grid.Column="15" Text="MD" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="15" Text="0" HorizontalAlignment="Center" Padding="4 0" Background="PaleVioletRed" />
+                        <TextBlock Grid.Row="0" Grid.Column="8" Text="7" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="8" Text="SF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="8" Text="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="SF = Sign Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="9" Text="6" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="9" Text="ZF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="9" Text="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="ZF = Zero Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="10" Text="5" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="10" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+
+                        <TextBlock Grid.Row="0" Grid.Column="11" Text="4" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="11" Text="AF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="11" Text="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="AF = Auxiliary Carry Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="12" Text="3" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="12" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+
+                        <TextBlock Grid.Row="0" Grid.Column="13" Text="2" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="13" Text="PF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="13" Text="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="PF = Parity Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="0" Grid.Column="14" Text="1" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="2" Grid.Column="14" Text="U" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" ToolTip="Undefined" />
+                        
+                        <TextBlock Grid.Row="0" Grid.Column="15" Text="0" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
+                        <TextBlock Grid.Row="1" Grid.Column="15" Text="CF" HorizontalAlignment="Center" Padding="4 0" />
+                        <TextBlock Grid.Row="2" Grid.Column="15" Text="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="CF = Carry Flag" HorizontalAlignment="Center" Padding="4 0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Background" Value="PaleVioletRed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged}" Value="True">
+                                            <Setter Property="Background" Value="GreenYellow" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                     </Grid>
                 </TabItem>
             </TabControl>

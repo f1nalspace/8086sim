@@ -390,40 +390,33 @@ namespace Final.ITP
                         DataType dataType = DataType.None;
                         foreach (OperandDefinition operand in operands)
                         {
+                            DataType thisDataType = operand.DataType;
+                            if (thisDataType > dataType)
+                                dataType = thisDataType;
                             switch (operand.Kind)
                             {
                                 case OperandDefinitionKind.FarPointer:
-                                    dataType |= DataType.Pointer;
                                     flags |= InstructionFlags.Far;
                                     break;
 
                                 case OperandDefinitionKind.NearPointer:
-                                    dataType |= DataType.Pointer;
                                     flags |= InstructionFlags.Near;
                                     break;
 
-                                case OperandDefinitionKind.TypePointer:
-                                    dataType |= DataType.Pointer;
-                                    break;
-                                case OperandDefinitionKind.TypeDoubleWord:
-                                    dataType |= DataType.DoubleWord;
-                                    break;
-                                case OperandDefinitionKind.TypeShort:
-                                    dataType |= DataType.Word;
-                                    break;
-                                case OperandDefinitionKind.TypeInt:
-                                    dataType |= DataType.Int;
-                                    break;
                                 case OperandDefinitionKind.KeywordFar:
                                     flags |= InstructionFlags.Far;
                                     break;
+
                                 default:
-                                    dataType |= operand.DataType;
                                     break;
                             }
                         }
 
-                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidthType, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
+                        DataWidth dataWidth = new DataWidth(dataWidthType);
+                        if (dataWidth == DataWidth.None)
+                            dataWidth = DataWidth.DataTypeToWidth(dataType);
+
+                        InstructionEntry instruction = new InstructionEntry(op, type, dataWidth, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
                         allInstructions.Add(instruction);
                     }
 

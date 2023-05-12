@@ -220,6 +220,10 @@ namespace Final.CPU8086
             {
                 CurrentStream = program.Stream;
                 DecodeInstructions(program);
+
+                OneOf<int, Error> loadRes = _cpu.LoadProgram(program);
+                if (loadRes.IsT1)
+                    _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
             }
             else
                 CurrentStream = ImmutableArray<byte>.Empty;

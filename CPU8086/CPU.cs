@@ -479,7 +479,7 @@ namespace Final.CPU8086
             return result;
         }
 
-        private uint GetAbsoluteMemoryAddress(MemoryAddress address)
+        public uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
             byte u8 = (byte)(address.Displacement & 0xFF);
             ushort u16 = (ushort)(address.Displacement & 0xFFFF);

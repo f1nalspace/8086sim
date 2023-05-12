@@ -8,12 +8,16 @@ using System.Threading;
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Text.RegularExpressions;
+using Final.CPU8086.Types;
+using Final.CPU8086.Services;
 
 namespace Final.CPU8086.Controls
 {
     public class BinaryGridViewModel : ViewModelBase, IBinaryGridService
     {
         public const int ColumnCount = 8;
+
+        private IMemoryAddressResolverService MemoryAddressResolver => GetService<IMemoryAddressResolverService>();
 
         public bool ShowAsHex
         {
@@ -93,6 +97,7 @@ namespace Final.CPU8086.Controls
         public event BinaryGridCellClickEventHandler CellClicked;
         public event BinaryGridPageChangedEventHandler PageChanged;
         public event BinaryGridPageChangedEventHandler PageChanging;
+        //public event BinaryGridResolveAddressEventHandler ResolveMemoryAddress;
 
         public string JumpAddress
         {
@@ -121,17 +126,36 @@ namespace Final.CPU8086.Controls
             //PageOffset = 0;
         }
 
-        private static readonly Regex _hexRangeRex = new Regex("0[xX](?<first>[0-9a-fA-F]+)\\s*(?:[-]0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
-        private static readonly Regex _intRangeRex = new Regex("(?<first>[0-9]+)\\s*(?:[-](?<second>[0-9]+))?", RegexOptions.Compiled);
+        private static readonly Regex _hexRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?0[xX](?<first>[0-9a-fA-F]+)\\s*(?:[-]0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
+        private static readonly Regex _intRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?(?<first>[0-9]+)\\s*(?:[-](?<second>[0-9]+))?", RegexOptions.Compiled);
 
-        private static (uint Start, uint Length) GetAddressRange(string address)
+        private static SegmentType ParseSegmentType(string str)
         {
+            if (string.IsNullOrWhiteSpace(str))
+                return SegmentType.None;
+            return str.ToLower() switch
+            {
+                "cs" => SegmentType.CS,
+                "ds" => SegmentType.DS,
+                "ss" => SegmentType.SS,
+                "es" => SegmentType.ES,
+                _ => SegmentType.None
+            };
+        }
+
+        private static (SegmentType seg, uint Start, uint Length) GetAddressRange(string address)
+        {
+            SegmentType seg;
             uint start, end;
             if (!string.IsNullOrEmpty(address))
             {
                 Match hexMatch = _hexRangeRex.Match(address);
                 if (hexMatch.Success)
                 {
+                    if (!string.IsNullOrWhiteSpace(hexMatch.Groups["seg"]?.Value))
+                        seg = ParseSegmentType(hexMatch.Groups["seg"]?.Value);
+                    else
+                        seg = SegmentType.None;
                     start = uint.Parse(hexMatch.Groups["first"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                     if (!string.IsNullOrWhiteSpace(hexMatch.Groups["second"]?.Value))
                         end = uint.Parse(hexMatch.Groups["second"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
@@ -143,6 +167,10 @@ namespace Final.CPU8086.Controls
                     Match intMatch = _intRangeRex.Match(address);
                     if (intMatch.Success)
                     {
+                        if (!string.IsNullOrWhiteSpace(hexMatch.Groups["seg"]?.Value))
+                            seg = ParseSegmentType(hexMatch.Groups["seg"]?.Value);
+                        else
+                            seg = SegmentType.None;
                         start = uint.Parse(intMatch.Groups["first"].Value);
                         if (!string.IsNullOrWhiteSpace(intMatch.Groups["second"]?.Value))
                             end = uint.Parse(intMatch.Groups["second"].Value);
@@ -150,22 +178,22 @@ namespace Final.CPU8086.Controls
                             end = start;
                     }
                     else
-                        return (0, 0);
+                        return (SegmentType.None, 0, 0);
                 }
             }
             else
-                return (0, 0);
+                return (SegmentType.None, 0, 0);
             if (start > end)
-                return (0, 0);
+                return (SegmentType.None, 0, 0);
             else if (start == end)
-                return (start, 1);
-            return (start, (end - start) + 1);
+                return (seg, start, 1);
+            return (seg, start, (end - start) + 1);
         }
 
         private bool CanJumpToAddress(string address) => true;
         private void JumpToAddress(string address)
         {
-            var range = GetAddressRange(address);
+            (SegmentType Seg, uint Start, uint Length) range = GetAddressRange(address);
             if (range.Length == 0)
             {
                 VisualPosition = 0;
@@ -175,8 +203,14 @@ namespace Final.CPU8086.Controls
 
             Contract.Assert(range.Length > 0);
 
+            uint start = range.Start;
+
+            IMemoryAddressResolverService srv = MemoryAddressResolver;
+            if (srv != null)
+                start = srv.Resolve(range.Seg, (int)range.Start);
+
             if (PageCount > 0 && BytesPerPage > 0)
-                PageOffset = Math.Max(0, Math.Min(PageCount - 1, range.Start / BytesPerPage));
+                PageOffset = Math.Max(0, Math.Min(PageCount - 1, start / BytesPerPage));
             else
                 PageOffset = 0;
 

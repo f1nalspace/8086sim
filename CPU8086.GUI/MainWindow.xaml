@@ -498,7 +498,7 @@
                             ShowAsHex="{Binding ShowMemoryAsHex, UpdateSourceTrigger=PropertyChanged}"
                             >
                             <dxmvvm:Interaction.Behaviors>
-                                <ctrls:BinaryGridServiceBehavior Key="MemoryGridService" />
+                                <ctrls:BinaryGridServiceBehavior Key="MemoryGridService" MemoryAddressResolverService="{Binding}" />
                             </dxmvvm:Interaction.Behaviors>
                         </ctrls:BinaryGridView>
                     </TabItem>

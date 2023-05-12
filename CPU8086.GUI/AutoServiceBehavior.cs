@@ -1,5 +1,6 @@
 ﻿using DevExpress.Mvvm;
 using DevExpress.Mvvm.UI.Interactivity;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace Final.CPU8086
@@ -9,12 +10,20 @@ namespace Final.CPU8086
     {
         public string Key { get; set; }
 
+        protected ISupportServices GetSupportServices(FrameworkElement obj)
+        {
+            object dt = obj?.DataContext;
+            if (dt is ISupportServices supportServices)
+                return supportServices;
+            return null;
+        }
+
         protected override void OnAttached()
         {
             base.OnAttached();
 
-            var dt = AssociatedObject?.DataContext;
-            if (dt is ISupportServices supportServices)
+            ISupportServices supportServices = GetSupportServices(AssociatedObject);
+            if (supportServices != null)
             {
                 IAutoService service = AssociatedObject.GetAutoService();
                 if (!string.IsNullOrEmpty(Key))
@@ -26,8 +35,8 @@ namespace Final.CPU8086
 
         protected override void OnDetaching()
         {
-            var dt = AssociatedObject?.DataContext;
-            if (dt is ISupportServices supportServices)
+            ISupportServices supportServices = GetSupportServices(AssociatedObject);
+            if (supportServices != null)
             {
                 IAutoService service = AssociatedObject.GetAutoService();
                 supportServices.ServiceContainer.UnregisterService(service);

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Final.CPU8086.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -91,6 +92,8 @@ namespace Final.CPU8086.Controls
             DependencyProperty.RegisterReadOnly(nameof(CanPrevPage), typeof(bool), typeof(BinaryGridView), new PropertyMetadata(false));
         public static readonly DependencyProperty CanPrevPageProperty = CanPrevPagePropertyKey.DependencyProperty;
 
+        //public static readonly RoutedEvent ResolveMemoryAddressEvent = EventManager.RegisterRoutedEvent(nameof(ResolveMemoryAddress), RoutingStrategy.Bubble, typeof(BinaryGridResolveAddressEventHandler), typeof(BinaryGridView));
+
         public object StreamSource
         {
             get => GetValue(StreamSourceProperty);
@@ -144,6 +147,12 @@ namespace Final.CPU8086.Controls
             private set => SetValue(CanPrevPagePropertyKey, value);
         }
 
+        //public event BinaryGridResolveAddressEventHandler ResolveMemoryAddress
+        //{
+        //    add => AddHandler(ResolveMemoryAddressEvent, value);
+        //    remove => RemoveHandler(ResolveMemoryAddressEvent, value);
+        //}
+
         public BinaryGridViewModel ViewModel => mainGrid?.DataContext as BinaryGridViewModel;
 
         public BinaryGridView()
@@ -156,10 +165,24 @@ namespace Final.CPU8086.Controls
         private void OnMainGridDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (e.OldValue is BinaryGridViewModel oldVM)
+            {
                 oldVM.PropertyChanged -= OnViewModelPropertyChanged;
+                //oldVM.ResolveMemoryAddress -= OnViewModelResolveMemoryAddress;
+            }
             if (e.NewValue is BinaryGridViewModel newVM)
+            {
                 newVM.PropertyChanged += OnViewModelPropertyChanged;
+                //newVM.ResolveMemoryAddress += OnViewModelResolveMemoryAddress;
+            }
         }
+
+        //private void OnViewModelResolveMemoryAddress(object sender, BinaryGridResolveAddressEventArgs args)
+        //{
+        //    BinaryGridViewModel vm = sender as BinaryGridViewModel;
+        //    BinaryGridResolveAddressEventArgs routedArgs = new BinaryGridResolveAddressEventArgs(ResolveMemoryAddressEvent, this, vm, args.Segment, args.Start, args.Result);
+        //    RaiseEvent(routedArgs);
+        //    args.Result = routedArgs.Result;
+        //}
 
         private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {

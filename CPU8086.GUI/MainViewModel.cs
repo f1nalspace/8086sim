@@ -3,6 +3,7 @@ using DevExpress.Mvvm.Native;
 using Final.CPU8086.Controls;
 using Final.CPU8086.Execution;
 using Final.CPU8086.Instructions;
+using Final.CPU8086.Services;
 using Final.CPU8086.Types;
 using OneOf;
 using System;
@@ -17,7 +18,7 @@ using System.Threading.Tasks;
 
 namespace Final.CPU8086
 {
-    public class MainViewModel : ViewModelBase
+    public class MainViewModel : ViewModelBase, IMemoryAddressResolverService
     {
         private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
 
@@ -26,7 +27,6 @@ namespace Final.CPU8086
         private readonly CPU _cpu;
 
         private IBinaryGridService MemoryGridService => GetService<IBinaryGridService>("MemoryGridService");
-
         public IProgram[] Programs { get; }
 
         public IProgram CurrentProgram { get => GetValue<IProgram>(); set => SetValue(value, () => LoadProgram(value)); }
@@ -123,6 +123,13 @@ namespace Final.CPU8086
                 .ToArray();
 
             CurrentProgram = Programs[0];
+        }
+
+        public uint ResolveMemoryAddress(SegmentType segment, (uint start, uint len) range)
+        {
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)range.start, segment, 0);
+            uint result = _cpu.GetAbsoluteMemoryAddress(address);
+            return result;
         }
 
         private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
@@ -435,6 +442,12 @@ namespace Final.CPU8086
             {
                 DecodeState = (Errors.Any() || stream.Length == 0) ? DecodeState.Failed : DecodeState.Success;
             }
+        }
+
+        uint IMemoryAddressResolverService.Resolve(SegmentType segment, int displacement)
+        {
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, displacement, segment, 0);
+            return _cpu.GetAbsoluteMemoryAddress(address);
         }
     }
 }

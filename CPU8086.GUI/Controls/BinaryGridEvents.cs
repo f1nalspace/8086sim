@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Final.CPU8086.Types;
+using System;
 using System.Windows;
 
 namespace Final.CPU8086.Controls
@@ -77,4 +78,32 @@ namespace Final.CPU8086.Controls
     }
 
     public delegate void BinaryGridPageChangedEventHandler(object sender, BinaryGridPageChangedEventArgs args);
+
+#if false
+    public class BinaryGridResolveAddressEventArgs : BinaryGridEventArgs
+    {
+        public SegmentType Segment { get; }
+        public uint Start { get; }
+        public uint Length { get; }
+        public uint Result { get; set; }
+
+        public BinaryGridResolveAddressEventArgs(BinaryGridViewModel view, SegmentType segment, uint start, uint length) : base(view)
+        {
+            Segment = segment;
+            Start = start;
+            Length = length;
+            Result = 0;
+        }
+
+        public BinaryGridResolveAddressEventArgs(RoutedEvent routedEvent, object source, BinaryGridViewModel view, SegmentType segment, uint start, uint length) : base(routedEvent, source, view)
+        {
+            Segment = segment;
+            Start = start;
+            Length = length;
+            Result = 0;
+        }
+    }
+
+    public delegate void BinaryGridResolveAddressEventHandler(object sender, BinaryGridResolveAddressEventArgs args);
+#endif
 }

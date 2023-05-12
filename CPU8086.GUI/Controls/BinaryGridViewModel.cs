@@ -97,7 +97,6 @@ namespace Final.CPU8086.Controls
         public event BinaryGridCellClickEventHandler CellClicked;
         public event BinaryGridPageChangedEventHandler PageChanged;
         public event BinaryGridPageChangedEventHandler PageChanging;
-        //public event BinaryGridResolveAddressEventHandler ResolveMemoryAddress;
 
         public string JumpAddress
         {
@@ -167,8 +166,8 @@ namespace Final.CPU8086.Controls
                     Match intMatch = _intRangeRex.Match(address);
                     if (intMatch.Success)
                     {
-                        if (!string.IsNullOrWhiteSpace(hexMatch.Groups["seg"]?.Value))
-                            seg = ParseSegmentType(hexMatch.Groups["seg"]?.Value);
+                        if (!string.IsNullOrWhiteSpace(intMatch.Groups["seg"]?.Value))
+                            seg = ParseSegmentType(intMatch.Groups["seg"]?.Value);
                         else
                             seg = SegmentType.None;
                         start = uint.Parse(intMatch.Groups["first"].Value);
@@ -204,6 +203,7 @@ namespace Final.CPU8086.Controls
             Contract.Assert(range.Length > 0);
 
             uint start = range.Start;
+            uint length = range.Length;
 
             IMemoryAddressResolverService srv = MemoryAddressResolver;
             if (srv != null)
@@ -214,8 +214,8 @@ namespace Final.CPU8086.Controls
             else
                 PageOffset = 0;
 
-            VisualPosition = range.Start;
-            VisualLength = range.Length;
+            VisualPosition = start;
+            VisualLength = length;
         }
 
         private void RefreshPagingProperties()

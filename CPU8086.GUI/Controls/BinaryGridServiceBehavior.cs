@@ -42,7 +42,7 @@ namespace Final.CPU8086.Controls
 
         protected override void OnDetaching()
         {
-            var srv = MemoryAddressResolverService;
+            IMemoryAddressResolverService srv = MemoryAddressResolverService;
             if (srv != null)
             {
                 BinaryGridViewModel vm = AssociatedObject.ViewModel;

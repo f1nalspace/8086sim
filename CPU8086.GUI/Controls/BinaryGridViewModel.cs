@@ -125,8 +125,8 @@ namespace Final.CPU8086.Controls
             //PageOffset = 0;
         }
 
-        private static readonly Regex _hexRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?0[xX](?<first>[0-9a-fA-F]+)\\s*(?:[-]0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
-        private static readonly Regex _intRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?(?<first>[0-9]+)\\s*(?:[-](?<second>[0-9]+))?", RegexOptions.Compiled);
+        private static readonly Regex _hexRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?0[xX](?<first>[0-9a-fA-F]+)\\s*(?:(?<sep>[-,])0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
+        private static readonly Regex _intRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?(?<first>[0-9]+)\\s*(?:(?<sep>[-,])(?<second>[0-9]+))?", RegexOptions.Compiled);
 
         private static SegmentType ParseSegmentType(string str)
         {
@@ -146,6 +146,7 @@ namespace Final.CPU8086.Controls
         {
             SegmentType seg;
             uint start, end;
+            uint length = 0;
             if (!string.IsNullOrEmpty(address))
             {
                 Match hexMatch = _hexRangeRex.Match(address);
@@ -157,7 +158,14 @@ namespace Final.CPU8086.Controls
                         seg = SegmentType.None;
                     start = uint.Parse(hexMatch.Groups["first"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
                     if (!string.IsNullOrWhiteSpace(hexMatch.Groups["second"]?.Value))
-                        end = uint.Parse(hexMatch.Groups["second"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                    {
+                        char sep = hexMatch.Groups["sep"].Value[0];
+                        uint second = uint.Parse(hexMatch.Groups["second"].Value, NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+                        if (sep == '-')
+                            end = second;
+                        else
+                            end = start + second;
+                    }
                     else
                         end = start;
                 }
@@ -172,7 +180,14 @@ namespace Final.CPU8086.Controls
                             seg = SegmentType.None;
                         start = uint.Parse(intMatch.Groups["first"].Value);
                         if (!string.IsNullOrWhiteSpace(intMatch.Groups["second"]?.Value))
-                            end = uint.Parse(intMatch.Groups["second"].Value);
+                        {
+                            char sep = intMatch.Groups["sep"].Value[0];
+                            uint second = uint.Parse(intMatch.Groups["second"].Value);
+                            if (sep == '-')
+                                end = second;
+                            else
+                                end = start + second;
+                        }
                         else
                             end = start;
                     }

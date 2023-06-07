@@ -59,8 +59,9 @@ namespace Final.CPU8086.Execution
 
             _typeFunctionTable[(int)InstructionType.PUSH] = PushOrPop;
             _typeFunctionTable[(int)InstructionType.POP] = PushOrPop;
-            _typeFunctionTable[(int)InstructionType.PUSHF] = PushOrPop;
-            _typeFunctionTable[(int)InstructionType.POPF] = PushOrPop;
+
+            _typeFunctionTable[(int)InstructionType.PUSHF] = FlagsPushOrPop;
+            _typeFunctionTable[(int)InstructionType.POPF] = FlagsPushOrPop;
         }
 
         public OneOf<int, Error> Execute(Instruction instruction, IRunState state)
@@ -205,6 +206,76 @@ namespace Final.CPU8086.Execution
             }
         }
 
+        private static OneOf<int, Error> PushToStack(CPU cpu, Instruction instruction, IRunState state, DataWidth width, Immediate value)
+        {
+            DataType dataType = WidthToType(width);
+            byte dataLen = WidthToLength(width);
+            if (dataType == DataType.None || dataLen == 0)
+                return new Error(ErrorCode.UnsupportedDataWidth, $"Unsupported data width '{width}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            // Decrement SP
+            Immediate oldSP = new Immediate(cpu.Register.SP);
+            cpu.Register.SP -= dataLen;
+            Immediate newSP = new Immediate(cpu.Register.SP);
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
+
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, cpu.Register.SP, SegmentType.SS, 0);
+
+            // Load previous value from SS:SP (Only used for IRunState)
+            OneOf<Immediate, Error> previousLoadRes = cpu.LoadMemory(address, dataType);
+            if (previousLoadRes.IsT1)
+                return previousLoadRes.AsT1;
+            Immediate previousValue = previousLoadRes.AsT0;
+
+            // Store value in SS:SP
+            OneOf<byte, Error> storeRes = cpu.StoreMemory(instruction, state, address, dataType, value);
+            if (storeRes.IsT1)
+                return storeRes.AsT1;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, previousValue), new ExecutedValue(address, value))));
+
+            return 0;
+        }
+
+        private static OneOf<Immediate, Error> PopFromStack(CPU cpu, Instruction instruction, IRunState state, DataWidth width)
+        {
+            DataType dataType = WidthToType(width);
+            byte dataLen = WidthToLength(width);
+            if (dataType == DataType.None || dataLen == 0)
+                return new Error(ErrorCode.UnsupportedDataWidth, $"Unsupported data width '{width}' for push instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            Immediate oldSP = new Immediate(cpu.Register.SP);
+
+            // Load value from SS:SP
+            OneOf<Immediate, Error> loadRes = cpu.LoadMemory(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, oldSP.S16, SegmentType.SS, 0), dataType);
+            if (loadRes.IsT1)
+                return loadRes.AsT1;
+            Immediate loadedValue = loadRes.AsT0;
+
+            // Increment SP
+            cpu.Register.SP += dataLen;
+            Immediate newSP = new Immediate(cpu.Register.SP);
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
+
+            return loadedValue;
+        }
+
+        // Implements all flags related instruction types, such as PUSHF/POPF
+        private static OneOf<int, Error> FlagsPushOrPop(CPU cpu, Instruction instruction, IRunState state)
+        {
+            switch (instruction.Type)
+            {
+                case InstructionType.PUSHF:
+                    throw new NotImplementedException();
+
+                case InstructionType.POPF:
+                    throw new NotImplementedException();
+
+                default:
+                    throw new NotSupportedException($"The flags instruction '{instruction.Type}' is not supported");
+            }
+        }
+
         private static OneOf<int, Error> PushOrPop(CPU cpu, Instruction instruction, IRunState state)
         {
             const int expectedOperandLen = 1;
@@ -235,43 +306,18 @@ namespace Final.CPU8086.Execution
 
                         if (instruction.Type == InstructionType.PUSH)
                         {
-                            // Decrement SP
-                            Immediate oldSP = new Immediate(cpu.Register.SP);
-                            cpu.Register.SP -= dataLen;
-                            Immediate newSP = new Immediate(cpu.Register.SP);
-                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
-
-                            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, cpu.Register.SP, SegmentType.SS, 0);
-
-                            // Load previous value from SS:SP
-                            OneOf<Immediate, Error> previousLoadRes = cpu.LoadMemory(address, dataType);
-                            if (previousLoadRes.IsT1)
-                                return previousLoadRes.AsT1;
-                            Immediate previousValue = previousLoadRes.AsT0;
-
-                            // Store register in SS:SP
-                            OneOf<byte, Error> storeRes = cpu.StoreMemory(instruction, state, address, dataType, regValue);
-                            if (storeRes.IsT1)
-                                return storeRes.AsT1;
-
-                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, previousValue), new ExecutedValue(address, regValue))));
+                            OneOf<int, Error> pushRes = PushToStack(cpu, instruction, state, instruction.Width, regValue);
+                            if (pushRes.IsT1)
+                                return pushRes.AsT1;
                         }
                         else
                         {
                             Contract.Assert(instruction.Type == InstructionType.POP);
 
-                            Immediate oldSP = new Immediate(cpu.Register.SP);
-
-                            // Load register value from SS:SP
-                            OneOf<Immediate, Error> loadRes = cpu.LoadMemory(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, oldSP.S16, SegmentType.SS, 0), dataType);
-                            if (loadRes.IsT1)
-                                return loadRes.AsT1;
-                            Immediate newValue = loadRes.AsT0;
-
-                            // Increment SP
-                            cpu.Register.SP += dataLen;
-                            Immediate newSP = new Immediate(cpu.Register.SP);
-                            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
+                            OneOf<Immediate, Error> popRes = PopFromStack(cpu, instruction, state, instruction.Width);
+                            if (popRes.IsT1)
+                                return popRes.AsT1;
+                            Immediate newValue = popRes.AsT0;
 
                             // Store value to register
                             OneOf<byte, Error> storeRes = cpu.StoreRegister(instruction, state, register, newValue);
@@ -282,12 +328,6 @@ namespace Final.CPU8086.Execution
                         }
                     }
                     break;
-
-                case InstructionType.PUSHF:
-                    throw new NotImplementedException();
-
-                case InstructionType.POPF:
-                    throw new NotImplementedException();
             }
 
             return 0;
@@ -305,12 +345,26 @@ namespace Final.CPU8086.Execution
                     break; // Nothing special todo, return operand address
 
                 case InstructionType.CALL:
-                    // TODO(final): PUSH IP to the stack and return operand address
-                    throw new NotImplementedException();
+                    {
+                        Immediate sp = new Immediate(cpu.Register.SP);
+                        OneOf<int, Error> pushRes = PushToStack(cpu, instruction, state, DataWidth.Word, sp);
+                        if (pushRes.IsT1)
+                            return pushRes.AsT1;
+                        // NOTE(final): Jump is done below
+                    }
+                    break;
 
                 case InstructionType.RET:
+                    {
+                        OneOf<Immediate, Error> popRes = PopFromStack(cpu, instruction, state, DataWidth.Word);
+                        if (popRes.IsT1)
+                            return popRes.AsT1;
+
+                        // TODO(final): Not sure if this is correct
+                        return popRes.AsT0.Value;
+                    }
+
                 case InstructionType.RETF:
-                    // TODO(final): POP IP from the stack and return that address
                     throw new NotImplementedException();
 
                 default:

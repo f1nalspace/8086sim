@@ -180,34 +180,34 @@ namespace Final.CPU8086
             switch (instruction.Type)
             {
                 case InstructionType.CALL:
+                {
+                    if (first.Type == OperandType.Register || first.Type == OperandType.Segment || first.Type == OperandType.Accumulator)
+                        cycles = new CyclesTable.Cycles(16, 1);
+                    else if (first.Type == OperandType.Memory)
                     {
-                        if (first.Type == OperandType.Register || first.Type == OperandType.Segment || first.Type == OperandType.Accumulator)
-                            cycles = new CyclesTable.Cycles(16, 1);
-                        else if (first.Type == OperandType.Memory)
-                        {
-                            DataType dataType = first.DataType;
-                            if (dataType == DataType.Byte)
-                                cycles = new CyclesTable.Cycles(13, 1, true);
-                            else if (dataType == DataType.Word || dataType == DataType.Short)
-                                cycles = new CyclesTable.Cycles(21, 2, true);
-                            else if (dataType == DataType.DoubleWord || dataType == DataType.Int)
-                                cycles = new CyclesTable.Cycles(37, 2, true);
-                            else
-                                throw new NotSupportedException($"Operand data type '{dataType}' is not supported");
-                        }
-                        else if (first.Type == OperandType.Immediate)
-                        {
-                            if (instruction.Flags.HasFlag(InstructionFlags.Near))
-                                cycles = new CyclesTable.Cycles(19, 1);
-                            else if (instruction.Flags.HasFlag(InstructionFlags.Far))
-                                cycles = new CyclesTable.Cycles(28, 2);
-                            else
-                                throw new NotSupportedException($"Instruction flags '{instruction.Flags}' is not supported");
-                        }
+                        DataType dataType = first.DataType;
+                        if (dataType == DataType.Byte)
+                            cycles = new CyclesTable.Cycles(13, 1, true);
+                        else if (dataType == DataType.Word || dataType == DataType.Short)
+                            cycles = new CyclesTable.Cycles(21, 2, true);
+                        else if (dataType == DataType.DoubleWord || dataType == DataType.Int)
+                            cycles = new CyclesTable.Cycles(37, 2, true);
                         else
-                            throw new NotSupportedException($"Instruction type '{instruction.Type}' is not supported");
+                            throw new NotSupportedException($"Operand data type '{dataType}' is not supported");
                     }
-                    break;
+                    else if (first.Type == OperandType.Immediate)
+                    {
+                        if (instruction.Flags.HasFlag(InstructionFlags.Near))
+                            cycles = new CyclesTable.Cycles(19, 1);
+                        else if (instruction.Flags.HasFlag(InstructionFlags.Far))
+                            cycles = new CyclesTable.Cycles(28, 2);
+                        else
+                            throw new NotSupportedException($"Instruction flags '{instruction.Flags}' is not supported");
+                    }
+                    else
+                        throw new NotSupportedException($"Instruction type '{instruction.Type}' is not supported");
+                }
+                break;
                 default:
                     cycles = _cycleTable.Get(instruction.Type, first.Type, second.Type);
                     break;
@@ -223,7 +223,7 @@ namespace Final.CPU8086
                 if (!isEvenAddress)
                 {
                     if (cycles.Transfers > 0)
-                        result *= (cycles.Transfers + 1U);
+                        result *= (4U * cycles.Transfers);
                     else
                         result += 4;
                 }
@@ -462,14 +462,14 @@ namespace Final.CPU8086
                 case SegmentType.DS:
                 case SegmentType.SS:
                 case SegmentType.ES:
-                    {
-                        RegisterType segmentRegister = SegmentToRegister(type);
-                        OneOf<Immediate, Error> loadedSegment = LoadRegister(segmentRegister);
-                        if (loadedSegment.IsT1)
-                            return uint.MaxValue;
-                        segmentBase = loadedSegment.AsT0.U16;
-                    }
-                    break;
+                {
+                    RegisterType segmentRegister = SegmentToRegister(type);
+                    OneOf<Immediate, Error> loadedSegment = LoadRegister(segmentRegister);
+                    if (loadedSegment.IsT1)
+                        return uint.MaxValue;
+                    segmentBase = loadedSegment.AsT0.U16;
+                }
+                break;
                 default:
                     segmentBase = 0;
                     break;
@@ -554,29 +554,29 @@ namespace Final.CPU8086
 
                 case DataType.Word:
                 case DataType.Short:
-                    {
-                        ushort u16 = (ushort)(
-                            (Memory[absoluteAddress + 0] << 0) |
-                            (Memory[absoluteAddress + 1] << 8));
-                        if (type == DataType.Short)
-                            return new Immediate((short)u16);
-                        else
-                            return new Immediate(u16);
-                    }
+                {
+                    ushort u16 = (ushort)(
+                        (Memory[absoluteAddress + 0] << 0) |
+                        (Memory[absoluteAddress + 1] << 8));
+                    if (type == DataType.Short)
+                        return new Immediate((short)u16);
+                    else
+                        return new Immediate(u16);
+                }
 
                 case DataType.Int:
                 case DataType.DoubleWord:
-                    {
-                        uint u32 = (uint)(
-                            (Memory[absoluteAddress + 0] << 0) |
-                            (Memory[absoluteAddress + 1] << 8) |
-                            (Memory[absoluteAddress + 2] << 16) |
-                            (Memory[absoluteAddress + 3] << 24));
-                        if (type == DataType.Int)
-                            return new Immediate((int)u32);
-                        else
-                            return new Immediate(u32);
-                    }
+                {
+                    uint u32 = (uint)(
+                        (Memory[absoluteAddress + 0] << 0) |
+                        (Memory[absoluteAddress + 1] << 8) |
+                        (Memory[absoluteAddress + 2] << 16) |
+                        (Memory[absoluteAddress + 3] << 24));
+                    if (type == DataType.Int)
+                        return new Immediate((int)u32);
+                    else
+                        return new Immediate(u32);
+                }
 
                 default:
                     return new Error(ErrorCode.UnsupportedDataType, $"The source memory type '{type}' is not supported!", 0);
@@ -612,63 +612,63 @@ namespace Final.CPU8086
             switch (type)
             {
                 case DataType.Byte:
-                    {
-                        Immediate oldValue = new Immediate(Memory[absoluteAddress]);
-                        Memory[absoluteAddress] = value.U8;
+                {
+                    Immediate oldValue = new Immediate(Memory[absoluteAddress]);
+                    Memory[absoluteAddress] = value.U8;
 
-                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 1));
+                    MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 1));
 
-                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldValue), new ExecutedValue(address, value))));
-                    }
-                    return 1;
+                    state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldValue), new ExecutedValue(address, value))));
+                }
+                return 1;
 
                 case DataType.Short:
                 case DataType.Word:
-                    {
-                        ushort oldValue = (ushort)((Memory[absoluteAddress + 0] << 0) | (Memory[absoluteAddress + 1] << 8));
-                        Immediate oldMemory;
-                        if (type == DataType.Short)
-                            oldMemory = new Immediate((short)oldValue);
-                        else
-                            oldMemory = new Immediate(oldValue);
+                {
+                    ushort oldValue = (ushort)((Memory[absoluteAddress + 0] << 0) | (Memory[absoluteAddress + 1] << 8));
+                    Immediate oldMemory;
+                    if (type == DataType.Short)
+                        oldMemory = new Immediate((short)oldValue);
+                    else
+                        oldMemory = new Immediate(oldValue);
 
-                        ushort newValue = value.U16;
-                        Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
-                        Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
+                    ushort newValue = value.U16;
+                    Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
+                    Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
 
-                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+                    state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
 
-                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 2));
+                    MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 2));
 
-                        return 2;
-                    }
+                    return 2;
+                }
 
                 case DataType.Int:
                 case DataType.DoubleWord:
-                    {
-                        uint oldValue = (uint)(
-                            (Memory[absoluteAddress + 0] << 0) |
-                            (Memory[absoluteAddress + 1] << 8) |
-                            (Memory[absoluteAddress + 2] << 16) |
-                            (Memory[absoluteAddress + 3] << 24));
-                        Immediate oldMemory;
-                        if (type == DataType.Int)
-                            oldMemory = new Immediate((int)oldValue);
-                        else
-                            oldMemory = new Immediate(oldValue);
+                {
+                    uint oldValue = (uint)(
+                        (Memory[absoluteAddress + 0] << 0) |
+                        (Memory[absoluteAddress + 1] << 8) |
+                        (Memory[absoluteAddress + 2] << 16) |
+                        (Memory[absoluteAddress + 3] << 24));
+                    Immediate oldMemory;
+                    if (type == DataType.Int)
+                        oldMemory = new Immediate((int)oldValue);
+                    else
+                        oldMemory = new Immediate(oldValue);
 
-                        uint newValue = value.U32;
-                        Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
-                        Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
-                        Memory[absoluteAddress + 2] = (byte)((newValue >> 16) & 0xFF);
-                        Memory[absoluteAddress + 3] = (byte)((newValue >> 24) & 0xFF);
+                    uint newValue = value.U32;
+                    Memory[absoluteAddress + 0] = (byte)((newValue >> 0) & 0xFF);
+                    Memory[absoluteAddress + 1] = (byte)((newValue >> 8) & 0xFF);
+                    Memory[absoluteAddress + 2] = (byte)((newValue >> 16) & 0xFF);
+                    Memory[absoluteAddress + 3] = (byte)((newValue >> 24) & 0xFF);
 
-                        state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
+                    state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(address, oldMemory), new ExecutedValue(address, value))));
 
-                        MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 4));
+                    MemoryChanged?.Invoke(this, new MemoryChangedEventArgs(absoluteAddress, 4));
 
-                        return 4;
-                    }
+                    return 4;
+                }
 
                 default:
                     return new Error(ErrorCode.UnsupportedDataWidth, $"The destination memory type '{type}' is not supported!", 0);
@@ -726,14 +726,14 @@ namespace Final.CPU8086
                     break;
 
                 case OperandDefinitionKind.SourceRegister:
-                    {
-                        if (type == DataType.Byte)
-                            return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
-                        else if (type == DataType.Word || type == DataType.Short)
-                            return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
-                        else
-                            throw new NotSupportedException($"Unsupported type of '{type}' for source register");
-                    }
+                {
+                    if (type == DataType.Byte)
+                        return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
+                    else if (type == DataType.Word || type == DataType.Short)
+                        return new InstructionOperand(_regTable.GetWord(registerBits), DataType.Word);
+                    else
+                        throw new NotSupportedException($"Unsupported type of '{type}' for source register");
+                }
 
                 case OperandDefinitionKind.RegisterByte:
                     return new InstructionOperand(_regTable.GetByte(registerBits), DataType.Byte);
@@ -993,14 +993,14 @@ namespace Final.CPU8086
                 switch (field.Type)
                 {
                     case FieldDefinitionType.Constant:
-                        {
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return value.AsT1;
-                            if (field.Value != value.AsT0)
-                                return new Error(ErrorCode.ConstantFieldMismatch, $"Expect constant to be '{field.Value}', but got instead '{value.AsT0}' in field '{field}'", position);
-                        }
-                        break;
+                    {
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return value.AsT1;
+                        if (field.Value != value.AsT0)
+                            return new Error(ErrorCode.ConstantFieldMismatch, $"Expect constant to be '{field.Value}', but got instead '{value.AsT0}' in field '{field}'", position);
+                    }
+                    break;
                     case FieldDefinitionType.ModRegRM:
                     case FieldDefinitionType.Mod000RM:
                     case FieldDefinitionType.Mod001RM:
@@ -1010,56 +1010,82 @@ namespace Final.CPU8086
                     case FieldDefinitionType.Mod101RM:
                     case FieldDefinitionType.Mod110RM:
                     case FieldDefinitionType.Mod111RM:
+                    {
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return value.AsT1;
+                        byte mrm = value.AsT0;
+                        modField = (byte)(mrm >> 6 & 0b11);
+                        regField = (byte)(mrm >> 3 & 0b111);
+                        rmField = (byte)(mrm >> 0 & 0b111);
+                        if (field.Type != FieldDefinitionType.ModRegRM)
+                        {
+                            hasRegField = false;
+                            byte expectReg = field.Type - FieldDefinitionType.Mod000RM;
+                            if (expectReg != regField)
+                                return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'", position);
+                        }
+                        else
+                            hasRegField = true;
+                        mode = (ModType)modField;
+                        eac = mode switch
+                        {
+                            ModType.RegisterMode => EffectiveAddressCalculation.None,
+                            _ => _effectiveAddressCalculationTable.Get(rmField, modField)
+                        };
+                        if (mode != ModType.RegisterMode)
+                            displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
+                        else
+                            displacementLength = 0;
+                    }
+                    break;
+                    case FieldDefinitionType.Displacement0:
+                    case FieldDefinitionType.Displacement1:
+                    {
+                        int t = field.Type - FieldDefinitionType.Displacement0;
+                        if (modField == byte.MaxValue || (displacementLength > 0 && t < displacementLength))
                         {
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
-                                return value.AsT1;
-                            byte mrm = value.AsT0;
-                            modField = (byte)(mrm >> 6 & 0b11);
-                            regField = (byte)(mrm >> 3 & 0b111);
-                            rmField = (byte)(mrm >> 0 & 0b111);
-                            if (field.Type != FieldDefinitionType.ModRegRM)
-                            {
-                                hasRegField = false;
-                                byte expectReg = field.Type - FieldDefinitionType.Mod000RM;
-                                if (expectReg != regField)
-                                    return new Error(ErrorCode.ConstantFieldMismatch, $"Expect register constant to be '{expectReg}', but got '{regField}' instead in field '{field}'", position);
-                            }
-                            else
-                                hasRegField = true;
-                            mode = (ModType)modField;
-                            eac = mode switch
-                            {
-                                ModType.RegisterMode => EffectiveAddressCalculation.None,
-                                _ => _effectiveAddressCalculationTable.Get(rmField, modField)
-                            };
-                            if (mode != ModType.RegisterMode)
-                                displacementLength = _effectiveAddressCalculationTable.GetDisplacementLength(eac);
-                            else
-                                displacementLength = 0;
+                                return new Error(value.AsT1, $"No more bytes left for reading the displacement-{t} in field '{field}'", position);
+                            byte d8 = value.AsT0;
+                            int shift = t * 8;
+                            displacement |= ((int)d8 << shift);
                         }
-                        break;
-                    case FieldDefinitionType.Displacement0:
-                    case FieldDefinitionType.Displacement1:
-                        {
-                            int t = field.Type - FieldDefinitionType.Displacement0;
-                            if (modField == byte.MaxValue || (displacementLength > 0 && t < displacementLength))
-                            {
-                                OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                                if (value.IsT1)
-                                    return new Error(value.AsT1, $"No more bytes left for reading the displacement-{t} in field '{field}'", position);
-                                byte d8 = value.AsT0;
-                                int shift = t * 8;
-                                displacement |= ((int)d8 << shift);
-                            }
-                        }
-                        break;
+                    }
+                    break;
                     case FieldDefinitionType.Immediate0:
                     case FieldDefinitionType.Immediate1:
                     case FieldDefinitionType.Immediate2:
                     case FieldDefinitionType.Immediate3:
+                    {
+                        int t = (int)field.Type - (int)FieldDefinitionType.Immediate0;
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
+                        byte imm8 = value.AsT0;
+                        int shift = t * 8;
+                        immediate |= ((int)imm8 << shift);
+                    }
+                    break;
+
+                    case FieldDefinitionType.RelativeLabelDisplacement0:
+                    case FieldDefinitionType.RelativeLabelDisplacement1:
+                    {
+                        int t = field.Type - FieldDefinitionType.RelativeLabelDisplacement0;
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'", position);
+                        byte d8 = value.AsT0;
+                        int shift = t * 8;
+                        displacement |= ((int)d8 << shift);
+                    }
+                    break;
+
+                    case FieldDefinitionType.Immediate0to3:
+                    {
+                        for (int t = 0; t < 4; t++)
                         {
-                            int t = (int)field.Type - (int)FieldDefinitionType.Immediate0;
                             OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
                             if (value.IsT1)
                                 return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
@@ -1067,82 +1093,56 @@ namespace Final.CPU8086
                             int shift = t * 8;
                             immediate |= ((int)imm8 << shift);
                         }
-                        break;
-
-                    case FieldDefinitionType.RelativeLabelDisplacement0:
-                    case FieldDefinitionType.RelativeLabelDisplacement1:
-                        {
-                            int t = field.Type - FieldDefinitionType.RelativeLabelDisplacement0;
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the relative label displacement-{t} in field '{field}'", position);
-                            byte d8 = value.AsT0;
-                            int shift = t * 8;
-                            displacement |= ((int)d8 << shift);
-                        }
-                        break;
-
-                    case FieldDefinitionType.Immediate0to3:
-                        {
-                            for (int t = 0; t < 4; t++)
-                            {
-                                OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                                if (value.IsT1)
-                                    return new Error(value.AsT1, $"No more bytes left for reading the immediate-{t} in field '{field}'", position);
-                                byte imm8 = value.AsT0;
-                                int shift = t * 8;
-                                immediate |= ((int)imm8 << shift);
-                            }
-                        }
-                        break;
+                    }
+                    break;
 
                     case FieldDefinitionType.Offset0:
                     case FieldDefinitionType.Offset1:
-                        {
-                            int t = (int)(field.Type - FieldDefinitionType.Offset0);
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the offset-{t} in field '{field}'", position);
-                            byte offset8 = value.AsT0;
-                            int shift = t * 8;
-                            offset |= ((int)offset8 << shift);
-                        }
-                        break;
+                    {
+                        int t = (int)(field.Type - FieldDefinitionType.Offset0);
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the offset-{t} in field '{field}'", position);
+                        byte offset8 = value.AsT0;
+                        int shift = t * 8;
+                        offset |= ((int)offset8 << shift);
+                    }
+                    break;
 
                     case FieldDefinitionType.Segment0:
                     case FieldDefinitionType.Segment1:
-                        {
-                            int t = (int)(field.Type - FieldDefinitionType.Segment0);
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the segment-{t} in field '{field}'", position);
-                            byte seg8 = value.AsT0;
-                            int shift = t * 8;
-                            segmentAddress |= ((uint)seg8 << shift);
-                            segmentType = SegmentType.Direct;
-                        }
-                        break;
+                    {
+                        int t = (int)(field.Type - FieldDefinitionType.Segment0);
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the segment-{t} in field '{field}'", position);
+                        byte seg8 = value.AsT0;
+                        int shift = t * 8;
+                        segmentAddress |= ((uint)seg8 << shift);
+                        segmentType = SegmentType.Direct;
+                    }
+                    break;
 
                     case FieldDefinitionType.ShortLabelOrShortLow:
-                        {
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
-                            byte low = value.AsT0;
-                            displacement |= ((int)low << 0);
-                        }
-                        break;
+                    {
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
+                        byte low = value.AsT0;
+                        displacement |= ((int)low << 0);
+                    }
+                    break;
 
                     case FieldDefinitionType.LongLabel:
                     case FieldDefinitionType.ShortHigh:
-                        {
-                            OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
-                            if (value.IsT1)
-                                return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
-                            byte high = value.AsT0;
-                            displacement |= ((int)high << 8);
-                        }
-                        break;
+                    {
+                        OneOf<byte, Error> value = ReadU8(ref cur, streamName, position);
+                        if (value.IsT1)
+                            return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
+                        byte high = value.AsT0;
+                        displacement |= ((int)high << 8);
+                    }
+                    break;
 
                     default:
                         return new Error(ErrorCode.UnsupportedFieldType, $"The field type '{field.Type}' is not supported!", position);
@@ -1369,40 +1369,40 @@ namespace Final.CPU8086
                     case InstructionType.LOOP:
                     case InstructionType.LOOPE:
                     case InstructionType.LOOPNZ:
+                    {
+                        if (instruction.Operands.Length != 1)
+                            return new Error(ErrorCode.InvalidOperandsLength, $"Expect number of operands to be 1, but got '{instruction.Operands.Length}' for jump instruction '{instruction}'", instruction.Position);
+
+                        InstructionOperand firstOp = instruction.Operands[0];
+
+                        uint absoluteAddress = 0;
+                        if (firstOp.Type == OperandType.Immediate)
                         {
-                            if (instruction.Operands.Length != 1)
-                                return new Error(ErrorCode.InvalidOperandsLength, $"Expect number of operands to be 1, but got '{instruction.Operands.Length}' for jump instruction '{instruction}'", instruction.Position);
-
-                            InstructionOperand firstOp = instruction.Operands[0];
-
-                            uint absoluteAddress = 0;
-                            if (firstOp.Type == OperandType.Immediate)
-                            {
-                                if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
-                                    return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
-                                int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
-                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
-                            }
-                            else if (firstOp.Type == OperandType.Value)
-                            {
-                                int relativeAddressAfterThisInstruction = firstOp.Value;
-                                absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
-                            }
-                            else
-                                break;
-
-                            if (!positionToInstructionMap.TryGetValue(absoluteAddress, out Instruction instructionToJumpTo))
-                                return new Error(ErrorCode.JumpInstructionNotFound, $"No instruction for absolute address '{absoluteAddress}' found for jump instruction '{instruction}'", instruction.Position);
-
-                            if (!instructionToSourceLabelMap.TryGetValue(instructionToJumpTo, out string label))
-                            {
-                                label = $"label{labelCounter++}";
-                                instructionToSourceLabelMap.Add(instructionToJumpTo, label);
-                            }
-
-                            instructionToTargetLabelMap.Add(instruction, label);
+                            if (!firstOp.Immediate.Flags.HasFlag(ImmediateFlag.RelativeJumpDisplacement))
+                                return new Error(ErrorCode.UnsupportedImmediateFlags, $"The immediate '{firstOp.Immediate}' is not a relative jump displacement for jump instruction '{instruction}'", instruction.Position);
+                            int relativeAddressAfterThisInstruction = firstOp.Immediate.Value;
+                            absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
                         }
-                        break;
+                        else if (firstOp.Type == OperandType.Value)
+                        {
+                            int relativeAddressAfterThisInstruction = firstOp.Value;
+                            absoluteAddress = (uint)(instruction.Position + instruction.Length + relativeAddressAfterThisInstruction);
+                        }
+                        else
+                            break;
+
+                        if (!positionToInstructionMap.TryGetValue(absoluteAddress, out Instruction instructionToJumpTo))
+                            return new Error(ErrorCode.JumpInstructionNotFound, $"No instruction for absolute address '{absoluteAddress}' found for jump instruction '{instruction}'", instruction.Position);
+
+                        if (!instructionToSourceLabelMap.TryGetValue(instructionToJumpTo, out string label))
+                        {
+                            label = $"label{labelCounter++}";
+                            instructionToSourceLabelMap.Add(instructionToJumpTo, label);
+                        }
+
+                        instructionToTargetLabelMap.Add(instruction, label);
+                    }
+                    break;
                 }
             }
 

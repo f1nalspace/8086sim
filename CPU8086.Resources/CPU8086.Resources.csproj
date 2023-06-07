@@ -6,9 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Resources\" />
   </ItemGroup>
 
@@ -51,18 +48,26 @@
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0054_draw_rectangle.asm" Link="Resources\listing_0054_draw_rectangle.asm" />
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle" Link="Resources\listing_0055_challenge_rectangle" />
     <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle.asm" Link="Resources\listing_0055_challenge_rectangle.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_SingleScalar" Link="Resources\listing_0057_SingleScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_SingleScalar.asm" Link="Resources\listing_0057_SingleScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_Unroll2Scalar" Link="Resources\listing_0058_Unroll2Scalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_Unroll2Scalar.asm" Link="Resources\listing_0058_Unroll2Scalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_DualScalar" Link="Resources\listing_0059_DualScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_DualScalar.asm" Link="Resources\listing_0059_DualScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_QuadScalar" Link="Resources\listing_0060_QuadScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_QuadScalar.asm" Link="Resources\listing_0060_QuadScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_QuadScalarPtr" Link="Resources\listing_0061_QuadScalarPtr" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_QuadScalarPtr.asm" Link="Resources\listing_0061_QuadScalarPtr.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_TreeScalarPtr" Link="Resources\listing_0062_TreeScalarPtr" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_TreeScalarPtr.asm" Link="Resources\listing_0062_TreeScalarPtr.asm" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0056_estimating_cycles" Link="Resources\listing_0056_estimating_cycles" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0056_estimating_cycles.asm" Link="Resources\listing_0056_estimating_cycles.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_challenge_cycles" Link="Resources\listing_0057_challenge_cycles" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_challenge_cycles.asm" Link="Resources\listing_0057_challenge_cycles.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_prologue_sum_loops.cpp" Link="Resources\listing_0058_prologue_sum_loops.cpp" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_SingleScalar" Link="Resources\listing_0059_SingleScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_SingleScalar.asm" Link="Resources\listing_0059_SingleScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_Unroll2Scalar" Link="Resources\listing_0060_Unroll2Scalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_Unroll2Scalar.asm" Link="Resources\listing_0060_Unroll2Scalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_DualScalar" Link="Resources\listing_0061_DualScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_DualScalar.asm" Link="Resources\listing_0061_DualScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_QuadScalar" Link="Resources\listing_0062_QuadScalar" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_QuadScalar.asm" Link="Resources\listing_0062_QuadScalar.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0063_QuadScalarPtr" Link="Resources\listing_0063_QuadScalarPtr" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0063_QuadScalarPtr.asm" Link="Resources\listing_0063_QuadScalarPtr.asm" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0064_TreeScalarPtr" Link="Resources\listing_0064_TreeScalarPtr" />
+    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0064_TreeScalarPtr.asm" Link="Resources\listing_0064_TreeScalarPtr.asm" />
   </ItemGroup>
 
 </Project>

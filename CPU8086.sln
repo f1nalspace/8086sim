@@ -13,7 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CPU8086.Resources", "CPU808
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InstructionTableParser", "InstructionTableParser\InstructionTableParser.csproj", "{5D935BD7-D1FA-4A41-86FF-0A97CB55B308}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPU8086.GUI", "CPU8086.GUI\CPU8086.GUI.csproj", "{880D9D5D-2B9B-47D8-AC16-15BB85301E17}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CPU8086.GUI", "CPU8086.GUI\CPU8086.GUI.csproj", "{880D9D5D-2B9B-47D8-AC16-15BB85301E17}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CPUEmulation.Core", "CPUEmulation.Core\CPUEmulation.Core.csproj", "{24A6DCCF-5B75-4114-97B8-9CA5AE95404E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CPUEmulation.X86", "CPUEmulation.X86\CPUEmulation.X86.csproj", "{03742A91-4605-4A53-AED1-FA063B3DA25E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +49,14 @@ Global
 		{880D9D5D-2B9B-47D8-AC16-15BB85301E17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{880D9D5D-2B9B-47D8-AC16-15BB85301E17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{880D9D5D-2B9B-47D8-AC16-15BB85301E17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24A6DCCF-5B75-4114-97B8-9CA5AE95404E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A6DCCF-5B75-4114-97B8-9CA5AE95404E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A6DCCF-5B75-4114-97B8-9CA5AE95404E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A6DCCF-5B75-4114-97B8-9CA5AE95404E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03742A91-4605-4A53-AED1-FA063B3DA25E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03742A91-4605-4A53-AED1-FA063B3DA25E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03742A91-4605-4A53-AED1-FA063B3DA25E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03742A91-4605-4A53-AED1-FA063B3DA25E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

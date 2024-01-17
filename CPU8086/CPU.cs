@@ -586,7 +586,7 @@ namespace Final.CPU8086
         public OneOf<Immediate, Error> LoadMemory(MemoryAddress address, DataType type)
         {
             uint absoluteAddress = GetAbsoluteMemoryAddress(address);
-            if (absoluteAddress == uint.MinValue)
+            if (absoluteAddress == uint.MaxValue)
                 return new Error(ErrorCode.UnsupportedEffectiveAddressCalculation, $"The effective address calculation '{address.EAC}' is not supported for the specified memory address '{address}' for type '{type}'", 0);
             return LoadMemory(absoluteAddress, type);
         }

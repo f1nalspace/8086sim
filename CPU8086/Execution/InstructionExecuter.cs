@@ -27,6 +27,7 @@ namespace Final.CPU8086.Execution
             _typeFunctionTable[(int)InstructionType.ADD] = Add;
             _typeFunctionTable[(int)InstructionType.SUB] = Sub;
             _typeFunctionTable[(int)InstructionType.CMP] = Cmp;
+            _typeFunctionTable[(int)InstructionType.XOR] = Xor;
 
             _typeFunctionTable[(int)InstructionType.JE] = ConditionalJump;
             _typeFunctionTable[(int)InstructionType.JNE] = ConditionalJump;
@@ -725,6 +726,7 @@ namespace Final.CPU8086.Execution
 
             return 0;
         }
+
         private static OneOf<int, Error> Cmp(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
@@ -806,6 +808,87 @@ namespace Final.CPU8086.Execution
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
             cpu.Register.OverflowFlag = isOverflow;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
+
+            return 0;
+        }
+
+        private static OneOf<int, Error> Xor(CPU cpu, Instruction instruction, IRunState state)
+        {
+            Contract.Assert(instruction != null);
+
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for xor instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            InstructionOperand destOperand = instruction.Operands[0];
+
+            InstructionOperand sourceOperand = instruction.Operands[1];
+
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
+            if (sourceRes.IsT1)
+                return sourceRes.AsT1;
+            Immediate source = sourceRes.AsT0;
+
+            OneOf<Immediate, Error> destRes = LoadOperand(cpu, instruction, destOperand);
+            if (destRes.IsT1)
+                return destRes.AsT1;
+            Immediate previosDest = destRes.AsT0;
+
+            int first = previosDest.Value;
+            int second = source.Value;
+            int change = first ^ second;
+
+            bool isZero = IsZero(change);
+            bool isParity;
+            bool isSign;
+
+            switch (instruction.Width.Type)
+            {
+                case DataWidthType.Byte:
+                    isParity = IsParity8((byte)change);
+                    isSign = IsSign8(change);
+                    break;
+
+                case DataWidthType.Word:
+                    isParity = IsParity16((ushort)change);
+                    isSign = IsSign16(change);
+                    break;
+
+                default:
+                    return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
+            }
+
+            FlagsDefinition oldFlags = new FlagsDefinition(
+                carry: cpu.Register.CarryFlag ? FlagDefinitionValue.One : Types.FlagDefinitionValue.Zero,
+                parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: cpu.Register.AuxiliaryCarryFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: cpu.Register.OverflowFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
+            );
+
+            FlagsDefinition newFlags = new FlagsDefinition(
+                carry: FlagDefinitionValue.Zero,
+                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: FlagDefinitionValue.Ignore,
+                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: FlagDefinitionValue.Zero
+            );
+
+            cpu.Register.CarryFlag = false;
+            cpu.Register.ParityFlag = isParity;
+            cpu.Register.ZeroFlag = isZero;
+            cpu.Register.SignFlag = isSign;
+            cpu.Register.OverflowFlag = false;
 
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
 

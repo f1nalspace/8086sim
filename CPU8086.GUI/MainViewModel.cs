@@ -35,7 +35,6 @@ namespace Final.CPU8086
 
         public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value, () => InstructionsChanged(value)); }
         private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
-        private ImmutableArray<uint> _instructionIndexMap = ImmutableArray<uint>.Empty;
 
         public ImmutableArray<AssemblyLine> AssemblyLines { get => _assemblyLines; private set => SetValue(ref _assemblyLines, value); }
         private ImmutableArray<AssemblyLine> _assemblyLines = ImmutableArray<AssemblyLine>.Empty;
@@ -86,6 +85,7 @@ namespace Final.CPU8086
         public DelegateCommand RunCommand { get; }
         public DelegateCommand StopCommand { get; }
         public DelegateCommand StepCommand { get; }
+        public DelegateCommand ResetCommand { get; }
         public DelegateCommand JumpToFirstMemoryPageCommand { get; }
         public DelegateCommand JumpToLastMemoryPageCommand { get; }
 
@@ -102,6 +102,7 @@ namespace Final.CPU8086
             RunCommand = new DelegateCommand(Run, CanRun);
             StopCommand = new DelegateCommand(Stop, CanStop);
             StepCommand = new DelegateCommand(Step, CanStep);
+            ResetCommand = new DelegateCommand(Reset, CanReset);
             JumpToFirstMemoryPageCommand = new DelegateCommand(JumpToFirstMemoryPage, CanJumpToFirstMemoryPage);
             JumpToLastMemoryPageCommand = new DelegateCommand(JumpToLastMemoryPage, CanJumpToLastMemoryPage);
 
@@ -209,12 +210,25 @@ namespace Final.CPU8086
             RefreshAssemblyLines(Instructions, asHex);
         }
 
+        private bool CanReset() => DecodeState == DecodeState.Failed || ExecutionState == ExecutionState.Failed;
+        private void Reset()
+        {
+            if (_dispatcherService is not null)
+                _dispatcherService.Invoke(() => Errors.Clear());
+            else
+                Errors.Clear();
+
+            _cpu.Reset();
+        }
+
         public void LoadProgram(IProgram program)
         {
             AddLog(0, $"Loading program '{program}'");
 
             if (CanStop())
                 Stop();
+
+            Reset();
 
             if (program != null)
             {
@@ -234,6 +248,7 @@ namespace Final.CPU8086
             RunCommand.RaiseCanExecuteChanged();
             StopCommand.RaiseCanExecuteChanged();
             StepCommand.RaiseCanExecuteChanged();
+            ResetCommand.RaiseCanExecuteChanged();
             RaisePropertyChanged(nameof(CanChangeStream));
         }
 

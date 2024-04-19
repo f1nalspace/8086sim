@@ -27,7 +27,6 @@ namespace Final.CPU8086.Execution
             _typeFunctionTable[(int)InstructionType.ADD] = Add;
             _typeFunctionTable[(int)InstructionType.SUB] = Sub;
             _typeFunctionTable[(int)InstructionType.CMP] = Cmp;
-            _typeFunctionTable[(int)InstructionType.XOR] = Xor;
 
             _typeFunctionTable[(int)InstructionType.JE] = ConditionalJump;
             _typeFunctionTable[(int)InstructionType.JNE] = ConditionalJump;
@@ -101,8 +100,14 @@ namespace Final.CPU8086.Execution
             };
         }
 
+        public static bool IsAuxiliaryOverflow2(int value, int addend) => ((value & 0xF) + (addend & 0xF) > 0xF);
+        public static bool IsAuxiliaryUnderflow2(int dividend, int divisor) => ((dividend & 0xF) < (divisor & 0xF));
+        public static bool IsAuxiliaryCarryOut2(int multiplicand, int multiplier) => ((multiplicand & 0xF) + (multiplier & 0xF) > 0xF);
+        public static bool IsAuxiliaryBorrowIn2(int dividend, int divisor) => ((dividend & 0xF) < (divisor & 0xF));
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAuxiliaryOverflow(int value, int addend) => ((value & 0xF) + (addend & 0xF) > 0xF);
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsAuxiliaryUnderflow(int value, int subtrahend) => (value & 0xF) - (subtrahend & 0xF) < 0;
 
@@ -128,7 +133,11 @@ namespace Final.CPU8086.Execution
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsCarry8(int value) => value > 0xFF;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsCarry8(int a, int b) => a > 0xFF - b;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsCarry16(int value) => value > 0xFFFF;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsCarry16(int a, int b) => a > 0xFFFF - b;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsBorrow(int value, int subtrahend) => value < subtrahend;
 
@@ -138,9 +147,9 @@ namespace Final.CPU8086.Execution
         public static bool IsOverflow16(int value) => value > short.MaxValue || value < short.MinValue;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsSign8(int value) => (sbyte)value < 0;
+        public static bool IsSign8(int value) => (value & 0x80) != 0;
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsSign16(int value) => (short)value < 0;
+        public static bool IsSign16(int value) => (value & 0x8000) != 0;
 
         private static OneOf<Immediate, Error> LoadOperand(CPU cpu, Instruction instruction, InstructionOperand operand)
         {
@@ -536,6 +545,112 @@ namespace Final.CPU8086.Execution
             return 0;
         }
 
+        private delegate int ArithmeticOperationHandler(int a, int b);
+
+        enum AuxiliaryState
+        {
+            None = 0,
+            Overflow,
+            Underflow,
+        }
+
+        private static OneOf<int, Error> ArithmeticOperation(CPU cpu, Instruction instruction, IRunState state, FlagsDefinition flags, ArithmeticOperationHandler operation, AuxiliaryState overflow, ReadOnlySpan<char> instructionName)
+        {
+            Contract.Assert(instruction != null);
+
+            const int expectedOperandLen = 2;
+            if (instruction.Operands.Length != expectedOperandLen)
+                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for {instructionName} instruction '{instruction.Mnemonic}'", instruction.Position);
+
+            InstructionOperand destOperand = instruction.Operands[0];
+
+            InstructionOperand sourceOperand = instruction.Operands[1];
+
+            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
+            if (sourceRes.IsT1)
+                return sourceRes.AsT1;
+
+            Immediate source = sourceRes.AsT0;
+
+            OneOf<Immediate, Error> previosDestRes = LoadOperand(cpu, instruction, destOperand);
+            if (previosDestRes.IsT1)
+                return previosDestRes.AsT1;
+
+            Immediate initial = previosDestRes.AsT0;
+
+            int a = initial.Value;
+            int b = source.Value;
+
+            int result = operation.Invoke(a, b);
+
+            bool isAuxiliary;
+            if (overflow == AuxiliaryState.Overflow)
+                isAuxiliary = IsAuxiliaryOverflow(a, b);
+            else if (overflow == AuxiliaryState.Underflow)
+                isAuxiliary = IsAuxiliaryUnderflow(a, b);
+            else
+                isAuxiliary = false;
+
+            bool isZero = result == 0;
+            bool isSign;
+            bool isCarry;
+            bool isParity;
+            bool isOverflow;
+            Immediate finalDest;
+            switch (instruction.Width.Type)
+            {
+                case DataWidthType.Byte:
+                    finalDest = new Immediate((byte)result);
+                    isSign = IsSign8(result);
+                    isCarry = IsCarry8(a, b);
+                    isParity = IsParity8((byte)result);
+                    isOverflow = IsOverflow8((byte)result);
+                    break;
+
+                case DataWidthType.Word:
+                    finalDest = new Immediate((ushort)result);
+                    isSign = IsSign16(result);
+                    isCarry = IsCarry16(a, b);
+                    isParity = IsParity16((byte)result);
+                    isOverflow = IsOverflow16((byte)result);
+                    break;
+
+                default:
+                    return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
+            }
+
+            OneOf<byte, Error> storeRes = StoreOperand(cpu, instruction, state, destOperand, finalDest);
+            if (storeRes.IsT1)
+                return storeRes.AsT1;
+
+            ushort status = cpu.Register.Status;
+
+            FlagsDefinition oldFlags = new FlagsDefinition(status);
+
+            FlagsDefinition newFlags = new FlagsDefinition(
+                carry: isCarry ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                auxiliary: isAuxiliary ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
+                trap: FlagDefinitionValue.Ignore,
+                interrupt: FlagDefinitionValue.Ignore,
+                direction: FlagDefinitionValue.Ignore,
+                overflow: isOverflow ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
+            );
+
+            cpu.Register.CarryFlag = isCarry;
+            cpu.Register.AuxiliaryCarryFlag = isAuxiliary;
+            cpu.Register.ParityFlag = isParity;
+            cpu.Register.ZeroFlag = isZero;
+            cpu.Register.SignFlag = isSign;
+            cpu.Register.OverflowFlag = isOverflow;
+
+            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
+
+            return 0;
+        }
+
         private static OneOf<int, Error> Add(CPU cpu, Instruction instruction, IRunState state)
         {
             Contract.Assert(instruction != null);
@@ -808,87 +923,6 @@ namespace Final.CPU8086.Execution
             cpu.Register.ZeroFlag = isZero;
             cpu.Register.SignFlag = isSign;
             cpu.Register.OverflowFlag = isOverflow;
-
-            state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
-
-            return 0;
-        }
-
-        private static OneOf<int, Error> Xor(CPU cpu, Instruction instruction, IRunState state)
-        {
-            Contract.Assert(instruction != null);
-
-            const int expectedOperandLen = 2;
-            if (instruction.Operands.Length != expectedOperandLen)
-                return new Error(ErrorCode.MismatchInstructionOperands, $"Expect '{expectedOperandLen}' operands, but got '{instruction.Operands.Length}' for xor instruction '{instruction.Mnemonic}'", instruction.Position);
-
-            InstructionOperand destOperand = instruction.Operands[0];
-
-            InstructionOperand sourceOperand = instruction.Operands[1];
-
-            OneOf<Immediate, Error> sourceRes = LoadOperand(cpu, instruction, sourceOperand);
-            if (sourceRes.IsT1)
-                return sourceRes.AsT1;
-            Immediate source = sourceRes.AsT0;
-
-            OneOf<Immediate, Error> destRes = LoadOperand(cpu, instruction, destOperand);
-            if (destRes.IsT1)
-                return destRes.AsT1;
-            Immediate previosDest = destRes.AsT0;
-
-            int first = previosDest.Value;
-            int second = source.Value;
-            int change = first ^ second;
-
-            bool isZero = IsZero(change);
-            bool isParity;
-            bool isSign;
-
-            switch (instruction.Width.Type)
-            {
-                case DataWidthType.Byte:
-                    isParity = IsParity8((byte)change);
-                    isSign = IsSign8(change);
-                    break;
-
-                case DataWidthType.Word:
-                    isParity = IsParity16((ushort)change);
-                    isSign = IsSign16(change);
-                    break;
-
-                default:
-                    return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
-            }
-
-            FlagsDefinition oldFlags = new FlagsDefinition(
-                carry: cpu.Register.CarryFlag ? FlagDefinitionValue.One : Types.FlagDefinitionValue.Zero,
-                parity: cpu.Register.ParityFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: cpu.Register.AuxiliaryCarryFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                zero: cpu.Register.ZeroFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                sign: cpu.Register.SignFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                trap: FlagDefinitionValue.Ignore,
-                interrupt: FlagDefinitionValue.Ignore,
-                direction: FlagDefinitionValue.Ignore,
-                overflow: cpu.Register.OverflowFlag ? FlagDefinitionValue.One : FlagDefinitionValue.Zero
-            );
-
-            FlagsDefinition newFlags = new FlagsDefinition(
-                carry: FlagDefinitionValue.Zero,
-                parity: isParity ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                auxiliary: FlagDefinitionValue.Ignore,
-                zero: isZero ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                sign: isSign ? FlagDefinitionValue.One : FlagDefinitionValue.Zero,
-                trap: FlagDefinitionValue.Ignore,
-                interrupt: FlagDefinitionValue.Ignore,
-                direction: FlagDefinitionValue.Ignore,
-                overflow: FlagDefinitionValue.Zero
-            );
-
-            cpu.Register.CarryFlag = false;
-            cpu.Register.ParityFlag = isParity;
-            cpu.Register.ZeroFlag = isZero;
-            cpu.Register.SignFlag = isSign;
-            cpu.Register.OverflowFlag = false;
 
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
 

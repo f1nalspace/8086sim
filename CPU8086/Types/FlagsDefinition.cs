@@ -41,6 +41,19 @@ namespace Final.CPU8086.Types
             this(FlagDefinitionValue.Ignore, parity, auxiliary, zero, sign, trap, interrupt, direction, overflow)
         { }
 
+        public FlagsDefinition(ushort status)
+        {
+            Carry = (status & RegisterState.CarryFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Parity = (status & RegisterState.ParityFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Auxiliary = (status & RegisterState.AuxiliaryCarryFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Zero = (status & RegisterState.ZeroFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Sign = (status & RegisterState.SignFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Trap = (status & RegisterState.TrapFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Interrupt = (status & RegisterState.InterruptFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Direction = (status & RegisterState.DirectionalFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+            Overflow = (status & RegisterState.OverflowFlagMask) != 0 ? FlagDefinitionValue.One : FlagDefinitionValue.Zero;
+        }
+
         public FlagsDefinition(ReadOnlySpan<char> data)
         {
             if (data.Length < 8)

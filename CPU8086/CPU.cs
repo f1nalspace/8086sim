@@ -122,6 +122,8 @@ namespace Final.CPU8086
 
         public void Reset()
         {
+            PreviousIP = CurrentIP = uint.MaxValue;
+
             if (ActiveProgram != null)
                 LoadProgram(ActiveProgram);
             else

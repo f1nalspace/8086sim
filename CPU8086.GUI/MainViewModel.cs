@@ -128,7 +128,7 @@ namespace Final.CPU8086
 
         public uint ResolveMemoryAddress(SegmentType segment, (uint start, uint len) range)
         {
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)range.start, segment, 0);
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate((int)range.start), segment, 0);
             uint result = _cpu.GetAbsoluteMemoryAddress(address);
             return result;
         }
@@ -465,7 +465,7 @@ namespace Final.CPU8086
 
         uint IMemoryAddressResolverService.Resolve(SegmentType segment, int displacement)
         {
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, displacement, segment, 0);
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate(displacement), segment, 0);
             return _cpu.GetAbsoluteMemoryAddress(address);
         }
     }

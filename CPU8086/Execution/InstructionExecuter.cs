@@ -229,7 +229,7 @@ namespace Final.CPU8086.Execution
             Immediate newSP = new Immediate(cpu.Register.SP);
             state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(RegisterType.SP, oldSP), new ExecutedValue(RegisterType.SP, newSP))));
 
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, cpu.Register.SP, SegmentType.SS, 0);
+            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate(cpu.Register.SP), SegmentType.SS, 0);
 
             // Load previous value from SS:SP (Only used for IRunState)
             OneOf<Immediate, Error> previousLoadRes = cpu.LoadMemory(address, dataType);
@@ -257,7 +257,7 @@ namespace Final.CPU8086.Execution
             Immediate oldSP = new Immediate(cpu.Register.SP);
 
             // Load value from SS:SP
-            OneOf<Immediate, Error> loadRes = cpu.LoadMemory(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, oldSP.S16, SegmentType.SS, 0), dataType);
+            OneOf<Immediate, Error> loadRes = cpu.LoadMemory(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate(oldSP.S16), SegmentType.SS, 0), dataType);
             if (loadRes.IsT1)
                 return loadRes.AsT1;
             Immediate loadedValue = loadRes.AsT0;

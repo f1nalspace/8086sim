@@ -169,7 +169,7 @@ namespace Final.CPU8086
                 if (op.Type == OperandType.Memory)
                 {
                     ea = _effectiveAddressCalculationTable.GetCycles(op.Memory.EAC);
-                    isEvenAddress = op.Memory.Displacement % 2 == 0;
+                    isEvenAddress = op.Memory.Displacement.Value % 2 == 0;
                     break;
                 }
             }
@@ -483,11 +483,6 @@ namespace Final.CPU8086
 
         public uint GetAbsoluteMemoryAddress(MemoryAddress address)
         {
-            byte u8 = (byte)(address.Displacement & 0xFF);
-            ushort u16 = (ushort)(address.Displacement & 0xFFFF);
-            int d8 = (u8 & 0b10000000) == 0b10000000 ? (-u8) : u8;
-            int d16 = (u16 & 0b10000000_00000000) == 0b10000000_00000000 ? (-u16) : u16;
-
             int offset = address.EAC switch
             {
                 EffectiveAddressCalculation.BX_SI => Register.BX + Register.SI,
@@ -496,24 +491,24 @@ namespace Final.CPU8086
                 EffectiveAddressCalculation.BP_DI => Register.BP + Register.DI,
                 EffectiveAddressCalculation.SI => Register.SI,
                 EffectiveAddressCalculation.DI => Register.DI,
-                EffectiveAddressCalculation.DirectAddress => address.Displacement & 0xFFFF,
+                EffectiveAddressCalculation.DirectAddress => address.Displacement.U16,
                 EffectiveAddressCalculation.BX => Register.BX,
-                EffectiveAddressCalculation.BX_SI_D8 => Register.BX + Register.SI + d8,
-                EffectiveAddressCalculation.BX_DI_D8 => Register.BX + Register.DI + d8,
-                EffectiveAddressCalculation.BP_SI_D8 => Register.BP + Register.SI + d8,
-                EffectiveAddressCalculation.BP_DI_D8 => Register.BP + Register.DI + d8,
-                EffectiveAddressCalculation.SI_D8 => Register.SI + d8,
-                EffectiveAddressCalculation.DI_D8 => Register.DI + d8,
-                EffectiveAddressCalculation.BP_D8 => Register.BP + d8,
-                EffectiveAddressCalculation.BX_D8 => Register.BX + d8,
-                EffectiveAddressCalculation.BX_SI_D16 => Register.BX + Register.SI + d16,
-                EffectiveAddressCalculation.BX_DI_D16 => Register.BX + Register.DI + d16,
-                EffectiveAddressCalculation.BP_SI_D16 => Register.BP + Register.SI + d16,
-                EffectiveAddressCalculation.BP_DI_D16 => Register.BP + Register.DI + d16,
-                EffectiveAddressCalculation.SI_D16 => Register.SI + d16,
-                EffectiveAddressCalculation.DI_D16 => Register.DI + d16,
-                EffectiveAddressCalculation.BP_D16 => Register.BP + d16,
-                EffectiveAddressCalculation.BX_D16 => Register.BX + d16,
+                EffectiveAddressCalculation.BX_SI_D8 => Register.BX + Register.SI + address.Displacement.S8,
+                EffectiveAddressCalculation.BX_DI_D8 => Register.BX + Register.DI + address.Displacement.S8,
+                EffectiveAddressCalculation.BP_SI_D8 => Register.BP + Register.SI + address.Displacement.S8,
+                EffectiveAddressCalculation.BP_DI_D8 => Register.BP + Register.DI + address.Displacement.S8,
+                EffectiveAddressCalculation.SI_D8 => Register.SI + address.Displacement.S8,
+                EffectiveAddressCalculation.DI_D8 => Register.DI + address.Displacement.S8,
+                EffectiveAddressCalculation.BP_D8 => Register.BP + address.Displacement.S8,
+                EffectiveAddressCalculation.BX_D8 => Register.BX + address.Displacement.S8,
+                EffectiveAddressCalculation.BX_SI_D16 => Register.BX + Register.SI + address.Displacement.S16,
+                EffectiveAddressCalculation.BX_DI_D16 => Register.BX + Register.DI + address.Displacement.S16,
+                EffectiveAddressCalculation.BP_SI_D16 => Register.BP + Register.SI + address.Displacement.S16,
+                EffectiveAddressCalculation.BP_DI_D16 => Register.BP + Register.DI + address.Displacement.S16,
+                EffectiveAddressCalculation.SI_D16 => Register.SI + address.Displacement.S16,
+                EffectiveAddressCalculation.DI_D16 => Register.DI + address.Displacement.S16,
+                EffectiveAddressCalculation.BP_D16 => Register.BP + address.Displacement.S16,
+                EffectiveAddressCalculation.BX_D16 => Register.BX + address.Displacement.S16,
                 _ => int.MinValue,
             };
 
@@ -702,7 +697,7 @@ namespace Final.CPU8086
             return null;
         }
 
-        static InstructionOperand CreateOperand(OperandDefinition sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, int displacement, int immediate, int offset, SegmentType segmentType, uint segmentAddress, DataType type)
+        static InstructionOperand CreateOperand(OperandDefinition sourceOp, ModType mode, byte registerBits, EffectiveAddressCalculation eac, Immediate displacement, Immediate immediate, Immediate offset, SegmentType segmentType, uint segmentAddress, DataType type)
         {
             switch (sourceOp.Kind)
             {
@@ -759,20 +754,20 @@ namespace Final.CPU8086
                     break;
 
                 case OperandDefinitionKind.ImmediateByte:
-                    if ((sbyte)immediate < 0)
-                        return new InstructionOperand((sbyte)(immediate & 0xFF), ImmediateFlag.None);
+                    if (immediate.S8 < 0)
+                        return new InstructionOperand(immediate.S8, ImmediateFlag.None);
                     else
-                        return new InstructionOperand((byte)(immediate & 0xFF), ImmediateFlag.None);
+                        return new InstructionOperand(immediate.U8, ImmediateFlag.None);
                 case OperandDefinitionKind.ImmediateWord:
-                    if ((short)immediate < 0)
-                        return new InstructionOperand((short)(immediate & 0xFFFF), ImmediateFlag.None);
+                    if (immediate.S16 < 0)
+                        return new InstructionOperand(immediate.S16, ImmediateFlag.None);
                     else
-                        return new InstructionOperand((ushort)(immediate & 0xFFFF), ImmediateFlag.None);
+                        return new InstructionOperand(immediate.U16, ImmediateFlag.None);
                 case OperandDefinitionKind.ImmediateDoubleWord:
-                    if ((int)immediate < 0)
-                        return new InstructionOperand((int)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
+                    if (immediate.S32 < 0)
+                        return new InstructionOperand(immediate.S32, ImmediateFlag.None);
                     else
-                        return new InstructionOperand((uint)(immediate & 0xFFFFFFFF), ImmediateFlag.None);
+                        return new InstructionOperand(immediate.U32, ImmediateFlag.None);
 
                 case OperandDefinitionKind.TypeDoubleWord:
                     break;
@@ -786,21 +781,21 @@ namespace Final.CPU8086
                     break;
 
                 case OperandDefinitionKind.ShortLabel:
-                    if ((sbyte)displacement < 0)
-                        return new InstructionOperand((sbyte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
+                    if (displacement.S8 < 0)
+                        return new InstructionOperand(displacement.S8, ImmediateFlag.RelativeJumpDisplacement);
                     else
-                        return new InstructionOperand((byte)(displacement & 0xFF), ImmediateFlag.RelativeJumpDisplacement);
+                        return new InstructionOperand(displacement.U8, ImmediateFlag.RelativeJumpDisplacement);
                 case OperandDefinitionKind.LongLabel:
-                    if ((short)displacement < 0)
-                        return new InstructionOperand((short)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
+                    if (displacement.S16 < 0)
+                        return new InstructionOperand(displacement.S16, ImmediateFlag.RelativeJumpDisplacement);
                     else
-                        return new InstructionOperand((ushort)(displacement & 0xFFFF), ImmediateFlag.RelativeJumpDisplacement);
+                        return new InstructionOperand(displacement.U16, ImmediateFlag.RelativeJumpDisplacement);
 
                 case OperandDefinitionKind.FarPointer:
-                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (short)(offset & 0xFFFF), segmentType, segmentAddress), DataType.Word);
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, offset, segmentType, segmentAddress), DataType.Word);
 
                 case OperandDefinitionKind.NearPointer:
-                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (sbyte)(offset & 0xFF), segmentType, segmentAddress), DataType.Byte);
+                    return new InstructionOperand(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, offset, segmentType, segmentAddress), DataType.Byte);
 
                 case OperandDefinitionKind.ST:
                     break;
@@ -937,6 +932,18 @@ namespace Final.CPU8086
             };
         }
 
+        static Immediate CreateSignedFromOffset(int offset, int length)
+        {
+            if (length <= 0)
+                return new Immediate();
+            return length switch { 
+                1 => new Immediate((sbyte)(offset & 0xFF)),
+                2 => new Immediate((short)(offset & 0xFFFF)),
+                4 => new Immediate(offset),
+                _ => new Immediate()
+            };
+        }
+
         static OneOf<Instruction, Error> DecodeInstruction(ReadOnlySpan<byte> stream, string streamName, uint position, InstructionDefinition entry)
         {
             if (stream.Length == 0)
@@ -987,6 +994,8 @@ namespace Final.CPU8086
             EffectiveAddressCalculation eac = EffectiveAddressCalculation.None;
 
             int displacementLength = 0;
+            int immediateLength = 0;
+            int offsetLength = 0;
 
             bool hasRegField = false;
 
@@ -1068,6 +1077,7 @@ namespace Final.CPU8086
                         byte imm8 = value.AsT0;
                         int shift = t * 8;
                         immediate |= ((int)imm8 << shift);
+                        immediateLength = Math.Max(immediateLength, t + 1);
                     }
                     break;
 
@@ -1081,6 +1091,7 @@ namespace Final.CPU8086
                         byte d8 = value.AsT0;
                         int shift = t * 8;
                         displacement |= ((int)d8 << shift);
+                        displacementLength = Math.Max(displacementLength, t + 1);
                     }
                     break;
 
@@ -1094,6 +1105,7 @@ namespace Final.CPU8086
                             byte imm8 = value.AsT0;
                             int shift = t * 8;
                             immediate |= ((int)imm8 << shift);
+                            immediateLength = Math.Max(immediateLength, t + 1);
                         }
                     }
                     break;
@@ -1108,6 +1120,7 @@ namespace Final.CPU8086
                         byte offset8 = value.AsT0;
                         int shift = t * 8;
                         offset |= ((int)offset8 << shift);
+                        offsetLength = Math.Max(offsetLength, t + 1);
                     }
                     break;
 
@@ -1132,6 +1145,7 @@ namespace Final.CPU8086
                             return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
                         byte low = value.AsT0;
                         displacement |= ((int)low << 0);
+                        immediateLength = 1;
                     }
                     break;
 
@@ -1143,6 +1157,7 @@ namespace Final.CPU8086
                             return new Error(value.AsT1, $"No more bytes left for reading the low displacement in field '{field}'", position);
                         byte high = value.AsT0;
                         displacement |= ((int)high << 8);
+                        immediateLength = 2;
                     }
                     break;
 
@@ -1261,7 +1276,11 @@ namespace Final.CPU8086
                 else
                     sourceType = bestInferredType;
 
-                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, displacement, immediate, offset, segmentType, segmentAddress, sourceType);
+                Immediate operandDisplacement = CreateSignedFromOffset(displacement, displacementLength);
+                Immediate operandImmediate = CreateSignedFromOffset(immediate, immediateLength);
+                Immediate operandOffset = CreateSignedFromOffset(offset, offsetLength);
+
+                InstructionOperand targetOp = CreateOperand(sourceOp, mode, register, eac, operandDisplacement, operandImmediate, operandOffset, segmentType, segmentAddress, sourceType);
 
                 targetOps[opCount++] = targetOp;
 
@@ -1550,7 +1569,7 @@ namespace Final.CPU8086
         private ReadOnlySpan<byte> GetCodeStream(uint ip, uint length)
         {
             uint codeEnd = GetCodeEnd(length);
-            uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, (int)ip, SegmentType.CS, 0));
+            uint codeOffset = GetAbsoluteMemoryAddress(new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate((int)ip), SegmentType.CS, 0));
             if (codeEnd > codeOffset)
             {
                 uint codeLen = codeEnd - codeOffset;

@@ -8,10 +8,10 @@ namespace Final.CPU8086.Types
     {
         public EffectiveAddressCalculation EAC { get; }
         public SegmentType SegmentType { get; }
-        public int Displacement { get; }
+        public Immediate Displacement { get; }
         public uint SegmentAddress { get; }
 
-        public MemoryAddress(EffectiveAddressCalculation eac, int displacement, SegmentType segmentType, uint segmentAddress)
+        public MemoryAddress(EffectiveAddressCalculation eac, Immediate displacement, SegmentType segmentType, uint segmentAddress)
         {
             EAC = eac;
             Displacement = displacement;
@@ -23,7 +23,7 @@ namespace Final.CPU8086.Types
         {
             if (EAC != other.EAC)
                 return false;
-            if (Displacement != other.Displacement)
+            if (!Displacement.Equals(other.Displacement))
                 return false;
             if (SegmentType != other.SegmentType)
                 return false;
@@ -38,7 +38,7 @@ namespace Final.CPU8086.Types
 
         public string Asm(DataWidthType dataWidth, OutputValueMode outputMode = OutputValueMode.AsHex, string hexPrefix = "0x")
         {
-            int d = Displacement;
+            int d = Displacement.Value;
             string append;
             if (d == 0)
                 append = string.Empty;
@@ -125,6 +125,6 @@ namespace Final.CPU8086.Types
             };
         }
 
-        public override string ToString() => $"EAC: {EAC}, Disp: 0x{Displacement:X}, Seg: {SegmentType}:0x{SegmentAddress:X}";
+        public override string ToString() => $"EAC: {EAC}, Disp: {Displacement}, Seg: {SegmentType}:0x{SegmentAddress:X}";
     }
 }

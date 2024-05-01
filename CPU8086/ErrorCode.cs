@@ -22,6 +22,7 @@
         // Program errors
         MissingProgramParameter,
         ProgramTooLarge,
+        ProgramIsEmpty,
         ProgramNotLoaded,
 
         // Execution errors

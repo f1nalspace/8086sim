@@ -138,10 +138,16 @@ namespace Final.CPU8086
             ExecutionState = ExecutionState.Stopped;
         }
 
+        
+
         public OneOf<int, Error> LoadProgram(IProgram program)
         {
             if (program == null)
                 return new Error(ErrorCode.MissingProgramParameter, $"Missing program argument!", 0);
+
+            if (program.Length == 0)
+                return new Error(ErrorCode.ProgramIsEmpty, $"The program '{program.Name}' is empty!", 0);
+
             if (program.Length > CodeSegmentLength)
                 return new Error(ErrorCode.ProgramTooLarge, $"The program '{program.Name}' is too large with '{program.Length}' bytes and does not fit in the code segment of max length '{CodeSegmentLength}' bytes!", 0);
 
@@ -1317,6 +1323,11 @@ namespace Final.CPU8086
                 return opCodeRes.AsT1;
 
             byte opCode = opCodeRes.AsT0;
+
+            // Early terminate out, for zero instructions
+            if (opCode == 0 && stream.Length > 1 && stream[1] == 0)
+                return new Error(ErrorCode.EndOfStream, $"Zero-Terminator instruction detected, exit out", position);
+
             InstructionDefinitionList instructionList = _entryTable[opCode];
             if (instructionList == null)
                 return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'", position);

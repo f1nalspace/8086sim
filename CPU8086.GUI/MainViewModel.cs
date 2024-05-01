@@ -118,8 +118,9 @@ namespace Final.CPU8086
 
             string[] resNames = _resources.GetNames();
 
-            Programs = resNames
-                .Where(n => string.IsNullOrEmpty(Path.GetExtension(n)))
+            IEnumerable<string> binaryOnly = resNames.Where(resName => ".bin".Equals(Path.GetExtension(resName), StringComparison.OrdinalIgnoreCase));
+
+            Programs = binaryOnly
                 .Select(n => new Program(n, _resources.Get(n)))
                 .ToArray();
 
@@ -445,6 +446,8 @@ namespace Final.CPU8086
                     OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, program.Name, position);
                     if (r.IsT1)
                     {
+                        if (r.AsT1.Code == ErrorCode.EndOfStream)
+                            break;
                         var err = new Error(r.AsT1, $"Failed to decode instruction stream '{program}'", position);
                         Errors.Add(err);
                         break;

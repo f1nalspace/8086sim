@@ -6,68 +6,265 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Resources\" />
+    <None Remove="Resources\performance_aware\listing_0037_single_register_mov.bin" />
+    <None Remove="Resources\performance_aware\listing_0038_many_register_mov.bin" />
+    <None Remove="Resources\performance_aware\listing_0039_more_movs.bin" />
+    <None Remove="Resources\performance_aware\listing_0040_challenge_movs.bin" />
+    <None Remove="Resources\performance_aware\listing_0041_add_sub_cmp_jnz.bin" />
+    <None Remove="Resources\performance_aware\listing_0042_completionist_decode.bin" />
+    <None Remove="Resources\performance_aware\listing_0043_immediate_movs.bin" />
+    <None Remove="Resources\performance_aware\listing_0044_register_movs.bin" />
+    <None Remove="Resources\performance_aware\listing_0045_challenge_register_movs.bin" />
+    <None Remove="Resources\performance_aware\listing_0046_add_sub_cmp.bin" />
+    <None Remove="Resources\performance_aware\listing_0047_challenge_flags.bin" />
+    <None Remove="Resources\performance_aware\listing_0048_ip_register.bin" />
+    <None Remove="Resources\performance_aware\listing_0049_conditional_jumps.bin" />
+    <None Remove="Resources\performance_aware\listing_0050_challenge_jumps.bin" />
+    <None Remove="Resources\performance_aware\listing_0051_memory_mov.bin" />
+    <None Remove="Resources\performance_aware\listing_0052_memory_add_loop.bin" />
+    <None Remove="Resources\performance_aware\listing_0053_add_loop_challenge.bin" />
+    <None Remove="Resources\performance_aware\listing_0054_draw_rectangle.bin" />
+    <None Remove="Resources\performance_aware\listing_0055_challenge_rectangle.bin" />
+    <None Remove="Resources\performance_aware\listing_0056_estimating_cycles.bin" />
+    <None Remove="Resources\performance_aware\listing_0057_challenge_cycles.bin" />
+    <None Remove="Resources\performance_aware\listing_0059_SingleScalar.bin" />
+    <None Remove="Resources\performance_aware\listing_0060_Unroll2Scalar.bin" />
+    <None Remove="Resources\performance_aware\listing_0061_DualScalar.bin" />
+    <None Remove="Resources\performance_aware\listing_0062_QuadScalar.bin" />
+    <None Remove="Resources\performance_aware\listing_0063_QuadScalarPtr.bin" />
+    <None Remove="Resources\performance_aware\listing_0064_TreeScalarPtr.bin" />
+    <None Remove="Resources\x80186\add.asm" />
+    <None Remove="Resources\x80186\add.bin" />
+    <None Remove="Resources\x80186\bcdcnv.asm" />
+    <None Remove="Resources\x80186\bcdcnv.bin" />
+    <None Remove="Resources\x80186\bitwise.asm" />
+    <None Remove="Resources\x80186\bitwise.bin" />
+    <None Remove="Resources\x80186\cmpneg.asm" />
+    <None Remove="Resources\x80186\cmpneg.bin" />
+    <None Remove="Resources\x80186\control.asm" />
+    <None Remove="Resources\x80186\control.bin" />
+    <None Remove="Resources\x80186\datatrnf.asm" />
+    <None Remove="Resources\x80186\datatrnf.bin" />
+    <None Remove="Resources\x80186\div.asm" />
+    <None Remove="Resources\x80186\div.bin" />
+    <None Remove="Resources\x80186\interrupt.asm" />
+    <None Remove="Resources\x80186\interrupt.bin" />
+    <None Remove="Resources\x80186\jmpmov.asm" />
+    <None Remove="Resources\x80186\jmpmov.bin" />
+    <None Remove="Resources\x80186\jump1.asm" />
+    <None Remove="Resources\x80186\jump1.bin" />
+    <None Remove="Resources\x80186\jump2.asm" />
+    <None Remove="Resources\x80186\jump2.bin" />
+    <None Remove="Resources\x80186\mul.asm" />
+    <None Remove="Resources\x80186\mul.bin" />
+    <None Remove="Resources\x80186\rep.asm" />
+    <None Remove="Resources\x80186\rep.bin" />
+    <None Remove="Resources\x80186\res_add.bin" />
+    <None Remove="Resources\x80186\res_bcdcnv.bin" />
+    <None Remove="Resources\x80186\res_bitwise.bin" />
+    <None Remove="Resources\x80186\res_cmpneg.bin" />
+    <None Remove="Resources\x80186\res_control.bin" />
+    <None Remove="Resources\x80186\res_datatrnf.bin" />
+    <None Remove="Resources\x80186\res_div.bin" />
+    <None Remove="Resources\x80186\res_interrupt.bin" />
+    <None Remove="Resources\x80186\res_jump1.bin" />
+    <None Remove="Resources\x80186\res_jump2.bin" />
+    <None Remove="Resources\x80186\res_mul.bin" />
+    <None Remove="Resources\x80186\res_rep.bin" />
+    <None Remove="Resources\x80186\res_rotate.bin" />
+    <None Remove="Resources\x80186\res_segpr.bin" />
+    <None Remove="Resources\x80186\res_shifts.bin" />
+    <None Remove="Resources\x80186\res_strings.bin" />
+    <None Remove="Resources\x80186\res_sub.bin" />
+    <None Remove="Resources\x80186\rotate.asm" />
+    <None Remove="Resources\x80186\rotate.bin" />
+    <None Remove="Resources\x80186\segpr.asm" />
+    <None Remove="Resources\x80186\segpr.bin" />
+    <None Remove="Resources\x80186\shifts.asm" />
+    <None Remove="Resources\x80186\shifts.bin" />
+    <None Remove="Resources\x80186\strings.asm" />
+    <None Remove="Resources\x80186\strings.bin" />
+    <None Remove="Resources\x80186\sub.asm" />
+    <None Remove="Resources\x80186\sub.bin" />
+    <None Remove="Resources\performance_aware\listing_0037_single_register_mov.asm" />
+    <None Remove="Resources\performance_aware\listing_0038_many_register_mov.asm" />
+    <None Remove="Resources\performance_aware\listing_0039_more_movs.asm" />
+    <None Remove="Resources\performance_aware\listing_0040_challenge_movs.asm" />
+    <None Remove="Resources\performance_aware\listing_0041_add_sub_cmp_jnz.asm" />
+    <None Remove="Resources\performance_aware\listing_0042_completionist_decode.asm" />
+    <None Remove="Resources\performance_aware\listing_0043_immediate_movs.asm" />
+    <None Remove="Resources\performance_aware\listing_0043_immediate_movs.txt" />
+    <None Remove="Resources\performance_aware\listing_0044_register_movs.asm" />
+    <None Remove="Resources\performance_aware\listing_0044_register_movs.txt" />
+    <None Remove="Resources\performance_aware\listing_0045_challenge_register_movs.asm" />
+    <None Remove="Resources\performance_aware\listing_0045_challenge_register_movs.txt" />
+    <None Remove="Resources\performance_aware\listing_0046_add_sub_cmp.asm" />
+    <None Remove="Resources\performance_aware\listing_0046_add_sub_cmp.txt" />
+    <None Remove="Resources\performance_aware\listing_0047_challenge_flags.asm" />
+    <None Remove="Resources\performance_aware\listing_0047_challenge_flags.txt" />
+    <None Remove="Resources\performance_aware\listing_0048_ip_register.asm" />
+    <None Remove="Resources\performance_aware\listing_0048_ip_register.txt" />
+    <None Remove="Resources\performance_aware\listing_0049_conditional_jumps.asm" />
+    <None Remove="Resources\performance_aware\listing_0049_conditional_jumps.txt" />
+    <None Remove="Resources\performance_aware\listing_0050_challenge_jumps.asm" />
+    <None Remove="Resources\performance_aware\listing_0050_challenge_jumps.txt" />
+    <None Remove="Resources\performance_aware\listing_0051_memory_mov.asm" />
+    <None Remove="Resources\performance_aware\listing_0051_memory_mov.txt" />
+    <None Remove="Resources\performance_aware\listing_0052_memory_add_loop.asm" />
+    <None Remove="Resources\performance_aware\listing_0052_memory_add_loop.txt" />
+    <None Remove="Resources\performance_aware\listing_0053_add_loop_challenge.asm" />
+    <None Remove="Resources\performance_aware\listing_0053_add_loop_challenge.txt" />
+    <None Remove="Resources\performance_aware\listing_0054_draw_rectangle.asm" />
+    <None Remove="Resources\performance_aware\listing_0054_draw_rectangle.txt" />
+    <None Remove="Resources\performance_aware\listing_0055_challenge_rectangle.asm" />
+    <None Remove="Resources\performance_aware\listing_0055_challenge_rectangle.txt" />
+    <None Remove="Resources\performance_aware\listing_0056_estimating_cycles.asm" />
+    <None Remove="Resources\performance_aware\listing_0056_estimating_cycles.txt" />
+    <None Remove="Resources\performance_aware\listing_0057_challenge_cycles.asm" />
+    <None Remove="Resources\performance_aware\listing_0057_challenge_cycles.txt" />
+    <None Remove="Resources\performance_aware\listing_0059_SingleScalar.asm" />
+    <None Remove="Resources\performance_aware\listing_0059_SingleScalar.txt" />
+    <None Remove="Resources\performance_aware\listing_0060_Unroll2Scalar.asm" />
+    <None Remove="Resources\performance_aware\listing_0060_Unroll2Scalar.txt" />
+    <None Remove="Resources\performance_aware\listing_0061_DualScalar.asm" />
+    <None Remove="Resources\performance_aware\listing_0061_DualScalar.txt" />
+    <None Remove="Resources\performance_aware\listing_0062_QuadScalar.asm" />
+    <None Remove="Resources\performance_aware\listing_0062_QuadScalar.txt" />
+    <None Remove="Resources\performance_aware\listing_0063_QuadScalarPtr.asm" />
+    <None Remove="Resources\performance_aware\listing_0063_QuadScalarPtr.txt" />
+    <None Remove="Resources\performance_aware\listing_0064_TreeScalarPtr.asm" />
+    <None Remove="Resources\performance_aware\listing_0064_TreeScalarPtr.txt" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0037_single_register_mov" Link="Resources\listing_0037_single_register_mov" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0037_single_register_mov.asm" Link="Resources\listing_0037_single_register_mov.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0038_many_register_mov" Link="Resources\listing_0038_many_register_mov" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0038_many_register_mov.asm" Link="Resources\listing_0038_many_register_mov.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0039_more_movs" Link="Resources\listing_0039_more_movs" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0039_more_movs.asm" Link="Resources\listing_0039_more_movs.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0040_challenge_movs" Link="Resources\listing_0040_challenge_movs" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0040_challenge_movs.asm" Link="Resources\listing_0040_challenge_movs.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0041_add_sub_cmp_jnz" Link="Resources\listing_0041_add_sub_cmp_jnz" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0041_add_sub_cmp_jnz.asm" Link="Resources\listing_0041_add_sub_cmp_jnz.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0042_completionist_decode" Link="Resources\listing_0042_completionist_decode" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0042_completionist_decode.asm" Link="Resources\listing_0042_completionist_decode.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs" Link="Resources\listing_0043_immediate_movs" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0043_immediate_movs.asm" Link="Resources\listing_0043_immediate_movs.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs" Link="Resources\listing_0044_register_movs" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0044_register_movs.asm" Link="Resources\listing_0044_register_movs.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs" Link="Resources\listing_0045_challenge_register_movs" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0045_challenge_register_movs.asm" Link="Resources\listing_0045_challenge_register_movs.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp" Link="Resources\listing_0046_add_sub_cmp" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0046_add_sub_cmp.asm" Link="Resources\listing_0046_add_sub_cmp.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags" Link="Resources\listing_0047_challenge_flags" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0047_challenge_flags.asm" Link="Resources\listing_0047_challenge_flags.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register" Link="Resources\listing_0048_ip_register" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0048_ip_register.asm" Link="Resources\listing_0048_ip_register.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps" Link="Resources\listing_0049_conditional_jumps" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0049_conditional_jumps.asm" Link="Resources\listing_0049_conditional_jumps.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps" Link="Resources\listing_0050_challenge_jumps" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0050_challenge_jumps.asm" Link="Resources\listing_0050_challenge_jumps.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0051_memory_mov" Link="Resources\listing_0051_memory_mov" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0051_memory_mov.asm" Link="Resources\listing_0051_memory_mov.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0052_memory_add_loop" Link="Resources\listing_0052_memory_add_loop" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0052_memory_add_loop.asm" Link="Resources\listing_0052_memory_add_loop.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0053_add_loop_challenge" Link="Resources\listing_0053_add_loop_challenge" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0053_add_loop_challenge.asm" Link="Resources\listing_0053_add_loop_challenge.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0054_draw_rectangle" Link="Resources\listing_0054_draw_rectangle" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0054_draw_rectangle.asm" Link="Resources\listing_0054_draw_rectangle.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle" Link="Resources\listing_0055_challenge_rectangle" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0055_challenge_rectangle.asm" Link="Resources\listing_0055_challenge_rectangle.asm" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0056_estimating_cycles" Link="Resources\listing_0056_estimating_cycles" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0056_estimating_cycles.asm" Link="Resources\listing_0056_estimating_cycles.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_challenge_cycles" Link="Resources\listing_0057_challenge_cycles" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0057_challenge_cycles.asm" Link="Resources\listing_0057_challenge_cycles.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0058_prologue_sum_loops.cpp" Link="Resources\listing_0058_prologue_sum_loops.cpp" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_SingleScalar" Link="Resources\listing_0059_SingleScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0059_SingleScalar.asm" Link="Resources\listing_0059_SingleScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_Unroll2Scalar" Link="Resources\listing_0060_Unroll2Scalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0060_Unroll2Scalar.asm" Link="Resources\listing_0060_Unroll2Scalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_DualScalar" Link="Resources\listing_0061_DualScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0061_DualScalar.asm" Link="Resources\listing_0061_DualScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_QuadScalar" Link="Resources\listing_0062_QuadScalar" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0062_QuadScalar.asm" Link="Resources\listing_0062_QuadScalar.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0063_QuadScalarPtr" Link="Resources\listing_0063_QuadScalarPtr" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0063_QuadScalarPtr.asm" Link="Resources\listing_0063_QuadScalarPtr.asm" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0064_TreeScalarPtr" Link="Resources\listing_0064_TreeScalarPtr" />
-    <EmbeddedResource Include="..\computer_enhance\perfaware\part1\listing_0064_TreeScalarPtr.asm" Link="Resources\listing_0064_TreeScalarPtr.asm" />
+    <EmbeddedResource Include="Resources\x80186\add.asm" />
+    <EmbeddedResource Include="Resources\x80186\add.bin" />
+    <EmbeddedResource Include="Resources\x80186\bcdcnv.asm" />
+    <EmbeddedResource Include="Resources\x80186\bcdcnv.bin" />
+    <EmbeddedResource Include="Resources\x80186\bitwise.asm" />
+    <EmbeddedResource Include="Resources\x80186\bitwise.bin" />
+    <EmbeddedResource Include="Resources\x80186\cmpneg.asm" />
+    <EmbeddedResource Include="Resources\x80186\cmpneg.bin" />
+    <EmbeddedResource Include="Resources\x80186\control.asm" />
+    <EmbeddedResource Include="Resources\x80186\control.bin" />
+    <EmbeddedResource Include="Resources\x80186\datatrnf.asm" />
+    <EmbeddedResource Include="Resources\x80186\datatrnf.bin" />
+    <EmbeddedResource Include="Resources\x80186\div.asm" />
+    <EmbeddedResource Include="Resources\x80186\div.bin" />
+    <EmbeddedResource Include="Resources\x80186\interrupt.asm" />
+    <EmbeddedResource Include="Resources\x80186\interrupt.bin" />
+    <EmbeddedResource Include="Resources\x80186\jmpmov.asm" />
+    <EmbeddedResource Include="Resources\x80186\jmpmov.bin" />
+    <EmbeddedResource Include="Resources\x80186\jump1.asm" />
+    <EmbeddedResource Include="Resources\x80186\jump1.bin" />
+    <EmbeddedResource Include="Resources\x80186\jump2.asm" />
+    <EmbeddedResource Include="Resources\x80186\jump2.bin" />
+    <EmbeddedResource Include="Resources\x80186\mul.asm" />
+    <EmbeddedResource Include="Resources\x80186\mul.bin" />
+    <EmbeddedResource Include="Resources\x80186\rep.asm" />
+    <EmbeddedResource Include="Resources\x80186\rep.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_add.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_bcdcnv.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_bitwise.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_cmpneg.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_control.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_datatrnf.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_div.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_interrupt.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_jump1.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_jump2.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_mul.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_rep.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_rotate.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_segpr.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_shifts.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_strings.bin" />
+    <EmbeddedResource Include="Resources\x80186\res_sub.bin" />
+    <EmbeddedResource Include="Resources\x80186\rotate.asm" />
+    <EmbeddedResource Include="Resources\x80186\rotate.bin" />
+    <EmbeddedResource Include="Resources\x80186\segpr.asm" />
+    <EmbeddedResource Include="Resources\x80186\segpr.bin" />
+    <EmbeddedResource Include="Resources\x80186\shifts.asm" />
+    <EmbeddedResource Include="Resources\x80186\shifts.bin" />
+    <EmbeddedResource Include="Resources\x80186\strings.asm" />
+    <EmbeddedResource Include="Resources\x80186\strings.bin" />
+    <EmbeddedResource Include="Resources\x80186\sub.asm" />
+    <EmbeddedResource Include="Resources\x80186\sub.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0037_single_register_mov.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0037_single_register_mov.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0038_many_register_mov.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0038_many_register_mov.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0039_more_movs.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0039_more_movs.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0040_challenge_movs.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0040_challenge_movs.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0041_add_sub_cmp_jnz.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0041_add_sub_cmp_jnz.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0042_completionist_decode.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0042_completionist_decode.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0043_immediate_movs.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0043_immediate_movs.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0043_immediate_movs.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0044_register_movs.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0044_register_movs.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0044_register_movs.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0045_challenge_register_movs.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0045_challenge_register_movs.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0045_challenge_register_movs.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0046_add_sub_cmp.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0046_add_sub_cmp.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0046_add_sub_cmp.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0047_challenge_flags.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0047_challenge_flags.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0047_challenge_flags.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0048_ip_register.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0048_ip_register.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0048_ip_register.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0049_conditional_jumps.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0049_conditional_jumps.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0049_conditional_jumps.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0050_challenge_jumps.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0050_challenge_jumps.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0050_challenge_jumps.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0051_memory_mov.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0051_memory_mov.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0051_memory_mov.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0052_memory_add_loop.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0052_memory_add_loop.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0052_memory_add_loop.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0053_add_loop_challenge.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0053_add_loop_challenge.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0053_add_loop_challenge.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0054_draw_rectangle.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0054_draw_rectangle.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0054_draw_rectangle.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0055_challenge_rectangle.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0055_challenge_rectangle.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0055_challenge_rectangle.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0056_estimating_cycles.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0056_estimating_cycles.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0056_estimating_cycles.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0057_challenge_cycles.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0057_challenge_cycles.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0057_challenge_cycles.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0059_SingleScalar.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0059_SingleScalar.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0059_SingleScalar.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0060_Unroll2Scalar.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0060_Unroll2Scalar.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0060_Unroll2Scalar.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0061_DualScalar.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0061_DualScalar.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0061_DualScalar.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0062_QuadScalar.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0062_QuadScalar.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0062_QuadScalar.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0063_QuadScalarPtr.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0063_QuadScalarPtr.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0063_QuadScalarPtr.txt" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0064_TreeScalarPtr.bin" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0064_TreeScalarPtr.asm" />
+    <EmbeddedResource Include="Resources\performance_aware\listing_0064_TreeScalarPtr.txt" />
   </ItemGroup>
 
 </Project>

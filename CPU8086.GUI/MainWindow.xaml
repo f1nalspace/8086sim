@@ -489,6 +489,7 @@
                             ShowAsHex="{Binding ShowStreamAsHex, UpdateSourceTrigger=PropertyChanged}"
                             SelectionStart="{Binding CurrentStreamPosition, UpdateSourceTrigger=PropertyChanged}"
                             SelectionLength="{Binding CurrentInstruction.Length, UpdateSourceTrigger=PropertyChanged}"
+                            BytesPerPage="128"
                             />
                     </TabItem>
                     <TabItem Header="Memory">

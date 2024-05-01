@@ -276,13 +276,27 @@ namespace Final.CPU8086.Execution
             switch (instruction.Type)
             {
                 case InstructionType.PUSHF:
-                    throw new NotImplementedException();
+                    return PushToStack(cpu, instruction, state, DataWidth.Word, new Immediate(cpu.Register.Status)); 
 
                 case InstructionType.POPF:
-                    throw new NotImplementedException();
+                    OneOf<Immediate, Error> popRes = PopFromStack(cpu, instruction, state, DataWidth.Word);
+                    if (popRes.IsT1)
+                        return popRes.AsT1;
+
+                    ushort newStatus = popRes.AsT0.U16;
+                    ushort oldStatus = cpu.Register.Status;
+
+                    FlagsDefinition oldFlags = new FlagsDefinition(oldStatus);
+                    FlagsDefinition newFlags = new FlagsDefinition(newStatus);
+
+                    cpu.Register.Status = newStatus;
+
+                    state.AddExecuted(new ExecutedInstruction(instruction, new ExecutedChange(new ExecutedValue(oldFlags), new ExecutedValue(newFlags))));
+
+                    return 0;
 
                 default:
-                    throw new NotSupportedException($"The flags instruction '{instruction.Type}' is not supported");
+                    throw new NotSupportedException($"The popRes instruction '{instruction.Type}' is not supported");
             }
         }
 

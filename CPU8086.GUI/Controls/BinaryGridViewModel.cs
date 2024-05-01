@@ -73,26 +73,32 @@ namespace Final.CPU8086.Controls
             private set => SetValue(value);
         }
 
+        public string PageInfo
+        {
+            get => GetValue<string>();
+            private set => SetValue(value);
+        }
+
         public StreamByte[] Stream
         {
             get => _stream;
-            set => SetValue(ref _stream, value, () => CurrentStreamChanged(value));
+            private set => SetValue(ref _stream, value, () => CurrentStreamChanged(value));
         }
         private StreamByte[] _stream = Array.Empty<StreamByte>();
 
         public ImmutableArray<uint> Lines
         {
             get => _lines;
-            set => SetValue(ref _lines, value);
+            private set => SetValue(ref _lines, value);
         }
         private ImmutableArray<uint> _lines = ImmutableArray<uint>.Empty;
 
-        public StreamByte[] Page
+        public ImmutableArray<StreamByte> Page
         {
             get => _page;
             private set => SetValue(ref _page, value);
         }
-        private StreamByte[] _page = Array.Empty<StreamByte>();
+        private ImmutableArray<StreamByte> _page = ImmutableArray<StreamByte>.Empty;
 
         public event BinaryGridCellClickEventHandler CellClicked;
         public event BinaryGridPageChangedEventHandler PageChanged;
@@ -107,11 +113,20 @@ namespace Final.CPU8086.Controls
 
         public DelegateCommand<StreamByte> CellClickCommand { get; }
         public DelegateCommand<string> JumpToAddressCommand { get; }
+        public DelegateCommand GoToFirstPageCommand { get; }
+        public DelegateCommand GoToNextPageCommand { get; }
+        public DelegateCommand GoToPrevPageCommand { get; }
+        public DelegateCommand GoToLastPageCommand { get; }
 
         public BinaryGridViewModel()
         {
             CellClickCommand = new DelegateCommand<StreamByte>(CellClick);
             JumpToAddressCommand = new DelegateCommand<string>(JumpToAddress, CanJumpToAddress);
+
+            GoToFirstPageCommand = new DelegateCommand(GoToFirstPage, CanGoToFirstPage);
+            GoToPrevPageCommand = new DelegateCommand(GoToPrevPage, CanGoToPrevPage);
+            GoToNextPageCommand = new DelegateCommand(GoToNextPage, CanGoToNextPage);
+            GoToLastPageCommand = new DelegateCommand(GoToLastPage, CanGoToLastPage);
 
             //StreamByte[] r = new StreamByte[256];
             //for (uint i = 0; i < 256; i++)
@@ -124,6 +139,18 @@ namespace Final.CPU8086.Controls
             //BytesPerPage = 64;
             //PageOffset = 0;
         }
+
+        private bool CanGoToFirstPage() => CanFirstPage;
+        private void GoToFirstPage() => FirstPage();
+
+        private bool CanGoToPrevPage() => CanPrevPage;
+        private void GoToPrevPage() => PrevPage();
+
+        private bool CanGoToNextPage() => CanNextPage;
+        private void GoToNextPage() => NextPage();
+
+        private bool CanGoToLastPage() => CanLastPage;
+        private void GoToLastPage() => LastPage();
 
         private static readonly Regex _hexRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?0[xX](?<first>[0-9a-fA-F]+)\\s*(?:(?<sep>[-,])0[xX](?<second>[0-9a-fA-F]+))?", RegexOptions.Compiled);
         private static readonly Regex _intRangeRex = new Regex("(?:(?<seg>(cs|CS|ds|DS|ss|SS|es|ES))\\:)?(?<first>[0-9]+)\\s*(?:(?<sep>[-,])(?<second>[0-9]+))?", RegexOptions.Compiled);
@@ -146,7 +173,6 @@ namespace Final.CPU8086.Controls
         {
             SegmentType seg;
             uint start, end;
-            uint length = 0;
             if (!string.IsNullOrEmpty(address))
             {
                 Match hexMatch = _hexRangeRex.Match(address);
@@ -233,18 +259,38 @@ namespace Final.CPU8086.Controls
             VisualLength = length;
         }
 
+        private void UpdatePageInfo(ReadOnlySpan<StreamByte> stream)
+        {
+            if (PageCount > 1)
+            {
+                uint byteOffset = PageOffset * BytesPerPage;
+                uint byteCount = Math.Min(BytesPerPage, (uint)(stream.Length - byteOffset));
+                PageInfo = $"{PageOffset + 1} / {PageCount} Pages ({byteCount} Bytes)";
+            }
+            else
+                PageInfo = $"{stream.Length} Bytes";
+        }
+
         private void RefreshPagingProperties()
         {
             RaisePropertiesChanged(nameof(CanFirstPage), nameof(CanLastPage), nameof(CanNextPage), nameof(CanPrevPage));
+
+            GoToFirstPageCommand.RaiseCanExecuteChanged();
+            GoToPrevPageCommand.RaiseCanExecuteChanged();
+            GoToNextPageCommand.RaiseCanExecuteChanged();
+            GoToLastPageCommand.RaiseCanExecuteChanged();
         }
 
         private void PageCountChanged(uint count)
         {
             RefreshPagingProperties();
+
+            UpdatePageInfo(Stream.AsSpan());
+
             PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, PageOffset, count, BytesPerPage));
         }
 
-        private void BytesPerPageChanged(StreamByte[] stream, uint bytesPerPage)
+        private void BytesPerPageChanged(ReadOnlySpan<StreamByte> stream, uint bytesPerPage)
         {
             if (bytesPerPage > 0 && stream.Length > 0)
             {
@@ -274,7 +320,7 @@ namespace Final.CPU8086.Controls
                 Lines = ImmutableArray<uint>.Empty;
         }
 
-        private void CurrentStreamChanged(StreamByte[] stream)
+        private void CurrentStreamChanged(ReadOnlySpan<StreamByte> stream)
         {
             BytesPerPageChanged(stream, BytesPerPage);
 
@@ -282,7 +328,7 @@ namespace Final.CPU8086.Controls
             SelectionLength = 0;
         }
 
-        private void ReloadPage(StreamByte[] stream, uint pageOffset, uint pageCount, uint bytesPerPage)
+        private void ReloadPage(ReadOnlySpan<StreamByte> stream, uint pageOffset, uint pageCount, uint bytesPerPage)
         {
             int streamLength = stream.Length;
             if (streamLength > 0 && pageCount > 0 && bytesPerPage > 0)
@@ -292,25 +338,29 @@ namespace Final.CPU8086.Controls
                 uint byteCount = Math.Min(bytesPerPage, (uint)(streamLength - byteIndex));
 
                 Page = stream
-                    .AsSpan()
                     .Slice((int)byteIndex, (int)byteCount)
-                    .ToArray();
+                    .ToImmutableArray();
                 StreamStart = (uint)byteIndex;
                 UpdateLines((uint)byteIndex, (uint)byteCount);
             }
             else
             {
-                Page = stream.ToArray();
+                Page = stream.ToImmutableArray();
                 StreamStart = 0;
                 UpdateLines(0, (uint)stream.Length);
             }
         }
 
-        private void PageOffsetChanged(StreamByte[] stream, uint pageOffset, uint pageCount, uint bytesPerPage)
+        private void PageOffsetChanged(ReadOnlySpan<StreamByte> stream, uint pageOffset, uint pageCount, uint bytesPerPage)
         {
             PageChanging?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageOffset, pageCount, bytesPerPage));
+
             ReloadPage(stream, pageOffset, pageCount, bytesPerPage);
+
             RefreshPagingProperties();
+
+            UpdatePageInfo(stream);
+
             PageChanged?.Invoke(this, new BinaryGridPageChangedEventArgs(this, pageOffset, pageCount, bytesPerPage));
         }
 
@@ -352,7 +402,7 @@ namespace Final.CPU8086.Controls
                     .ToArray();
             }
             else
-                Stream = Array.Empty<StreamByte>();
+                Stream = Array.Empty< StreamByte>();
         }
 
         public void ReloadStream(ReadOnlySpan<byte> stream, uint offset)
@@ -365,8 +415,11 @@ namespace Final.CPU8086.Controls
             else
             {
                 uint count = 0;
-                Stream = stream.ToArray().Select(b => new StreamByte(Interlocked.Increment(ref count) - 1, b))
-                    .ToArray();
+                int length = stream.Length;
+                StreamByte[] buffer = new StreamByte[length];
+                for (int index = 0; index < length; ++index)
+                    buffer[index] = new StreamByte(Interlocked.Increment(ref count) - 1, stream[index]);
+                Stream = buffer.ToArray();
             }
             ReloadPage(Stream, PageOffset, PageCount, BytesPerPage);
         }

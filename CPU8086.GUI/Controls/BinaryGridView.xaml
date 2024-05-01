@@ -24,6 +24,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" LastChildFill="True">
             <TextBox x:Name="addressTextbox" Text="{Binding JumpAddress, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
@@ -154,5 +155,62 @@
                 </Grid>
             </Grid>
         </ScrollViewer>
+        <DockPanel Grid.Row="2" LastChildFill="True">
+            <StackPanel  Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button x:Name="gotoFirstPageButton" Command="{Binding GoToFirstPageCommand}">
+                    <Image Source="../Resources/MemoryPageFirst_32x32.png">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.25" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </Button>
+                <Button Command="{Binding GoToPrevPageCommand}">
+                    <Image Source="../Resources/MemoryPagePrev_32x32.png">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.25" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </Button>
+                <Button Command="{Binding GoToNextPageCommand}">
+                    <Image Source="../Resources/MemoryPageNext_32x32.png">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.25" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </Button>
+                <Button Command="{Binding GoToLastPageCommand}">
+                    <Image Source="../Resources/MemoryPageLast_32x32.png">
+                        <Image.Style>
+                            <Style TargetType="Image">
+                                <Style.Triggers>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter Property="Opacity" Value="0.25" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                </Button>
+            </StackPanel>
+            <Label Content="{Binding PageInfo, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Right" />
+        </DockPanel>
     </Grid>
 </UserControl>

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.ComponentModel;
 
 namespace Final.CPU8086.Controls
@@ -13,7 +14,7 @@ namespace Final.CPU8086.Controls
         uint PageOffset { get; }
 
         StreamByte[] Stream { get; }
-        StreamByte[] Page { get; }
+        ImmutableArray<StreamByte> Page { get; }
 
         bool AllowPaging { get; }
      

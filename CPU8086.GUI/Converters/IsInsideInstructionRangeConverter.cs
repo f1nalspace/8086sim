@@ -4,7 +4,7 @@ using System.Windows.Data;
 using Final.CPU8086.Instructions;
 using Final.CPU8086.Types;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Converters
 {
     public class IsInsideInstructionRangeConverter : IMultiValueConverter
     {
@@ -47,16 +47,16 @@ namespace Final.CPU8086
 
                     if (instruction != null)
                     {
-                        if (testIndex >= instruction.Position && testIndex < (instruction.Position + instruction.Length))
+                        if (testIndex >= instruction.Position && testIndex < instruction.Position + instruction.Length)
                             return true;
-                        if (instruction.Position >= testIndex && instruction.Position < (testIndex + len))
+                        if (instruction.Position >= testIndex && instruction.Position < testIndex + len)
                             return true;
                     }
                     else
                     {
                         if (streamIndex == testIndex)
                             return true;
-                        if (streamIndex >= testIndex && streamIndex < (testIndex + len))
+                        if (streamIndex >= testIndex && streamIndex < testIndex + len)
                             return true;
                     }
                 }

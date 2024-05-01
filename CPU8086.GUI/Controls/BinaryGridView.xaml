@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Final.CPU8086"
+             xmlns:conv="clr-namespace:Final.CPU8086.Converters"
              xmlns:ctrls="clr-namespace:Final.CPU8086.Controls"
              xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
              xmlns:s="clr-namespace:System;assembly=mscorlib"
@@ -17,8 +18,8 @@
             <s:Boolean x:Key="falseValue">False</s:Boolean>
             <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
             <s:UInt32 x:Key="one">1</s:UInt32>
-            <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
-            <local:IsInsideRangeConverter x:Key="isInsideRangeConverter" />
+            <conv:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+            <conv:IsInsideRangeConverter x:Key="isInsideRangeConverter" />
             <dxmvvm:NumericToVisibilityConverter x:Key="inverseNumVisConverter" Inverse="True" />
         </Grid.Resources>
         <Grid.RowDefinitions>
@@ -123,7 +124,7 @@
                                     </Border.Style>
                                     <TextBlock TextAlignment="Right">
                                         <TextBlock.Text>
-                                            <MultiBinding Converter="{local:HexCellValueConverter}">
+                                            <MultiBinding Converter="{conv:HexCellValueConverter}">
                                                 <Binding />
                                                 <Binding Path="DataContext.ShowAsHex" ElementName="mainGrid" UpdateSourceTrigger="PropertyChanged" />
                                             </MultiBinding>

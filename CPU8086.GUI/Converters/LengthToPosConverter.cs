@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Converters
 {
     public class LengthToPosConverter : MarkupExtension, IValueConverter
     {
@@ -13,7 +13,7 @@ namespace Final.CPU8086
         {
             if (value is int len && len > 0)
             {
-                int rowCount = (len / Columns) + 1;
+                int rowCount = len / Columns + 1;
                 uint[] result = new uint[rowCount];
                 uint p = 0;
                 for (int i = 0; i < rowCount; ++i)

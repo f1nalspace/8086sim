@@ -248,7 +248,7 @@ namespace Final.CPU8086.Types
                 ImmediateType.SignedWord => S16.ToString("G"),
                 ImmediateType.DoubleWord => $"0x{U32:X8}",
                 ImmediateType.Int => S32.ToString("G"),
-                _ => string.Empty,
+                _ => "None",
             };
         }
     }

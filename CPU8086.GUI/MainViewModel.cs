@@ -86,8 +86,6 @@ namespace Final.CPU8086
         public DelegateCommand StopCommand { get; }
         public DelegateCommand StepCommand { get; }
         public DelegateCommand ResetCommand { get; }
-        public DelegateCommand JumpToFirstMemoryPageCommand { get; }
-        public DelegateCommand JumpToLastMemoryPageCommand { get; }
 
         private volatile Task _executionTask = null;
         private volatile int _isStopping = 0;
@@ -103,8 +101,6 @@ namespace Final.CPU8086
             StopCommand = new DelegateCommand(Stop, CanStop);
             StepCommand = new DelegateCommand(Step, CanStep);
             ResetCommand = new DelegateCommand(Reset, CanReset);
-            JumpToFirstMemoryPageCommand = new DelegateCommand(JumpToFirstMemoryPage, CanJumpToFirstMemoryPage);
-            JumpToLastMemoryPageCommand = new DelegateCommand(JumpToLastMemoryPage, CanJumpToLastMemoryPage);
 
             Errors = new ObservableCollection<Error>();
             Logs = new ObservableCollection<LogItemViewModel>();
@@ -147,7 +143,11 @@ namespace Final.CPU8086
 
         private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
         {
-            MemoryPageChanged(args.PageOffset, args.PageCount, args.BytesPerPage);
+            (uint Offset, uint Length) range = MemoryGridService.ComputePageRange(args.PageOffset, args.PageCount, args.BytesPerPage);
+
+            ReadOnlySpan<byte> stream = Memory.Get(range.Offset, range.Length);
+
+            MemoryGridService.ReloadStream(stream, range.Offset);
         }
 
         private void AddLog(uint position, string message)
@@ -156,32 +156,6 @@ namespace Final.CPU8086
                 _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
             else
                 Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now));
-        }
-
-        private bool CanJumpToFirstMemoryPage() => MemoryGridService?.CanFirstPage ?? false;
-        private void JumpToFirstMemoryPage()
-        {
-            SelectedStreamOrMemoryTabIndex = 1;
-            MemoryGridService.FirstPage();
-        }
-
-        private bool CanJumpToLastMemoryPage() => MemoryGridService?.CanLastPage ?? false;
-        private void JumpToLastMemoryPage()
-        {
-            SelectedStreamOrMemoryTabIndex = 1;
-            MemoryGridService.LastPage();
-        }
-
-        private void MemoryPageChanged(uint pageOffset, uint pageCount, uint bytesPerPage)
-        {
-            JumpToFirstMemoryPageCommand.RaiseCanExecuteChanged();
-            JumpToLastMemoryPageCommand.RaiseCanExecuteChanged();
-
-            (uint Offset, uint Length) range = MemoryGridService.ComputePageRange(pageOffset, pageCount, bytesPerPage);
-
-            ReadOnlySpan<byte> stream = Memory.Get(range.Offset, range.Length);
-
-            MemoryGridService.ReloadStream(stream, range.Offset);
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Converters
 {
     public class HexCellValueConverter : MarkupExtension, IValueConverter, IMultiValueConverter
     {
@@ -52,7 +52,7 @@ namespace Final.CPU8086
             else if (value is int s32Value)
             {
                 if (asHex)
-                    return $"{hexPrefix}{(s32Offset + s32Value):X8}";
+                    return $"{hexPrefix}{s32Offset + s32Value:X8}";
                 else
                     return (s32Offset + s32Value).ToString("D");
             }
@@ -88,7 +88,7 @@ namespace Final.CPU8086
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
 
-        
+
 
         public override object ProvideValue(IServiceProvider serviceProvider)
             => this;

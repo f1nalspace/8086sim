@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Converters
 {
     public class IsInsideRangeConverter : MarkupExtension, IMultiValueConverter
     {
@@ -30,9 +30,9 @@ namespace Final.CPU8086
                 if (values.Length >= 4 && values[3] is uint maxLen)
                     len = maxLen;
 
-                if (index >= selectionStart && index < (selectionStart + selectionLength))
+                if (index >= selectionStart && index < selectionStart + selectionLength)
                     return true;
-                if (selectionStart >= index && selectionStart < (index + len))
+                if (selectionStart >= index && selectionStart < index + len)
                     return true;
             }
             return false;

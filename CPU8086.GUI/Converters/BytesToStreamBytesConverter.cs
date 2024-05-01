@@ -7,7 +7,7 @@ using System.Threading;
 using System.Windows.Data;
 using System.Windows.Markup;
 
-namespace Final.CPU8086
+namespace Final.CPU8086.Converters
 {
     public class BytesToStreamBytesConverter : MarkupExtension, IValueConverter
     {

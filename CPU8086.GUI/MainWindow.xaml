@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Final.CPU8086"
+        xmlns:conv="clr-namespace:Final.CPU8086.Converters"
         xmlns:ctrls="clr-namespace:Final.CPU8086.Controls"
         xmlns:dxmvvm="http://schemas.devexpress.com/winfx/2008/xaml/mvvm"
         xmlns:s="clr-namespace:System;assembly=mscorlib"
@@ -24,10 +25,12 @@
         <s:Boolean x:Key="falseValue">False</s:Boolean>
         <s:UInt32 x:Key="maxStreamLaneLength">8</s:UInt32>
 
-        <local:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" IsDirectPosition="False" />
-        <local:IsInsideInstructionRangeConverter x:Key="isOnInstructionConverter" IsDirectPosition="True" />
+        <conv:IsInsideInstructionRangeConverter x:Key="isInsideInstructionRangeConverter" IsDirectPosition="False" />
+        <conv:IsInsideInstructionRangeConverter x:Key="isOnInstructionConverter" IsDirectPosition="True" />
 
-        <local:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+        <conv:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+        <conv:HexCellValueConverter x:Key="registerValueConverter" />
+        <conv:BoolToIntConverter x:Key="boolIntConverter" />
 
         <Style TargetType="Image" x:Key="imgPositionIcon">
             <Style.Triggers>
@@ -76,10 +79,6 @@
                 </RibbonGroup>
                 <RibbonGroup Header="Debug">
                     <RibbonButton Label="Step" SmallImageSource="Resources/StepIn_16x16.png" LargeImageSource="Resources/StepIn_32x32.png" Command="{Binding StepCommand}" />
-                </RibbonGroup>
-                <RibbonGroup Header="Memory">
-                    <RibbonButton Label="First Page" LargeImageSource="Resources/MemoryPageFirst_32x32.png" Command="{Binding JumpToFirstMemoryPageCommand}" />
-                    <RibbonButton Label="Last Page" LargeImageSource="Resources/MemoryPageLast_32x32.png" Command="{Binding JumpToLastMemoryPageCommand}" />
                 </RibbonGroup>
             </RibbonTab>
             <RibbonTab Header="View">
@@ -150,7 +149,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="AX" ToolTip="Accumulator Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" Padding="4 0" HorizontalAlignment="Right">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.AX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -160,7 +159,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="AH" ToolTip="Accumulator Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.AH" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -170,7 +169,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="4" Text="AL" ToolTip="Accumulator Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.AL" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -195,7 +194,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="BX" ToolTip="Base Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.BX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -205,7 +204,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="BH" ToolTip="Base Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.BH" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -215,7 +214,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="4" Text="BL" ToolTip="Base Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.BL" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -240,7 +239,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="CX" ToolTip="Counting Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.CX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -250,7 +249,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="CH" ToolTip="Counting Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.CH" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -260,7 +259,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="4" Text="CL" ToolTip="Counting Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.CL" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -285,7 +284,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="DX" ToolTip="Data Register (16-Bit)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.DX" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -295,7 +294,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="DH" ToolTip="Data Register (8-Bit High)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.DH" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -305,7 +304,7 @@
                                 <TextBlock Grid.Row="0" Grid.Column="4" Text="DL" ToolTip="Data Register (8-Bit Low)" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Row="1" Grid.Column="4" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{local:HexCellValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.DL" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -330,7 +329,7 @@
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="SP" ToolTip="Stack Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.SP" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -340,7 +339,7 @@
                                 <TextBlock Grid.Column="2" Grid.Row="0" Text="CS" ToolTip="Code Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
                                 <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.CS" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -363,7 +362,7 @@
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="BP" ToolTip="Base Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.BP" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -373,7 +372,7 @@
                                 <TextBlock Grid.Column="2" Grid.Row="0" Text="DS" ToolTip="Data Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
                                 <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.DS" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -396,7 +395,7 @@
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="SI" ToolTip="Source Index" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.SI" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -406,7 +405,7 @@
                                 <TextBlock Grid.Column="2" Grid.Row="0" Text="SS" ToolTip="Stack Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
                                 <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.SS" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                         </MultiBinding>
@@ -429,7 +428,7 @@
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="DI" ToolTip="Destination Index" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.DI" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Source="$" />
@@ -440,7 +439,7 @@
                                 <TextBlock Grid.Column="2" Grid.Row="0" Text="ES" ToolTip="Extra Segment" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue" />
                                 <TextBlock Grid.Column="2" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0" Foreground="CadetBlue">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.ES" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Source="$" />
@@ -468,7 +467,7 @@
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="IP" ToolTip="Instruction Pointer" HorizontalAlignment="Right" Padding="4 0" />
                                 <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Right" Padding="4 0">
                                     <TextBlock.Text>
-                                        <MultiBinding Converter="{StaticResource streamPosValueConverter}">
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
                                             <Binding Path="Register.IP" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Path="ShowRegisterAsHex" UpdateSourceTrigger="PropertyChanged" />
                                             <Binding Source="$" />
@@ -694,7 +693,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="4" Text="11" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="4" Text="OF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="4" Text="{Binding Register.OverflowFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="OF = Overflow Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="4" Text="{Binding Register.OverflowFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="OF = Overflow Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -709,7 +708,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="5" Text="10" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="5" Text="DF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="DF = Direction Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="5" Text="{Binding Register.DirectionalFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="DF = Direction Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -724,7 +723,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="6" Text="9" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="6" Text="IF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="6" Text="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="IF = Interrupt Enable Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="6" Text="{Binding Register.InterruptFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="IF = Interrupt Enable Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -739,7 +738,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="7" Text="8" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="7" Text="TF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="7" Text="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="TF = Trap Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="7" Text="{Binding Register.TrapFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="TF = Trap Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -754,7 +753,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="8" Text="7" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="8" Text="SF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="8" Text="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="SF = Sign Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="8" Text="{Binding Register.SignFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="SF = Sign Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -769,7 +768,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="9" Text="6" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="9" Text="ZF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="9" Text="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="ZF = Zero Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="9" Text="{Binding Register.ZeroFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="ZF = Zero Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -787,7 +786,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="11" Text="4" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="11" Text="AF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="11" Text="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="AF = Auxiliary Carry Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="11" Text="{Binding Register.AuxiliaryCarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="AF = Auxiliary Carry Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -805,7 +804,7 @@
 
                         <TextBlock Grid.Row="0" Grid.Column="13" Text="2" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="13" Text="PF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="13" Text="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="PF = Parity Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="13" Text="{Binding Register.ParityFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="PF = Parity Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -823,7 +822,7 @@
                         
                         <TextBlock Grid.Row="0" Grid.Column="15" Text="0" HorizontalAlignment="Center" Padding="4 0" Foreground="LightGray" />
                         <TextBlock Grid.Row="1" Grid.Column="15" Text="CF" HorizontalAlignment="Center" Padding="4 0" />
-                        <TextBlock Grid.Row="2" Grid.Column="15" Text="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={local:BoolToIntConverter}}" ToolTip="CF = Carry Flag" HorizontalAlignment="Center" Padding="4 0">
+                        <TextBlock Grid.Row="2" Grid.Column="15" Text="{Binding Register.CarryFlag, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource boolIntConverter}}" ToolTip="CF = Carry Flag" HorizontalAlignment="Center" Padding="4 0">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Background" Value="PaleVioletRed" />
@@ -851,7 +850,7 @@
             <Separator />
             <StatusBarItem Content="Position:" />
             <Separator />
-            <StatusBarItem Content="{Binding CurrentStreamPosition, UpdateSourceTrigger=PropertyChanged}" />
+            <StatusBarItem Content="{Binding CurrentStreamPosition, UpdateSourceTrigger=PropertyChanged, Converter={conv:BytePositionToStringConverter}}" />
             <Separator />
             <StatusBarItem Content="Errors:" />
             <Separator />

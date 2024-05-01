@@ -1324,10 +1324,6 @@ namespace Final.CPU8086
 
             byte opCode = opCodeRes.AsT0;
 
-            // Early terminate out, for zero instructions
-            if (opCode == 0 && stream.Length > 1 && stream[1] == 0)
-                return new Error(ErrorCode.EndOfStream, $"Zero-Terminator instruction detected, exit out", position);
-
             InstructionDefinitionList instructionList = _entryTable[opCode];
             if (instructionList == null)
                 return new Error(ErrorCode.OpCodeNotImplemented, $"Not implemented opcode '${opCode:X2}' / '{opCode.ToBinary()}'", position);

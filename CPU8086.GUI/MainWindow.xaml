@@ -515,11 +515,11 @@
 
                         <!-- Assembly Lines -->
                         <TabItem Header="Assembly Output">
-                            <ScrollViewer>
-                                <ItemsControl ItemsSource="{Binding AssemblyLines}">
+                            <ScrollViewer CanContentScroll="True">
+                                <ItemsControl ItemsSource="{Binding AssemblyLines}" VirtualizingStackPanel.IsVirtualizing="True">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Vertical" />
+                                            <VirtualizingStackPanel IsVirtualizing="True" VirtualizationMode="Recycling" Orientation="Vertical" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>

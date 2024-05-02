@@ -17,6 +17,24 @@ namespace Final.CPU8086.Types
     {
         public DataWidthType Type { get; }
 
+        public DataType DataType => Type switch
+        {
+            DataWidthType.Byte => DataType.Byte,
+            DataWidthType.Word => DataType.Word,
+            DataWidthType.DoubleWord => DataType.DoubleWord,
+            DataWidthType.QuadWord => DataType.QuadWord,
+            _ => DataType.None,
+        };
+
+        public byte Length => Type switch
+        {
+            DataWidthType.Byte => 1,
+            DataWidthType.Word => 2,
+            DataWidthType.DoubleWord => 4,
+            DataWidthType.QuadWord => 8,
+            _ => 0,
+        };
+
         public DataWidth(DataWidthType type)
         {
             Type = type;
@@ -97,5 +115,9 @@ namespace Final.CPU8086.Types
             else
                 return None;
         }
+
+        
+
+        
     }
 }

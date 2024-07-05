@@ -15,6 +15,7 @@ using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -770,9 +771,142 @@ namespace Final.ITP
 
 #endif // GENERATE_CS
 
+            StringBuilder htmlString = new StringBuilder();
+
+            htmlString.AppendLine("<!DOCTYPE html>");
+
+            htmlString.AppendLine("<html>");
+
+            htmlString.AppendLine("<head>");
+            htmlString.AppendLine("<title>Op code table</title>");
+            htmlString.AppendLine("<style>");
+            htmlString.AppendLine("html, body, table, th, td {");
+            htmlString.AppendLine("\tfont-family: consolas; font-size: 16px;");
+            htmlString.AppendLine("}");
+            htmlString.AppendLine("");
+            htmlString.AppendLine("table, th, td {");
+            htmlString.AppendLine("\tborder: 1px solid black;");
+            htmlString.AppendLine("}");
+            htmlString.AppendLine("th, td {");
+            htmlString.AppendLine("\twidth: 200px;");
+            htmlString.AppendLine("\theight: 100px;");
+            htmlString.AppendLine("\ttext-align: center;");
+            htmlString.AppendLine("}");
+            htmlString.AppendLine("</style>");
+            htmlString.AppendLine("</head>");
+
+            htmlString.AppendLine("<body>");
+
+            htmlString.AppendLine("<h1>");
+            htmlString.AppendLine("Intel 8086 Instruction Table");
+            htmlString.AppendLine("</h1>");
+
+            htmlString.AppendLine("<table>");
+
+            Random rnd = new Random(42);
+
+            Span<byte> colorBytes = stackalloc byte[3];
+
+            InstructionTableCell[] cells = new InstructionTableCell[256];
+            Dictionary<InstructionType, (Color, Color)> colorsMap = new Dictionary<InstructionType, (Color, Color)>();
+            foreach (InstructionDefinition instruction in allInstructions)
+            {
+                int index = instruction.Op;
+                if (!colorsMap.TryGetValue(instruction.Type, out (Color backColor, Color foregroundColor) colors))
+                {
+                    rnd.NextBytes(colorBytes);
+
+                    Color backColor = Color.FromArgb(colorBytes[0], colorBytes[1], colorBytes[2]);
+
+                    float brightness = backColor.GetBrightness();
+                   
+                    Color foregroundColor = brightness < 0.45f ? Color.White : Color.Black;
+
+                    colors = (backColor, foregroundColor);
+
+                    colorsMap.Add(instruction.Type, colors);
+                }
+                cells[index] = new InstructionTableCell(instruction, colors);
+            }
+
+            htmlString.AppendLine("<thead>");
+            htmlString.AppendLine("<tr>");
+            htmlString.AppendLine("<th></th>");
+            for (int colIndex = 0; colIndex < 16; ++colIndex)
+            {
+                htmlString.AppendLine($"<th>{colIndex:X1}</th>");
+            }
+            htmlString.AppendLine("</tr>");
+            htmlString.AppendLine("</thead>");
+
+            htmlString.AppendLine("<tbody>");
+            for (int rowIndex = 0; rowIndex < 16; ++rowIndex)
+            {
+                htmlString.AppendLine("<tr>");
+                htmlString.AppendLine($"<td>{rowIndex:X1}</td>");
+                for (var colIndex = 0; colIndex < 16; ++colIndex)
+                {
+                    InstructionTableCell cell = cells[rowIndex * 16 + colIndex];
+
+                    Color? backgroundColor = cell?.colors.background;
+                    Color? foregroundColor = cell?.colors.foreground;
+
+                    if (backgroundColor.HasValue)
+                        htmlString.AppendLine($"<td style=\"background-color: #{backgroundColor.Value.R:X2}{backgroundColor.Value.G:X2}{backgroundColor.Value.B:X2}; color: #{foregroundColor.Value.R:X2}{foregroundColor.Value.G:X2}{foregroundColor.Value.B:X2};\">");
+                    else
+                        htmlString.AppendLine("<td>");
+
+                    if (cell is not null)
+                    {
+                        htmlString.AppendLine("<div>");
+
+                        if (cell.Instruction.Operands.Length == 0)
+                            htmlString.AppendLine(cell.Instruction.Mnemonic.Name);
+                        else if (cell.Instruction.Operands.Length == 1)
+                            htmlString.AppendLine($"{cell.Instruction.Mnemonic.Name} {cell.Instruction.Operands[0]}");
+                        else if (cell.Instruction.Operands.Length == 2)
+                            htmlString.AppendLine($"{cell.Instruction.Mnemonic.Name} {cell.Instruction.Operands[0]}, {cell.Instruction.Operands[1]}");
+
+                        htmlString.AppendLine("</div>");
+
+                        htmlString.AppendLine("<div>");
+                        htmlString.AppendLine($"{cell.Instruction.MinLength} / {cell.Instruction.MaxLength}");
+                        htmlString.AppendLine("</div>");
+                        htmlString.AppendLine("<div>");
+                        htmlString.AppendLine($"{cell.Instruction.DataType}");
+                        htmlString.AppendLine("</div>");
+                        htmlString.AppendLine("<div>");
+                        htmlString.AppendLine($"{cell.Instruction.UsedFlags}");
+                        htmlString.AppendLine("</div>");
+                    }
+                    htmlString.AppendLine("</td>");
+                }
+                htmlString.AppendLine("</tr>");
+            }
+            htmlString.AppendLine("</tbody>");
+
+            htmlString.AppendLine("</table>");
+
+            htmlString.AppendLine("</body>");
+
+            htmlString.AppendLine("</html>");
+
+            string htmlFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "8086-instruction-table.html");
+
+            using (FileStream csvStream = File.Create(htmlFilePath))
+            {
+                using (StreamWriter writer = new StreamWriter(csvStream, encoding: Encoding.UTF8, leaveOpen: true))
+                {
+                    writer.Write(htmlString.ToString());
+                }
+                csvStream.Flush();
+            }
+
             Console.WriteLine();
             Console.WriteLine("Done, press any key to exit");
             Console.ReadKey();
         }
     }
+
+    record InstructionTableCell(InstructionDefinition Instruction, (Color background, Color foreground) colors);
 }

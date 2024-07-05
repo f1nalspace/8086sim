@@ -518,7 +518,6 @@ namespace Final.CPU8086.Instructions
         public override string ToString()
         {
             StringBuilder s = new StringBuilder();
-            s.Append(DataTypeToString(DataType));
             if (Kind == OperandDefinitionKind.Value)
                 s.Append(Value.ToString("D"));
             else if (Kind == OperandDefinitionKind.M_Number)

@@ -12,7 +12,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
 using System.IO;
-using System.Linq;
+using System.Linq;  
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -394,7 +394,10 @@ namespace Final.CPU8086
             if (res.IsT0)
                 AssemblyLines = res.AsT0.ToImmutableArray();
             else
+            {
                 AssemblyLines = ImmutableArray<AssemblyLine>.Empty;
+                Errors.Add(res.AsT1);
+            }
         }
 
         private void DecodeInstructions(IProgram program)

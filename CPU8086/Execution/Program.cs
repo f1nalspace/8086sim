@@ -30,7 +30,7 @@ namespace Final.CPU8086.Execution
             Name = name;
 
             byte[] data = new byte[stream.Length];
-            stream.Read(data, 0, data.Length);
+            stream.ReadExactly(data);
 
             int haltPos = BackScanForHalt(data);
 

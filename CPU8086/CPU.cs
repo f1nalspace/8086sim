@@ -691,7 +691,7 @@ namespace Final.CPU8086
         {
             long len = stream.Length;
             byte[] data = new byte[len];
-            stream.Read(data);
+            stream.ReadExactly(data);
             return GetAssembly(data, name, outputMode);
         }
 

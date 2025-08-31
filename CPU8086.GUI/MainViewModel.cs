@@ -112,12 +112,12 @@ namespace Final.CPU8086
             DecodeState = DecodeState.None;
             SelectedStreamOrMemoryTabIndex = 0;
 
-            string[] resNames = _resources.GetNames();
+            IEnumerable<InstructionStreamResourceName> resourceNames = _resources.GetNames();
 
-            IEnumerable<string> binaryOnly = resNames.Where(resName => ".bin".Equals(Path.GetExtension(resName), StringComparison.OrdinalIgnoreCase));
+            IEnumerable<InstructionStreamResourceName> binaryOnly = resourceNames.Where(r => r.IsBinary);
 
             Programs = binaryOnly
-                .Select(n => new Program(n, _resources.Get(n)))
+                .Select(n => new Program($"{n.Group}/{n.Name}", _resources.Get(n.ResourceName, false)))
                 .ToArray();
 
             CurrentProgram = Programs[0];

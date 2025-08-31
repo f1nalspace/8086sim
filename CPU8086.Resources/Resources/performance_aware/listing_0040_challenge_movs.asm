@@ -16,18 +16,14 @@
 
 bits 16
 
-; Initialization
-mov bx, 35
-mov di, 2
-
 ; Signed displacements
 mov ax, [bx + di - 37]
 mov [si - 300], cx
 mov dx, [bx - 32]
 
 ; Explicit sizes
-mov byte [bp + di], 7
-mov word [di + 901], 347
+mov [bp + di], byte 7
+mov [di + 901], word 347
 
 ; Direct address
 mov bp, [5]

@@ -239,12 +239,15 @@ dass die Validierung (Core/Console/Tests) früh und unabhängig von der UI grün
   nur ungenutzte `using DevExpress.Mvvm.Native;` entfernen (F-008).
 - `IAutoService`, `IBinaryGridService`, `IMemoryAddressResolverService`, `DecodeState`, `StreamByte`,
   `Controls/BinaryGridEvents` übernehmen (UI-frei → meist unverändert).
-- **Behaviors** (`AutoServiceBehavior`, `BinaryGridServiceBehavior`) auf
-  `Avalonia.Xaml.Interactivity.Behavior<T>` basieren lassen (API quasi identisch);
-  `Behaviors/AttachServiceBehavior` auf toten Code prüfen (F-006).
+- `Behaviors/AttachServiceBehavior` auf toten Code prüfen (F-006).
+- **Umgesetzte Abweichung (Session 2):** `DelegateCommand` als eigene `ICommand`-Impl. statt `RelayCommand`-Wrapper
+  (Werttyp-`CanExecute`-Semantik). Die **Behaviors** (`AutoServiceBehavior`, `BinaryGridServiceBehavior`) sind nach
+  **Phase 4** verschoben — sie hängen an `BinaryGridView` + `DependencyProperty` und werden mit dem Control portiert.
 - **Validierung**: GUI kompiliert; ViewModels lassen sich gegen den Shim instanziieren (noch ohne fertige Views).
 
-### Phase 4 — Converters & BinaryGridView (Custom Control)
+### Phase 4 — Converters, BinaryGridView (Custom Control) & Behaviors
+- **Behaviors** (`AutoServiceBehavior`, `BinaryGridServiceBehavior`) auf `Avalonia.Xaml.Interactivity.Behavior<T>`
+  basieren lassen (API quasi identisch); dazu `Behavior<T>`-Shim + Paket `Avalonia.Xaml.Interactions`.
 - Converter auf Avalonia portieren (`Avalonia.Data.Converters`); `NumericToVisibilityConverter`-Nutzung
   durch `IsVisible` + `int→bool`-Converter ersetzen.
 - `BinaryGridView`: `DependencyProperty`→`StyledProperty`, Callbacks anpassen, `.axaml` neu aufbauen

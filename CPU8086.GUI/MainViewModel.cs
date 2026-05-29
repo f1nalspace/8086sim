@@ -1,5 +1,4 @@
 ﻿using DevExpress.Mvvm;
-using DevExpress.Mvvm.Native;
 using Final.CPU8086.Controls;
 using Final.CPU8086.Execution;
 using Final.CPU8086.Instructions;

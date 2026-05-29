@@ -14,7 +14,7 @@
 | 0 | Vorbereitung & Baseline | ✅ erledigt |
 | 1 | Non-UI-Projekte → .NET 10 (+ xUnit) | ✅ erledigt |
 | 2 | Avalonia-Projektgerüst | ✅ erledigt |
-| 3 | MVVM-Infrastruktur | ⬜ |
+| 3 | MVVM-Kompatibilitäts-Shim | ✅ erledigt |
 | 4 | Converters & BinaryGridView | ⬜ |
 | 5 | MainWindow-Nachbau (inkl. Ribbon) | ⬜ |
 | 6 | Plattform-/IDE-Verifikation | ⬜ |
@@ -49,16 +49,17 @@
 - [x] Validierung: `dotnet build CPU8086.sln` grün (0 Fehler); GUI-Fenster lief im Smoke-Test 8 s stabil unter X11 (`:0`), keine Exception; Tests unverändert 5/14; xUnit2004-Warnungen in `FlagsTests` bereinigt (`Assert.False/True`).
 
 ### Phase 3 — MVVM-Kompatibilitäts-Shim (DevExpress.Mvvm-API auf CT.Mvvm)
-- [ ] Shim `ViewModelBase` (GetValue/SetValue-Overloads, Raise*, ISupportServices) — intern `ObservableObject`
-- [ ] Shim `DelegateCommand` / `DelegateCommand<T>` (`RaiseCanExecuteChanged`) — intern `RelayCommand`
-- [ ] Shim `IServiceContainer` + `ServiceContainer` (typed + named), `ISupportServices`
-- [ ] Shim `IDispatcherService` — Wrapper um `Dispatcher.UIThread`
-- [ ] ViewModels **unverändert** lauffähig gegen Shim (`MainViewModel`, `BinaryGridViewModel`, `LogItemViewModel`)
-- [ ] Ungenutzte `using DevExpress.Mvvm.Native;` entfernt (F-008)
-- [ ] Behaviors auf `Avalonia.Xaml.Interactivity.Behavior<T>` basiert (`AutoServiceBehavior`, `BinaryGridServiceBehavior`)
-- [ ] `Behaviors/AttachServiceBehavior` auf toten Code geprüft (F-006)
-- [ ] UI-freie Typen übernommen (`IAutoService`, Service-Interfaces, `DecodeState`, `StreamByte`, `BinaryGridEvents`)
-- [ ] Validierung: GUI kompiliert
+- [x] Shim `ViewModelBase` (GetValue/SetValue-Overloads keyless + ref, Raise*, GetService, ISupportServices) — erbt von CT.Mvvm `ObservableObject`; ref-`SetValue` delegiert an `SetProperty`. `Mvvm/ViewModelBase.cs`
+- [x] Shim `DelegateCommand` / `DelegateCommand<T>` (`RaiseCanExecuteChanged`). `Mvvm/DelegateCommand.cs`. **Abweichung vom Plan:** schlanke eigene `ICommand`-Implementierung statt `RelayCommand`-Wrapper — `RelayCommand<T>` hat bei Werttypen (`StreamByte`) abweichende `CanExecute`-Semantik bei null-Parametern. CT.Mvvm wird weiterhin für `ViewModelBase` genutzt.
+- [x] Shim `IServiceContainer` + `ServiceContainer` (typed + named/keyed), `ISupportServices`. `Mvvm/ServiceContainer.cs`
+- [x] Shim `IDispatcherService` + `DispatcherService` — Wrapper um `Dispatcher.UIThread`. `Mvvm/DispatcherService.cs`
+- [x] ViewModels **unverändert** lauffähig gegen Shim (`MainViewModel`, `BinaryGridViewModel`, `LogItemViewModel`) — wieder einkompiliert, instanziieren ohne Crash.
+- [x] Ungenutzte `using DevExpress.Mvvm.Native;` entfernt (F-008 ✅) in `MainViewModel`, `BinaryGridViewModel`.
+- [x] `Behaviors/AttachServiceBehavior` als toter Code bestätigt (keine Referenzen) und gelöscht (F-006 ✅).
+- [x] UI-freie Typen übernommen (`IAutoService`, `IMemoryAddressResolverService`, `IBinaryGridService`, `DecodeState`, `StreamByte`); `Controls/BinaryGridEvents` von WPF auf `Avalonia.Interactivity.RoutedEventArgs/RoutedEvent` portiert.
+- [x] **Entry-Point** `Program` nach Namespace `Final.CPU8086.GUI` verschoben (verhinderte Verdeckung von `Final.CPU8086.Execution.Program` in `MainViewModel`).
+- [x] **Scope-Anpassung:** Behaviors (`AutoServiceBehavior`, `BinaryGridServiceBehavior`) bleiben in Phase 4 — sie sind an `BinaryGridView` (Custom Control) und `DependencyProperty` gekoppelt und werden gemeinsam mit dem Control + `Behavior<T>`-Shim portiert.
+- [x] Validierung: `dotnet build CPU8086.sln` grün (0 Fehler/Warnungen); `MainViewModel` als DataContext temporär verdrahtet → App lief 8 s stabil (instanziiert+dekodiert erstes Programm), danach zurückgebaut; Tests unverändert 5/14.
 
 ### Phase 4 — Converters & BinaryGridView
 - [ ] Converter portiert (`Avalonia.Data.Converters`)
@@ -95,9 +96,9 @@
 | F-003 | niedrig | `CPU8086.Console/Program.cs:201` | `Console.ReadKey()` wirft `InvalidOperationException` bei umgeleiteter/fehlender Konsoleneingabe (Pipe, CI, headless). | tracken, nicht fixen |
 | F-004 | niedrig | `CPU8086.GUI.csproj` | `WPFHexaEditor` referenziert, aber nirgends verwendet. Bei Migration ersatzlos entfernbar. | ✅ **erledigt (Phase 2)** — ersatzlos entfernt |
 | F-005 | info | `CPU8086.Tests` | Mehrere Tests rot, weil Instructions nicht implementiert sind bzw. Cycle-Zählung abweicht. | **ignorieren** (per Nutzer) |
-| F-006 | niedrig | `CPU8086.GUI/Behaviors/AttachServiceBehavior.cs` | Leere abstrakte Behavior-Basis ohne ersichtliche Verwendung — möglicher toter Code. | in Phase 3 prüfen |
+| F-006 | niedrig | `CPU8086.GUI/Behaviors/AttachServiceBehavior.cs` | Leere abstrakte Behavior-Basis ohne ersichtliche Verwendung — möglicher toter Code. | ✅ **erledigt (Phase 3)** — als toter Code bestätigt (keine Referenzen) und gelöscht |
 | F-007 | info | `CPU8086.Console/Properties/launchSettings.json` | Default-Arg `--res listing_0050_challenge_jumps` greift wegen F-001 nicht (Resource nicht gefunden). | tracken |
-| F-008 | niedrig | `MainViewModel.cs`, `Controls/BinaryGridViewModel.cs`, `Converters/HexCellValueConverter.cs` | `using DevExpress.Mvvm.Native;` vorhanden, aber **ungenutzt** (keine Native-Aufrufe). | im Zuge der Portierung entfernen |
+| F-008 | niedrig | `MainViewModel.cs`, `Controls/BinaryGridViewModel.cs`, `Converters/HexCellValueConverter.cs` | `using DevExpress.Mvvm.Native;` vorhanden, aber **ungenutzt** (keine Native-Aufrufe). | 🟡 teilweise (Phase 3): in `MainViewModel` + `BinaryGridViewModel` entfernt; `HexCellValueConverter` folgt in Phase 4 |
 
 > Hinweis zu **F-005**: laut Nutzer sind rote Tests teils erwartbar (nicht implementierte Instructions /
 > Cycles). Diese werden nicht als Migrationsdefekt gewertet.
@@ -140,5 +141,14 @@
   angelegt. Noch nicht portierte WPF-Quellen temporär via `<Compile Remove>` ausgeschlossen (Phase 3/4 reaktivieren).
   Validierung: Solution baut grün; Avalonia-Fenster startet stabil unter X11.
 - **Avalonia-Version fixiert:** 11.3.17 (aktuelle Stable-Linie, .NET-10-kompatibel).
-- **Nächster Schritt:** Phase 3 — MVVM-Kompatibilitäts-Shim (`DevExpress.Mvvm`-API auf CommunityToolkit.Mvvm),
-  dann ViewModels/Behaviors/Services schrittweise wieder einkompilieren (die `<Compile Remove>`-Einträge entfernen).
+- **Phase 3 umgesetzt:** MVVM-Kompatibilitäts-Shim unter `Mvvm/` (Namespace `DevExpress.Mvvm`): `ViewModelBase`
+  (intern `ObservableObject`), `DelegateCommand`/`<T>` (eigene `ICommand`-Impl., siehe Abweichung), `ServiceContainer`/
+  `ISupportServices`, `IDispatcherService`/`DispatcherService`. CT.Mvvm 8.4.0 ergänzt. ViewModels (`MainViewModel`,
+  `BinaryGridViewModel`, `LogItemViewModel`) unverändert wieder einkompiliert; UI-freie Typen + `IBinaryGridService`
+  reaktiviert; `BinaryGridEvents` auf Avalonia-`RoutedEventArgs` portiert. F-006 (tote `AttachServiceBehavior`) gelöscht,
+  F-008 in beiden VMs bereinigt. Entry-Point `Program` → Namespace `Final.CPU8086.GUI` (Namenskollision vermieden).
+  Behaviors + `BinaryGridView` + Converters bleiben für Phase 4 ausgeschlossen.
+- Validierung: Solution baut grün (0/0); `MainViewModel` instanziiert real ohne Crash; Tests unverändert 5/14.
+- **Nächster Schritt:** Phase 4 — Converters auf Avalonia portieren + `BinaryGridView` als Avalonia-Custom-Control
+  (`StyledProperty` + `.axaml`), dann Behaviors (`AutoServiceBehavior`/`BinaryGridServiceBehavior`) + `Behavior<T>`-Shim
+  (Paket `Avalonia.Xaml.Interactions`).

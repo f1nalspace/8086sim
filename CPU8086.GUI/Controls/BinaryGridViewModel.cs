@@ -1,5 +1,4 @@
 ﻿using DevExpress.Mvvm;
-using DevExpress.Mvvm.Native;
 using System;
 using System.Linq;
 using System.Collections.Immutable;

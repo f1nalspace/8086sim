@@ -1,7 +1,10 @@
 using Avalonia;
+using Final.CPU8086;
 using System;
 
-namespace Final.CPU8086
+// Eigener Sub-Namespace, damit die Entry-Klasse `Program` nicht den Core-Typ
+// `Final.CPU8086.Execution.Program` innerhalb des `Final.CPU8086`-Namespace verdeckt.
+namespace Final.CPU8086.GUI
 {
     internal static class Program
     {

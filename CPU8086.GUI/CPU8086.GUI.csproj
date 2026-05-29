@@ -13,6 +13,7 @@
     <PackageReference Include="Avalonia" Version="11.3.17" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <!-- nur im Debug aktiv (DevTools via F12) -->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.17" Condition="'$(Configuration)' == 'Debug'" />
   </ItemGroup>
@@ -27,17 +28,19 @@
   </ItemGroup>
 
   <!--
-    Phase 2: Noch nicht portierte WPF/DevExpress-Quellen sind temporär aus dem Build genommen.
-    Sie werden phasenweise wieder einkompiliert:
-      Phase 3 - MVVM-Shim + ViewModels/Behaviors/Services/UI-freie Typen
-      Phase 4 - Converters + BinaryGridView
-    Als <None> referenziert, damit sie in Visual Studio / Rider sichtbar bleiben.
+    Phase 4 (noch ausstehend): an die View gekoppelte Quellen sind weiterhin aus dem Build genommen.
+      - AutoServiceBehavior / BinaryGridServiceBehavior: brauchen Avalonia-Behavior-Basis + BinaryGridView
+      - BinaryGridView.xaml.cs: Custom Control (StyledProperties + .axaml)
+      - Converters: Avalonia-Portierung
+    Werden in Phase 4 wieder einkompiliert. Als <None> referenziert, damit sie in VS/Rider sichtbar bleiben.
   -->
   <ItemGroup>
-    <Compile Remove="AutoServiceBehavior.cs;DecodeState.cs;IAutoService.cs;LogItemViewModel.cs;MainViewModel.cs;StreamByte.cs" />
-    <Compile Remove="Behaviors\**\*.cs;Controls\**\*.cs;Converters\**\*.cs;Services\**\*.cs" />
-    <None Include="AutoServiceBehavior.cs;DecodeState.cs;IAutoService.cs;LogItemViewModel.cs;MainViewModel.cs;StreamByte.cs" />
-    <None Include="Behaviors\**\*.cs;Controls\**\*.cs;Converters\**\*.cs;Services\**\*.cs" />
+    <Compile Remove="AutoServiceBehavior.cs" />
+    <Compile Remove="Controls\BinaryGridServiceBehavior.cs;Controls\BinaryGridView.xaml.cs" />
+    <Compile Remove="Converters\**\*.cs" />
+    <None Include="AutoServiceBehavior.cs" />
+    <None Include="Controls\BinaryGridServiceBehavior.cs;Controls\BinaryGridView.xaml.cs" />
+    <None Include="Converters\**\*.cs" />
   </ItemGroup>
 
 </Project>

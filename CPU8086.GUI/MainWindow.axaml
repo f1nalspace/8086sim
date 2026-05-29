@@ -69,7 +69,7 @@
                                   IsEnabled="{Binding CanChangeStream}" />
                     </StackPanel>
                     
-                    <Separator Width="10" />
+                    <Separator />
 
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="Execution" />
@@ -94,17 +94,19 @@
                 <StackPanel Orientation="Horizontal">
                     
                     <StackPanel Orientation="Vertical">
-                        <TextBlock Text="Style" />
-                        <ToggleButton x:Name="darkModeToggle" Content="Dark mode" Click="OnToggleTheme" />
+                        <TextBlock Text="Dark-Mode" />
+                        <ToggleSwitch x:Name="darkModeToggle" IsCheckedChanged="OnToggleTheme" />
                     </StackPanel>
+                    
+                    <Separator />
                     
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="Values" />
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
-                            <CheckBox Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
-                            <CheckBox Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
-                            <CheckBox Content="Memory as hex" IsChecked="{Binding ShowMemoryAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Memory as hex" IsChecked="{Binding ShowMemoryAsHex}" />
                         </StackPanel>
                     </StackPanel>
                     

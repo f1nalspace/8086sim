@@ -6,7 +6,7 @@
         x:CompileBindings="False"
         Title="8086 CPU Simulator by Torsten Spaete"
         Width="1280" Height="960"
-        FontFamily="Consolas" FontSize="14"
+        FontFamily="Bitstream Vera Sans Mono" FontSize="14"
         WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -23,19 +23,44 @@
             <Setter Property="Opacity" Value="0.3" />
         </Style>
         <Style Selector="TextBlock.reg">
-            <Setter Property="Width" Value="44" />
-            <Setter Property="Foreground" Value="#888" />
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="Margin" Value="0 0 10 0" />
         </Style>
         <Style Selector="TextBlock.regval">
-            <Setter Property="TextAlignment" Value="Right" />
-            <Setter Property="MinWidth" Value="80" />
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style Selector="TextBlock.asmline">
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style Selector="Border.registers">
+        </Style>
+        <Style Selector="Border.assembly">
+        </Style>
+        <Style Selector="Border.instructions">
+        </Style>
+        <Style Selector="GridSplitter.horizontal_splitter">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="ResizeDirection" Value="Columns" />
+            <Setter Property="BorderBrush" Value="CornflowerBlue" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="CadetBlue" />
+        </Style>
+        <Style Selector="GridSplitter.vertical_splitter">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="ResizeDirection" Value="Rows" />
+            <Setter Property="BorderBrush" Value="CornflowerBlue" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Background" Value="CadetBlue" />
+        </Style>
+        <Style Selector="StackPanel.flags CheckBox">
+            <Setter Property="Margin" Value="0 0 5 0" />
         </Style>
     </Window.Styles>
 
-    <DockPanel LastChildFill="True">
-
-        <!-- Ribbon (Tab-basierter Nachbau) -->
-        <TabControl DockPanel.Dock="Top">
+    <Grid RowDefinitions="Auto,*,Auto,*,Auto,Auto">
+        
+        <!-- Ribbon Menu, Row 0 -->
+        <TabControl Grid.Row="0">
             <TabItem Header="Home">
                 <StackPanel Orientation="Horizontal" Margin="4">
                     <StackPanel Orientation="Vertical" Margin="4">
@@ -70,132 +95,182 @@
             </TabItem>
         </TabControl>
 
-        <!-- Hauptbereich -->
-        <Grid ColumnDefinitions="250,4,*,4,380" Margin="4">
-
-            <!-- Registers + Flags -->
-            <Border Grid.Column="0" BorderBrush="#ddd" BorderThickness="1" Padding="6">
-                <ScrollViewer>
-                    <StackPanel Spacing="2">
-                        <TextBlock Text="Registers" FontWeight="Bold" Margin="0 0 0 4" />
-                        <Grid ColumnDefinitions="*,*">
-                            <StackPanel Grid.Column="0" Spacing="2">
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="AX" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.AX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="BX" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="CX" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="DX" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="SP" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="BP" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="SI" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="DI" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                            </StackPanel>
-                            <StackPanel Grid.Column="1" Spacing="2">
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="CS" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="DS" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="SS" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="ES" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.ES" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                                <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="IP" /><TextBlock Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.IP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock></StackPanel>
-                            </StackPanel>
-                        </Grid>
-
-                        <TextBlock Text="Flags" FontWeight="Bold" Margin="0 8 0 4" />
-                        <WrapPanel>
-                            <CheckBox Content="CF" IsChecked="{Binding Register.CarryFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="PF" IsChecked="{Binding Register.ParityFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="AF" IsChecked="{Binding Register.AuxiliaryCarryFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="ZF" IsChecked="{Binding Register.ZeroFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="SF" IsChecked="{Binding Register.SignFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="TF" IsChecked="{Binding Register.TrapFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="IF" IsChecked="{Binding Register.InterruptFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="DF" IsChecked="{Binding Register.DirectionalFlag}" IsHitTestVisible="False" />
-                            <CheckBox Content="OF" IsChecked="{Binding Register.OverflowFlag}" IsHitTestVisible="False" />
-                        </WrapPanel>
-
-                        <TextBlock Text="State" FontWeight="Bold" Margin="0 8 0 4" />
-                        <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="Decode" /><TextBlock Text="{Binding DecodeState}" /></StackPanel>
-                        <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="Exec" /><TextBlock Text="{Binding ExecutionState}" /></StackPanel>
-                        <StackPanel Orientation="Horizontal"><TextBlock Classes="reg" Text="Pos" /><TextBlock Text="{Binding CurrentStreamPosition}" /></StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+        <!-- Main, Row 1 -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
+            
+            <!-- Registers, Col 0 -->
+            <Border Grid.Column="0" Classes="registers">
+                <StackPanel Spacing="2" Orientation="Vertical">
+                    <TabControl>
+                        <TabItem Header="Registers">
+                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="reg" Text="AX" />
+                                <TextBlock Grid.Row="0"  Grid.Column="1" Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.AX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="reg" Text="BX" />
+                                <TextBlock Grid.Row="1" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="reg" Text="CX" />
+                                <TextBlock Grid.Row="2" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="3" Grid.Column="0" Classes="reg" Text="DX" />
+                                <TextBlock Grid.Row="3" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" />
+                                <TextBlock Grid.Row="5" Grid.Column="0" Classes="reg" Text="SP" />
+                                <TextBlock Grid.Row="5" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="6" Grid.Column="0" Classes="reg" Text="BP" />
+                                <TextBlock Grid.Row="6" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="7" Grid.Column="0" Classes="reg" Text="SI" />
+                                <TextBlock Grid.Row="7" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="8" Grid.Column="0" Classes="reg" Text="DI" />
+                                <TextBlock Grid.Row="8" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <Separator Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" />
+                                <TextBlock Grid.Row="10" Grid.Column="0" Classes="reg" Text="CS" />
+                                <TextBlock Grid.Row="10" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="11" Grid.Column="0" Classes="reg" Text="DS" />
+                                <TextBlock Grid.Row="11" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="12" Grid.Column="0" Classes="reg" Text="SS" />
+                                <TextBlock Grid.Row="12" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="13" Grid.Column="0" Classes="reg" Text="ES" />
+                                <TextBlock Grid.Row="13" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.ES" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <Separator Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="2" />
+                                <TextBlock Grid.Row="15" Grid.Column="0" Classes="reg" Text="IP" />
+                                <TextBlock Grid.Row="15" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.IP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </StackPanel>
             </Border>
-
-            <GridSplitter Grid.Column="1" Width="4" ResizeDirection="Columns" />
-
-            <!-- Stream/Memory tabs + Assembly -->
-            <Grid Grid.Column="2" RowDefinitions="*,4,*">
-                <TabControl Grid.Row="0" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
-                    <TabItem Header="Stream">
-                        <ctrls:BinaryGridView StreamSource="{Binding CurrentStream}"
-                                              ShowAsHex="{Binding ShowStreamAsHex}"
-                                              SelectionStart="{Binding CurrentStreamPosition}"
-                                              SelectionLength="1" />
-                    </TabItem>
-                    <TabItem Header="Memory">
-                        <ctrls:BinaryGridView x:Name="memoryGrid"
-                                              ShowAsHex="{Binding ShowMemoryAsHex}"
-                                              BytesPerPage="256" />
-                    </TabItem>
-                </TabControl>
-
-                <GridSplitter Grid.Row="1" Height="4" ResizeDirection="Rows" />
-
-                <Border Grid.Row="2" BorderBrush="#ddd" BorderThickness="1">
-                    <DockPanel LastChildFill="True">
-                        <TextBlock DockPanel.Dock="Top" Text="Assembly" FontWeight="Bold" Margin="4" />
+            
+            <!-- Splitter, Col 1 -->
+            <GridSplitter Grid.Column="1" Classes="horizontal_splitter" />
+            
+            <!-- Assembly, Col 2 -->
+            <Border Grid.Column="2" Classes="assembly">
+                <TabControl>
+                    <TabItem Header="Assembly">
                         <ScrollViewer>
                             <ItemsControl ItemsSource="{Binding AssemblyLines}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="2 0" Padding="4 0">
+                                        <Border>
                                             <Border.Background>
                                                 <MultiBinding Converter="{StaticResource asmMarker}">
                                                     <Binding Path="Position" />
                                                     <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                 </MultiBinding>
                                             </Border.Background>
-                                            <TextBlock Text="{Binding Assembly}" />
+                                            <TextBlock Text="{Binding Assembly}" Classes="asmline"  />
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
-                    </DockPanel>
-                </Border>
-            </Grid>
+                    </TabItem>
+                </TabControl>
+            </Border>
+            
+            <!-- Splitter, Col 3 -->
+            <GridSplitter Grid.Column="3" Classes="horizontal_splitter" />
+            
+            <!-- Instructions, Col 4 (Star) -->
+            <Border Grid.Column="4" Classes="instructions">
+                <TabControl>
+                    <TabItem Header="Instructions">
+                        <DataGrid ItemsSource="{Binding Instructions}"
+                                  SelectedItem="{Binding CurrentInstruction, Mode=OneWay}"
+                                  IsReadOnly="True" AutoGenerateColumns="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
+                                <DataGridTextColumn Header="Op" Binding="{Binding OpCode}" />
+                                <DataGridTextColumn Header="Mnemonic" Binding="{Binding Mnemonic}" />
+                                <DataGridTextColumn Header="Len" Binding="{Binding Length}" />
+                                <DataGridTextColumn Header="Cycles" Binding="{Binding Cycles}" />
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </TabItem>
+                </TabControl>
+            </Border>
 
-            <GridSplitter Grid.Column="3" Width="4" ResizeDirection="Columns" />
+            <!-- Splitter, Col 5 -->
+            <GridSplitter Grid.Column="5" Classes="horizontal_splitter" />
 
-            <!-- Instructions / Errors / Logs -->
-            <Grid Grid.Column="4" RowDefinitions="*,Auto,140,Auto,140">
-                <DataGrid Grid.Row="0" ItemsSource="{Binding Instructions}"
-                          SelectedItem="{Binding CurrentInstruction, Mode=OneWay}"
-                          IsReadOnly="True" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
-                        <DataGridTextColumn Header="Op" Binding="{Binding OpCode}" />
-                        <DataGridTextColumn Header="Mnemonic" Binding="{Binding Mnemonic}" />
-                        <DataGridTextColumn Header="Len" Binding="{Binding Length}" />
-                        <DataGridTextColumn Header="Cycles" Binding="{Binding Cycles}" />
-                    </DataGrid.Columns>
-                </DataGrid>
+            <!-- Stream / Memory, Col 6 -->
+            <TabControl Grid.Column="6" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
+                <TabItem Header="Stream">
+                    <ctrls:BinaryGridView StreamSource="{Binding CurrentStream}"
+                                          ShowAsHex="{Binding ShowStreamAsHex}"
+                                          SelectionStart="{Binding CurrentStreamPosition}"
+                                          SelectionLength="1" />
+                </TabItem>
+                <TabItem Header="Memory">
+                    <ctrls:BinaryGridView x:Name="memoryGrid"
+                                          ShowAsHex="{Binding ShowMemoryAsHex}"
+                                          BytesPerPage="256" />
+                </TabItem>
+            </TabControl>
 
-                <TextBlock Grid.Row="1" Text="Errors" FontWeight="Bold" Margin="0 6 0 2" />
-                <DataGrid Grid.Row="2" ItemsSource="{Binding Errors}" IsReadOnly="True" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
-                        <DataGridTextColumn Header="Code" Binding="{Binding Code}" />
-                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
-                    </DataGrid.Columns>
-                </DataGrid>
-
-                <TextBlock Grid.Row="3" Text="Log" FontWeight="Bold" Margin="0 6 0 2" />
-                <DataGrid Grid.Row="4" ItemsSource="{Binding Logs}" IsReadOnly="True" AutoGenerateColumns="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
-                        <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
-                    </DataGrid.Columns>
-                </DataGrid>
-            </Grid>
         </Grid>
-    </DockPanel>
+
+        <!-- Splitter, Row 2 -->
+        <GridSplitter Grid.Row="2" Classes="vertical_splitter" />
+        
+        <!-- Errors, Row 3 -->
+        <Border Grid.Row="3">
+            <TabControl>
+                <TabItem Header="Errors">
+                    <DataGrid ItemsSource="{Binding Errors}" IsReadOnly="True" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
+                            <DataGridTextColumn Header="Code" Binding="{Binding Code}" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+                <TabItem Header="Log">
+                    <DataGrid ItemsSource="{Binding Logs}" IsReadOnly="True" AutoGenerateColumns="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+            </TabControl>
+        </Border>
+        
+        <!-- Flags, Row 4 -->
+        <StackPanel Grid.Row="4" Classes="flags">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Register.CarryFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="CF" />
+                <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Register.ParityFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="PF" />
+                <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding Register.AuxiliaryCarryFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="AF" />
+                <CheckBox Grid.Row="0" Grid.Column="3" IsChecked="{Binding Register.ZeroFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="ZF" />
+                <CheckBox Grid.Row="0" Grid.Column="4" IsChecked="{Binding Register.SignFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="4" Text="SF" />
+                <CheckBox Grid.Row="0" Grid.Column="5" IsChecked="{Binding Register.TrapFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="5" Text="TF" />
+                <CheckBox Grid.Row="0" Grid.Column="6" IsChecked="{Binding Register.InterruptFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="6" Text="IF" />
+                <CheckBox Grid.Row="0" Grid.Column="7" IsChecked="{Binding Register.DirectionalFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="7" Text="DF" />
+                <CheckBox Grid.Row="0" Grid.Column="8" IsChecked="{Binding Register.OverflowFlag}" IsHitTestVisible="False" />
+                <TextBlock Grid.Row="1" Grid.Column="8" Text="OF" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Statusbar, Row 5 -->
+        <StackPanel Grid.Row="5" Orientation="Horizontal">
+            <TextBlock Text="State" Margin="0 0 10 0" />
+            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                <TextBlock Text="Decode: " /><TextBlock Text="{Binding DecodeState}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                <TextBlock Text="Exec: " /><TextBlock Text="{Binding ExecutionState}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+                <TextBlock Text="Pos: " /><TextBlock Text="{Binding CurrentStreamPosition}" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
 </Window>

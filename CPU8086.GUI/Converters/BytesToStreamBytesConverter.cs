@@ -1,15 +1,14 @@
-﻿using System;
+using Avalonia.Data.Converters;
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
-using System.Windows.Data;
-using System.Windows.Markup;
 
 namespace Final.CPU8086.Converters
 {
-    public class BytesToStreamBytesConverter : MarkupExtension, IValueConverter
+    public class BytesToStreamBytesConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -24,8 +23,5 @@ namespace Final.CPU8086.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
              => throw new NotSupportedException();
-
-        public override object ProvideValue(IServiceProvider serviceProvider)
-            => this;
     }
 }

@@ -1,0 +1,148 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:Final.CPU8086.Converters"
+             xmlns:ctrls="clr-namespace:Final.CPU8086.Controls"
+             xmlns:i="using:Avalonia.Xaml.Interactivity"
+             xmlns:ia="using:Avalonia.Xaml.Interactions.Core"
+             x:Class="Final.CPU8086.Controls.BinaryGridView"
+             x:CompileBindings="False"
+             FontFamily="Consolas"
+             FontSize="16">
+
+    <UserControl.Resources>
+        <conv:HexCellValueConverter x:Key="streamPosValueConverter" HexPrefix="0x" />
+        <conv:HexCellValueConverter x:Key="hexCellConverter" />
+        <conv:NumericToBoolConverter x:Key="hasStream" />
+        <conv:NumericToBoolConverter x:Key="noStream" Inverse="True" />
+        <conv:RangeHighlightConverter x:Key="lineSelectionBg" InsideBrush="LightBlue" OutsideBrush="Transparent" MaxLen="8" />
+        <conv:RangeHighlightConverter x:Key="lineVisualBorder" InsideBrush="LightCoral" OutsideBrush="LightGray" MaxLen="8" />
+        <conv:RangeHighlightConverter x:Key="cellSelectionBg" InsideBrush="LightBlue" OutsideBrush="Transparent" />
+        <conv:RangeHighlightConverter x:Key="cellVisualBorder" InsideBrush="LightCoral" OutsideBrush="LightGray" />
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="Button.pager:disabled Image">
+            <Setter Property="Opacity" Value="0.25" />
+        </Style>
+    </UserControl.Styles>
+
+    <Grid x:Name="mainGrid" Background="White" TextElement.Foreground="Black" RowDefinitions="Auto,*,Auto">
+
+        <!-- Jump-to-address -->
+        <DockPanel Grid.Row="0" LastChildFill="True">
+            <TextBox x:Name="addressTextbox" Text="{Binding JumpAddress, Mode=TwoWay}">
+                <TextBox.KeyBindings>
+                    <KeyBinding Gesture="Enter"
+                                Command="{Binding JumpToAddressCommand}"
+                                CommandParameter="{Binding #addressTextbox.Text}" />
+                </TextBox.KeyBindings>
+            </TextBox>
+        </DockPanel>
+
+        <!-- Grid / empty placeholder -->
+        <ScrollViewer Grid.Row="1">
+            <Panel>
+                <Grid IsVisible="{Binding Stream.Length, Converter={StaticResource hasStream}}"
+                      ColumnDefinitions="Auto,*">
+
+                    <!-- line numbers -->
+                    <ItemsControl Grid.Column="0" Width="100" ItemsSource="{Binding Lines}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="1" Margin="2">
+                                    <Border.Background>
+                                        <MultiBinding Converter="{StaticResource lineSelectionBg}">
+                                            <Binding />
+                                            <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
+                                        </MultiBinding>
+                                    </Border.Background>
+                                    <Border.BorderBrush>
+                                        <MultiBinding Converter="{StaticResource lineVisualBorder}">
+                                            <Binding />
+                                            <Binding Path="$parent[ItemsControl].DataContext.VisualPosition" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.VisualLength" />
+                                        </MultiBinding>
+                                    </Border.BorderBrush>
+                                    <TextBlock TextAlignment="Right" Foreground="Gray"
+                                               Text="{Binding Converter={StaticResource streamPosValueConverter}}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- data cells -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Page}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderThickness="1" Margin="2" Width="50" Background="Transparent">
+                                    <Border.BorderBrush>
+                                        <MultiBinding Converter="{StaticResource cellVisualBorder}">
+                                            <Binding />
+                                            <Binding Path="$parent[ItemsControl].DataContext.VisualPosition" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.VisualLength" />
+                                        </MultiBinding>
+                                    </Border.BorderBrush>
+                                    <i:Interaction.Behaviors>
+                                        <ia:EventTriggerBehavior EventName="Tapped">
+                                            <ia:InvokeCommandAction Command="{Binding $parent[ItemsControl].DataContext.CellClickCommand}"
+                                                                    CommandParameter="{Binding}" />
+                                        </ia:EventTriggerBehavior>
+                                    </i:Interaction.Behaviors>
+                                    <TextBlock TextAlignment="Right">
+                                        <TextBlock.Background>
+                                            <MultiBinding Converter="{StaticResource cellSelectionBg}">
+                                                <Binding />
+                                                <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
+                                                <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
+                                            </MultiBinding>
+                                        </TextBlock.Background>
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource hexCellConverter}">
+                                                <Binding />
+                                                <Binding Path="$parent[ItemsControl].DataContext.ShowAsHex" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+
+                <Grid IsVisible="{Binding Stream.Length, Converter={StaticResource noStream}}">
+                    <TextBlock Text="No stream loaded" />
+                </Grid>
+            </Panel>
+        </ScrollViewer>
+
+        <!-- pager -->
+        <DockPanel Grid.Row="2" LastChildFill="True">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Classes="pager" Command="{Binding GoToFirstPageCommand}">
+                    <Image Source="avares://CPU8086.GUI/Resources/MemoryPageFirst_32x32.png" Width="32" Height="32" />
+                </Button>
+                <Button Classes="pager" Command="{Binding GoToPrevPageCommand}">
+                    <Image Source="avares://CPU8086.GUI/Resources/MemoryPagePrev_32x32.png" Width="32" Height="32" />
+                </Button>
+                <Button Classes="pager" Command="{Binding GoToNextPageCommand}">
+                    <Image Source="avares://CPU8086.GUI/Resources/MemoryPageNext_32x32.png" Width="32" Height="32" />
+                </Button>
+                <Button Classes="pager" Command="{Binding GoToLastPageCommand}">
+                    <Image Source="avares://CPU8086.GUI/Resources/MemoryPageLast_32x32.png" Width="32" Height="32" />
+                </Button>
+            </StackPanel>
+            <TextBlock Text="{Binding PageInfo}" HorizontalAlignment="Right" VerticalAlignment="Center" />
+        </DockPanel>
+    </Grid>
+</UserControl>

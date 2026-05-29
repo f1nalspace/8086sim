@@ -1,29 +1,31 @@
-﻿using DevExpress.Mvvm;
+using Avalonia;
+using DevExpress.Mvvm;
 using Final.CPU8086.Services;
-using System.Windows;
 
 namespace Final.CPU8086.Controls
 {
     public class BinaryGridServiceBehavior : AutoServiceBehavior<BinaryGridView>
     {
-        public static readonly DependencyProperty MemoryAddressResolverServiceProperty = DependencyProperty.Register(nameof(MemoryAddressResolverService), typeof(IMemoryAddressResolverService), typeof(BinaryGridServiceBehavior), new PropertyMetadata(null, MemoryAddressResolverServiceChanged));
+        public static readonly StyledProperty<IMemoryAddressResolverService> MemoryAddressResolverServiceProperty =
+            AvaloniaProperty.Register<BinaryGridServiceBehavior, IMemoryAddressResolverService>(nameof(MemoryAddressResolverService));
 
-        private static void MemoryAddressResolverServiceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        static BinaryGridServiceBehavior()
         {
-            if (d is BinaryGridServiceBehavior behavior)
-            {
-                BinaryGridView view = behavior.AssociatedObject;
-                BinaryGridViewModel vm = view?.ViewModel;
-                ISupportServices supportServices = vm as ISupportServices;
-                if (supportServices != null)
-                    supportServices.ServiceContainer.RegisterService(e.NewValue as IMemoryAddressResolverService);
-            }
+            MemoryAddressResolverServiceProperty.Changed.AddClassHandler<BinaryGridServiceBehavior>(
+                (behavior, e) => behavior.OnMemoryAddressResolverServiceChanged(e.NewValue as IMemoryAddressResolverService));
+        }
+
+        private void OnMemoryAddressResolverServiceChanged(IMemoryAddressResolverService service)
+        {
+            BinaryGridViewModel vm = AssociatedObject?.ViewModel;
+            if (service != null && vm is ISupportServices supportServices)
+                supportServices.ServiceContainer.RegisterService(service);
         }
 
         public IMemoryAddressResolverService MemoryAddressResolverService
         {
-            get => GetValue(MemoryAddressResolverServiceProperty) as IMemoryAddressResolverService;
-            set => SetCurrentValue(MemoryAddressResolverServiceProperty, value);
+            get => GetValue(MemoryAddressResolverServiceProperty);
+            set => SetValue(MemoryAddressResolverServiceProperty, value);
         }
 
         protected override void OnAttached()
@@ -34,8 +36,7 @@ namespace Final.CPU8086.Controls
             if (srv != null)
             {
                 BinaryGridViewModel vm = AssociatedObject.ViewModel;
-                ISupportServices supportServices = vm as ISupportServices;
-                if (supportServices != null)
+                if (vm is ISupportServices supportServices)
                     supportServices.ServiceContainer.RegisterService(srv);
             }
         }
@@ -46,8 +47,7 @@ namespace Final.CPU8086.Controls
             if (srv != null)
             {
                 BinaryGridViewModel vm = AssociatedObject.ViewModel;
-                ISupportServices supportServices = vm as ISupportServices;
-                if (supportServices != null)
+                if (vm is ISupportServices supportServices)
                     supportServices.ServiceContainer.UnregisterService(srv);
             }
 

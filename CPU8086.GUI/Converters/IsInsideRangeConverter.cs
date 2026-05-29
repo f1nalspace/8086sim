@@ -1,17 +1,17 @@
-﻿using System;
+using Avalonia.Data.Converters;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Markup;
 
 namespace Final.CPU8086.Converters
 {
-    public class IsInsideRangeConverter : MarkupExtension, IMultiValueConverter
+    public class IsInsideRangeConverter : IMultiValueConverter
     {
         public bool IsDirectPosition { get; set; } = false;
 
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(IList<object> values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values.Length >= 3 &&
+            if (values.Count >= 3 &&
                 values[1] is uint selectionStart &&
                 values[2] is uint selectionLength)
             {
@@ -24,10 +24,10 @@ namespace Final.CPU8086.Converters
                 else if (values[0] is StreamByte sb)
                     index = sb.Index;
                 else
-                    throw new NotSupportedException();
+                    return false;
 
                 uint len = 0;
-                if (values.Length >= 4 && values[3] is uint maxLen)
+                if (values.Count >= 4 && values[3] is uint maxLen)
                     len = maxLen;
 
                 if (index >= selectionStart && index < selectionStart + selectionLength)
@@ -37,10 +37,5 @@ namespace Final.CPU8086.Converters
             }
             return false;
         }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-            => throw new NotSupportedException();
-
-        public override object ProvideValue(IServiceProvider serviceProvider) => this;
     }
 }

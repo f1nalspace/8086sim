@@ -13,6 +13,8 @@
     <PackageReference Include="Avalonia" Version="11.3.17" />
     <PackageReference Include="Avalonia.Desktop" Version="11.3.17" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.17" />
+    <PackageReference Include="Avalonia.Xaml.Interactivity" Version="11.3.0" />
+    <PackageReference Include="Avalonia.Xaml.Interactions" Version="11.3.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <!-- nur im Debug aktiv (DevTools via F12) -->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.17" Condition="'$(Configuration)' == 'Debug'" />
@@ -25,22 +27,6 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Resources\**\*.png" />
-  </ItemGroup>
-
-  <!--
-    Phase 4 (noch ausstehend): an die View gekoppelte Quellen sind weiterhin aus dem Build genommen.
-      - AutoServiceBehavior / BinaryGridServiceBehavior: brauchen Avalonia-Behavior-Basis + BinaryGridView
-      - BinaryGridView.xaml.cs: Custom Control (StyledProperties + .axaml)
-      - Converters: Avalonia-Portierung
-    Werden in Phase 4 wieder einkompiliert. Als <None> referenziert, damit sie in VS/Rider sichtbar bleiben.
-  -->
-  <ItemGroup>
-    <Compile Remove="AutoServiceBehavior.cs" />
-    <Compile Remove="Controls\BinaryGridServiceBehavior.cs;Controls\BinaryGridView.xaml.cs" />
-    <Compile Remove="Converters\**\*.cs" />
-    <None Include="AutoServiceBehavior.cs" />
-    <None Include="Controls\BinaryGridServiceBehavior.cs;Controls\BinaryGridView.xaml.cs" />
-    <None Include="Converters\**\*.cs" />
   </ItemGroup>
 
 </Project>

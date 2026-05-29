@@ -15,7 +15,7 @@
 | 1 | Non-UI-Projekte → .NET 10 (+ xUnit) | ✅ erledigt |
 | 2 | Avalonia-Projektgerüst | ✅ erledigt |
 | 3 | MVVM-Kompatibilitäts-Shim | ✅ erledigt |
-| 4 | Converters & BinaryGridView | ⬜ |
+| 4 | Converters, BinaryGridView & Behaviors | ✅ erledigt |
 | 5 | MainWindow-Nachbau (inkl. Ribbon) | ⬜ |
 | 6 | Plattform-/IDE-Verifikation | ⬜ |
 
@@ -61,11 +61,13 @@
 - [x] **Scope-Anpassung:** Behaviors (`AutoServiceBehavior`, `BinaryGridServiceBehavior`) bleiben in Phase 4 — sie sind an `BinaryGridView` (Custom Control) und `DependencyProperty` gekoppelt und werden gemeinsam mit dem Control + `Behavior<T>`-Shim portiert.
 - [x] Validierung: `dotnet build CPU8086.sln` grün (0 Fehler/Warnungen); `MainViewModel` als DataContext temporär verdrahtet → App lief 8 s stabil (instanziiert+dekodiert erstes Programm), danach zurückgebaut; Tests unverändert 5/14.
 
-### Phase 4 — Converters & BinaryGridView
-- [ ] Converter portiert (`Avalonia.Data.Converters`)
-- [ ] `NumericToVisibilityConverter`-Nutzung ersetzt (IsVisible + int→bool)
-- [ ] `BinaryGridView`: StyledProperties + `.axaml` neu aufgebaut
-- [ ] Validierung: Control rendert isoliert
+### Phase 4 — Converters, BinaryGridView & Behaviors
+- [x] Alle 7 Converter auf `Avalonia.Data.Converters` portiert (MarkupExtension/ProvideValue raus; `IMultiValueConverter` → `IList<object>`-Signatur ohne `ConvertBack`; `DependencyProperty.UnsetValue` → `AvaloniaProperty.UnsetValue`). F-008 final erledigt (`HexCellValueConverter` Native-using weg).
+- [x] `NumericToVisibilityConverter`-Nutzung ersetzt durch neuen `NumericToBoolConverter` (→ `IsVisible`, mit `Inverse`).
+- [x] WPF-`DataTrigger`-Hervorhebung ersetzt durch `RangeHighlightConverter` (MultiBinding → `IBrush`, `InsideBrush`/`OutsideBrush`/`MaxLen`) — Avalonia kennt keine DataTrigger.
+- [x] `BinaryGridView` als Avalonia-Control neu: `DependencyProperty`→`StyledProperty` (StreamSource/SelectionStart/SelectionLength/ShowAsHex/BytesPerPage) + `DirectProperty` (readonly CanFirst/Last/Next/Prev); Änderungen via `OnPropertyChanged`-Override an das VM gebrückt; `.axaml` neu (ItemsControls für Lines/Page, WrapPanel, Pager-Buttons mit `avares://`-Icons, Jump-TextBox mit Enter-KeyBinding, Zell-Klick via `EventTriggerBehavior`/`InvokeCommandAction`). `x:CompileBindings=False` (reflektierende Bindings wie WPF).
+- [x] Behaviors portiert: `Behavior<T>`-Shim (Namespace `DevExpress.Mvvm.UI.Interactivity`, basiert auf `Avalonia.Xaml.Interactivity.Behavior<T>`); `AutoServiceBehavior<T>` (FrameworkElement→Control) und `BinaryGridServiceBehavior` (`DependencyProperty`→`StyledProperty` + static Changed-Handler). Pakete `Avalonia.Xaml.Interactivity`/`Avalonia.Xaml.Interactions` 11.3.0.
+- [x] Validierung: GUI baut (0/0); `BinaryGridView` isoliert im MainWindow mit 200 Beispiel-Bytes gerendert → **vom Nutzer bestätigt** (Hex-Zellen `00`–`3F` sichtbar). Bug gefunden+gefixt: Zell-Text ohne explizite Farbe = FluentTheme-hell auf hartem weißem Grid → unsichtbar; `TextElement.Foreground="Black"` auf `mainGrid` gesetzt. Temp-Verdrahtung danach entfernt; Tests unverändert 5/14.
 
 ### Phase 5 — MainWindow-Nachbau
 - [ ] Register-Panel (AX–DI, Segmente, IP)
@@ -98,7 +100,7 @@
 | F-005 | info | `CPU8086.Tests` | Mehrere Tests rot, weil Instructions nicht implementiert sind bzw. Cycle-Zählung abweicht. | **ignorieren** (per Nutzer) |
 | F-006 | niedrig | `CPU8086.GUI/Behaviors/AttachServiceBehavior.cs` | Leere abstrakte Behavior-Basis ohne ersichtliche Verwendung — möglicher toter Code. | ✅ **erledigt (Phase 3)** — als toter Code bestätigt (keine Referenzen) und gelöscht |
 | F-007 | info | `CPU8086.Console/Properties/launchSettings.json` | Default-Arg `--res listing_0050_challenge_jumps` greift wegen F-001 nicht (Resource nicht gefunden). | tracken |
-| F-008 | niedrig | `MainViewModel.cs`, `Controls/BinaryGridViewModel.cs`, `Converters/HexCellValueConverter.cs` | `using DevExpress.Mvvm.Native;` vorhanden, aber **ungenutzt** (keine Native-Aufrufe). | 🟡 teilweise (Phase 3): in `MainViewModel` + `BinaryGridViewModel` entfernt; `HexCellValueConverter` folgt in Phase 4 |
+| F-008 | niedrig | `MainViewModel.cs`, `Controls/BinaryGridViewModel.cs`, `Converters/HexCellValueConverter.cs` | `using DevExpress.Mvvm.Native;` vorhanden, aber **ungenutzt** (keine Native-Aufrufe). | ✅ **erledigt** (Phase 3 VMs, Phase 4 `HexCellValueConverter`) |
 
 > Hinweis zu **F-005**: laut Nutzer sind rote Tests teils erwartbar (nicht implementierte Instructions /
 > Cycles). Diese werden nicht als Migrationsdefekt gewertet.
@@ -149,6 +151,12 @@
   F-008 in beiden VMs bereinigt. Entry-Point `Program` → Namespace `Final.CPU8086.GUI` (Namenskollision vermieden).
   Behaviors + `BinaryGridView` + Converters bleiben für Phase 4 ausgeschlossen.
 - Validierung: Solution baut grün (0/0); `MainViewModel` instanziiert real ohne Crash; Tests unverändert 5/14.
-- **Nächster Schritt:** Phase 4 — Converters auf Avalonia portieren + `BinaryGridView` als Avalonia-Custom-Control
-  (`StyledProperty` + `.axaml`), dann Behaviors (`AutoServiceBehavior`/`BinaryGridServiceBehavior`) + `Behavior<T>`-Shim
-  (Paket `Avalonia.Xaml.Interactions`).
+- **Phase 4 umgesetzt:** 7 Converter auf Avalonia portiert + neue `NumericToBoolConverter`/`RangeHighlightConverter`
+  (Ersatz für `NumericToVisibilityConverter` bzw. WPF-DataTrigger). `BinaryGridView` als Avalonia-Control neu
+  (`StyledProperty`/`DirectProperty` + `.axaml`); Behaviors portiert + `Behavior<T>`-Shim; Pakete
+  `Avalonia.Xaml.Interactivity`/`Interactions` 11.3.0. F-008 final erledigt.
+- Validierung Phase 4: GUI baut 0/0; Control isoliert gerendert, **Bytes vom Nutzer bestätigt sichtbar**.
+  Gefundener+gefixter Render-Bug: weiße Default-Schrift auf weißem Grid → `TextElement.Foreground="Black"`.
+- **Nächster Schritt:** Phase 5 — MainWindow nachbauen (Register-/Flags-Panel, Stream/Memory-Tabs mit `BinaryGridView`,
+  Assembly-Output, Instructions-DataGrid, Errors/Log, **Ribbon-Nachbau**, `Loaded`-Command, Service-Wiring via Behaviors).
+  Paket `Avalonia.Controls.DataGrid` + Theme-Include in Phase 5 ergänzen.

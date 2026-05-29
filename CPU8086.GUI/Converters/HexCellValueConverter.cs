@@ -1,14 +1,12 @@
-﻿using DevExpress.Mvvm.Native;
+using Avalonia;
+using Avalonia.Data.Converters;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Text.RegularExpressions;
-using System.Windows;
-using System.Windows.Data;
-using System.Windows.Markup;
 
 namespace Final.CPU8086.Converters
 {
-    public class HexCellValueConverter : MarkupExtension, IValueConverter, IMultiValueConverter
+    public class HexCellValueConverter : IValueConverter, IMultiValueConverter
     {
         public string HexPrefix { get; set; } = string.Empty;
 
@@ -63,7 +61,7 @@ namespace Final.CPU8086.Converters
                 else
                     return sb.Value.ToString("D");
             }
-            return DependencyProperty.UnsetValue;
+            return AvaloniaProperty.UnsetValue;
         }
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -72,25 +70,17 @@ namespace Final.CPU8086.Converters
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
 
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(IList<object> values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values.Length >= 2)
+            if (values.Count >= 2)
             {
                 bool asHex = values[1] is bool b && b;
-                if (values.Length >= 3 && values[2] is int offset)
+                if (values.Count >= 3 && values[2] is int offset)
                     return DoConvert(values[0], asHex, HexPrefix, offset);
                 else
                     return DoConvert(values[0], asHex, HexPrefix);
             }
             return string.Empty;
         }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-            => throw new NotSupportedException();
-
-
-
-        public override object ProvideValue(IServiceProvider serviceProvider)
-            => this;
     }
 }

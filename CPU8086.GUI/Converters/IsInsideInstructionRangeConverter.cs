@@ -1,8 +1,9 @@
-﻿using System;
-using System.Globalization;
-using System.Windows.Data;
+using Avalonia.Data.Converters;
 using Final.CPU8086.Instructions;
 using Final.CPU8086.Types;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
 
 namespace Final.CPU8086.Converters
 {
@@ -10,13 +11,13 @@ namespace Final.CPU8086.Converters
     {
         public bool IsDirectPosition { get; set; } = false;
 
-        public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(IList<object> values, Type targetType, object parameter, CultureInfo culture)
         {
-            if (values.Length >= 2 && values[0] is uint testIndex && values[1] is uint streamIndex)
+            if (values.Count >= 2 && values[0] is uint testIndex && values[1] is uint streamIndex)
             {
                 if (IsDirectPosition)
                 {
-                    if (values.Length >= 3 && values[2] is AssemblyLine line)
+                    if (values.Count >= 3 && values[2] is AssemblyLine line)
                     {
                         if (line.Type == AssemblyLineType.SourceLabel)
                             return false;
@@ -27,7 +28,7 @@ namespace Final.CPU8086.Converters
                 {
                     Instruction instruction = null;
                     AssemblyLine line = null;
-                    if (values.Length >= 3)
+                    if (values.Count >= 3)
                     {
                         if (values[2] is Instruction valueInstruction)
                             instruction = valueInstruction;
@@ -36,7 +37,7 @@ namespace Final.CPU8086.Converters
                     }
 
                     uint len = 0;
-                    if (values.Length >= 4 && values[3] is uint maxLen)
+                    if (values.Count >= 4 && values[3] is uint maxLen)
                         len = maxLen;
 
                     if (line != null)
@@ -63,8 +64,5 @@ namespace Final.CPU8086.Converters
             }
             return false;
         }
-
-        public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-            => throw new NotSupportedException();
     }
 }

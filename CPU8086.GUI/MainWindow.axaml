@@ -11,6 +11,7 @@
 
     <Window.Resources>
         <conv:HexCellValueConverter x:Key="registerValueConverter" />
+        <conv:PositionMarkerConverter x:Key="asmMarker" InsideBrush="LightBlue" OutsideBrush="Transparent" />
     </Window.Resources>
 
     <Window.Styles>
@@ -145,7 +146,15 @@
                             <ItemsControl ItemsSource="{Binding AssemblyLines}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <TextBlock Text="{Binding Assembly}" Margin="6 0" />
+                                        <Border Margin="2 0" Padding="4 0">
+                                            <Border.Background>
+                                                <MultiBinding Converter="{StaticResource asmMarker}">
+                                                    <Binding Path="Position" />
+                                                    <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                </MultiBinding>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding Assembly}" />
+                                        </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -158,7 +167,9 @@
 
             <!-- Instructions / Errors / Logs -->
             <Grid Grid.Column="4" RowDefinitions="*,Auto,140,Auto,140">
-                <DataGrid Grid.Row="0" ItemsSource="{Binding Instructions}" IsReadOnly="True" AutoGenerateColumns="False">
+                <DataGrid Grid.Row="0" ItemsSource="{Binding Instructions}"
+                          SelectedItem="{Binding CurrentInstruction, Mode=OneWay}"
+                          IsReadOnly="True" AutoGenerateColumns="False">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
                         <DataGridTextColumn Header="Op" Binding="{Binding OpCode}" />

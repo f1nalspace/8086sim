@@ -107,7 +107,13 @@ namespace Final.CPU8086.Controls
                 return;
 
             if (change.Property == StreamSourceProperty)
+            {
                 _viewModel.LoadStreamFromSource(change.NewValue);
+                // LoadStreamFromSource setzt die Selektion zurueck -> extern gebundene
+                // Selektion (z. B. aktuelle Ausfuehrungsposition) erneut anwenden.
+                _viewModel.SelectionStart = SelectionStart;
+                _viewModel.SelectionLength = SelectionLength;
+            }
             else if (change.Property == SelectionStartProperty)
                 _viewModel.SelectionStart = change.GetNewValue<uint>();
             else if (change.Property == SelectionLengthProperty)

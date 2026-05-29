@@ -82,7 +82,11 @@
 - [x] **Dispatcher-Stub:** `DirectDispatcherService` (führt Action direkt aus); `_dispatcherService` fällt darauf zurück → alle `null`-Prüfungen in `AddLog`/`Reset` entfernt.
 - [x] **Light-Mode** gesetzt (`RequestedThemeVariant="Light"`), vom Nutzer bestätigt.
 - [x] Validierung: Solution baut 0/0; App startet, Programm-Auswahl lädt Disassembly; **Run/Step ohne Cross-Thread-Crash** (Nutzer bestätigt Farben/Funktion).
-- [ ] **OFFEN (nächste Session):** UI-Layout/Abstände, pixelnahe Ribbon-Optik, DataGrid-Row-Highlighting der aktuellen Instruktion, **umschaltbares Theme (Light/Dark zur Laufzeit)**.
+- [x] **Ausführungsposition-Marker (teilweise):** Stream-Tab markiert aktuelles Byte (Selection blau; Fix: Control wendet Selektion nach Stream-Load erneut an, da `CurrentStreamChanged` sie zurücksetzt). Instructions-DataGrid: `SelectedItem="{Binding CurrentInstruction, OneWay}"` (Zeilen-Highlight + Auto-Scroll). Assembly: `PositionMarkerConverter` markiert Zeile mit `Position == CurrentStreamPosition` (Hintergrund).
+- [ ] **OFFEN (nächste Session):**
+  - **Distinkter Marker** (nicht nur Hintergrund-Highlight) in Stream + Assembly: dafür `VisualPosition`/`VisualLength` des `BinaryGridView` als bindbare `StyledProperty` exponieren (aktuell nur intern via JumpToAddress) und an die Ausführungsposition binden → coralfarbener Marker-Rahmen; in der Assembly ein eigenes Marker-Glyph/▶ statt nur Hintergrund.
+  - **Memory-View-Marker:** aktuelle CS:IP → absolute Adresse (`GetAbsoluteMemoryAddress`) als Selektion des Memory-Grids.
+  - UI-Layout/Abstände, pixelnahe Ribbon-Optik, **umschaltbares Theme (Light/Dark zur Laufzeit)**.
 
 ### Phase 6 — Plattform-/IDE-Verifikation
 - [ ] Smoke-Test Linux

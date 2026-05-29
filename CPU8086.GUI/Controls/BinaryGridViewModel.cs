@@ -16,6 +16,15 @@ namespace Final.CPU8086.Controls
     {
         public const int ColumnCount = 8;
 
+        // Number of byte cells the WrapPanel currently shows per row. Fed in from the view
+        // whenever its width changes so the line indicators stay aligned with the wrapped cells.
+        public uint Columns
+        {
+            get => _columns;
+            set => SetValue(ref _columns, value == 0 ? 1u : value, () => UpdateLines(StreamStart, (uint)Page.Length));
+        }
+        private uint _columns = ColumnCount;
+
         private IMemoryAddressResolverService MemoryAddressResolver => GetService<IMemoryAddressResolverService>();
 
         public bool ShowAsHex
@@ -309,10 +318,11 @@ namespace Final.CPU8086.Controls
         {
             if (byteCount > 0)
             {
-                uint lineCount = (uint)Math.Ceiling(byteCount / (double)ColumnCount);
+                uint columns = _columns == 0 ? ColumnCount : _columns;
+                uint lineCount = (uint)Math.Ceiling(byteCount / (double)columns);
                 uint[] lines = new uint[lineCount];
                 for (uint i = 0; i < lineCount; ++i)
-                    lines[i] = byteOffset + (uint)(i * ColumnCount);
+                    lines[i] = byteOffset + (uint)(i * columns);
                 Lines = lines.ToImmutableArray();
             }
             else

@@ -1,5 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Reactive;
+using System;
 using System.ComponentModel;
 
 namespace Final.CPU8086.Controls
@@ -93,11 +95,27 @@ namespace Final.CPU8086.Controls
         private readonly BinaryGridViewModel _viewModel = new BinaryGridViewModel();
         public BinaryGridViewModel ViewModel => _viewModel;
 
+        // Horizontal footprint of a single byte cell in the WrapPanel: Border Width=50 plus
+        // Margin=2 on the left and right (see the cell template in BinaryGridView.axaml).
+        private const double CellWidth = 54;
+
         public BinaryGridView()
         {
             InitializeComponent();
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
             mainGrid.DataContext = _viewModel;
+
+            // Track the cell area's width so the line indicators follow the actual wrapping.
+            dataCells.GetObservable(BoundsProperty)
+                .Subscribe(new AnonymousObserver<Rect>(OnDataCellsBoundsChanged));
+        }
+
+        private void OnDataCellsBoundsChanged(Rect bounds)
+        {
+            if (_viewModel == null || bounds.Width <= 0)
+                return;
+            uint columns = (uint)Math.Max(1, (int)(bounds.Width / CellWidth));
+            _viewModel.Columns = columns;
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)

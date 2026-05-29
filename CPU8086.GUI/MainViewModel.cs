@@ -56,6 +56,31 @@ namespace Final.CPU8086
 
         public uint CurrentStreamPosition => _cpu.PreviousIP; // Previous IP is the current stream position
 
+        // The decoded instruction sitting at the current stream position (the one about to be
+        // executed). CPU.CurrentInstruction is the *previously executed* one after a step, so the
+        // Instructions grid and the stream highlight must resolve by position instead, otherwise
+        // both lag one step behind the actual execution position.
+        public Instruction CurrentStreamInstruction
+        {
+            get
+            {
+                uint pos = CurrentStreamPosition;
+                if (pos == uint.MaxValue)
+                    return null;
+                foreach (Instruction instruction in _instructions)
+                {
+                    if (instruction.Position == pos)
+                        return instruction;
+                }
+                return null;
+            }
+        }
+
+        // Byte length of the instruction at the current stream position, so the binary grid
+        // highlights exactly the bytes of the instruction about to be executed (not just one box).
+        public uint CurrentStreamLength
+            => CurrentStreamInstruction?.Length ?? (CurrentStreamPosition == uint.MaxValue ? 0u : 1u);
+
         public ExecutionState ExecutionState => _cpu.ExecutionState;
 
         public DecodeState DecodeState
@@ -166,7 +191,7 @@ namespace Final.CPU8086
                 else if (nameof(CPU.Memory).Equals(e.PropertyName))
                     RaisePropertyChanged(nameof(Memory));
                 else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
-                    RaisePropertyChanged(nameof(CurrentStreamPosition));
+                    RaisePropertiesChanged(nameof(CurrentStreamPosition), nameof(CurrentStreamLength), nameof(CurrentStreamInstruction));
                 else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
                     RaisePropertyChanged(nameof(CurrentInstruction));
                 else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))

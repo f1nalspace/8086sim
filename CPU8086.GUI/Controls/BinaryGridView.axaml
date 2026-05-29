@@ -60,6 +60,7 @@
                                             <Binding />
                                             <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
                                             <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.Columns" />
                                         </MultiBinding>
                                     </Border.Background>
                                     <Border.BorderBrush>
@@ -67,6 +68,7 @@
                                             <Binding />
                                             <Binding Path="$parent[ItemsControl].DataContext.VisualPosition" />
                                             <Binding Path="$parent[ItemsControl].DataContext.VisualLength" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.Columns" />
                                         </MultiBinding>
                                     </Border.BorderBrush>
                                     <TextBlock TextAlignment="Right" Foreground="Gray"
@@ -76,8 +78,10 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <!-- data cells -->
-                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Page}">
+                    <!-- data cells: the WrapPanel decides how many cells fit per row; the
+                         code-behind measures it and feeds the count back into the view model's
+                         Columns so the line indicators stay aligned on resize -->
+                    <ItemsControl x:Name="dataCells" Grid.Column="1" ItemsSource="{Binding Page}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
                                 <WrapPanel />

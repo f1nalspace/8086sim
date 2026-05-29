@@ -175,7 +175,7 @@
                 <TabControl>
                     <TabItem Header="Instructions">
                         <DataGrid ItemsSource="{Binding Instructions}"
-                                  SelectedItem="{Binding CurrentInstruction, Mode=OneWay}"
+                                  SelectedItem="{Binding CurrentStreamInstruction, Mode=OneWay}"
                                   IsReadOnly="True" AutoGenerateColumns="False">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
@@ -198,7 +198,7 @@
                     <ctrls:BinaryGridView StreamSource="{Binding CurrentStream}"
                                           ShowAsHex="{Binding ShowStreamAsHex}"
                                           SelectionStart="{Binding CurrentStreamPosition}"
-                                          SelectionLength="1" />
+                                          SelectionLength="{Binding CurrentStreamLength}" />
                 </TabItem>
                 <TabItem Header="Memory">
                     <ctrls:BinaryGridView x:Name="memoryGrid"

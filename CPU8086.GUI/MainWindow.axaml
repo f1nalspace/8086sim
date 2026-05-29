@@ -100,10 +100,6 @@
         <Style Selector="StackPanel.regstack">
             <Setter Property="Spacing" Value="2" />
         </Style>
-        <!-- Stream / Memory side panel -->
-        <Style Selector="TabControl.streampanel">
-            <Setter Property="Width" Value="450" />
-        </Style>
         <!-- Status bar items -->
         <Style Selector="TextBlock.statusitem, StackPanel.statusitem">
             <Setter Property="Margin" Value="0 0 10 0" />
@@ -149,7 +145,7 @@
         </TabControl>
 
         <!-- Main, Row 1 -->
-        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,450">
             
             <!-- Registers, Col 0 -->
             <Border Grid.Column="0" Classes="registers">
@@ -272,7 +268,7 @@
             <GridSplitter Grid.Column="5" Classes="horizontal_splitter" />
 
             <!-- Stream / Memory, Col 6 -->
-            <TabControl Grid.Column="6" Classes="streampanel" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
+            <TabControl Grid.Column="6" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
                 <TabItem Header="Stream">
                     <ctrls:BinaryGridView StreamSource="{Binding CurrentStream}"
                                           ShowAsHex="{Binding ShowStreamAsHex}"

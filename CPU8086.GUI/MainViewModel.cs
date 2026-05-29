@@ -166,6 +166,22 @@ namespace Final.CPU8086
         private void OnLoaded()
         {
             MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
+
+            // The first program is already loaded in the constructor (before the memory grid
+            // service exists), so push the current memory now that the grid is wired up.
+            RefreshMemoryGrid();
+        }
+
+        // Feed the full 1 MB address space into the memory grid so it always shows memory (paged
+        // via BytesPerPage) while a program is loaded. Subsequent in-place ReloadStream calls from
+        // OnCPUMemoryChanged / OnMemoryGridServicePageChanged keep the visible page fresh.
+        private void RefreshMemoryGrid()
+        {
+            IBinaryGridService grid = MemoryGridService;
+            if (grid == null)
+                return;
+            byte[] data = Memory.Get(0, (uint)Memory.Length).ToArray();
+            _dispatcherService.Invoke(() => grid.ReloadStream(data, 0));
         }
 
         private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
@@ -237,6 +253,9 @@ namespace Final.CPU8086
                 OneOf<int, Error> loadRes = _cpu.LoadProgram(program);
                 if (loadRes.IsT1)
                     _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
+
+                // Refresh the memory grid with the program just written into memory.
+                RefreshMemoryGrid();
             }
             else
                 CurrentStream = ImmutableArray<byte>.Empty;

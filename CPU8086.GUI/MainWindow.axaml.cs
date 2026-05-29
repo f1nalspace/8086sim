@@ -40,6 +40,15 @@ namespace Final.CPU8086
             _viewModel.OnLoadedCommand.Execute(null);
         }
 
+        // The instructions grid is a read-only display: keep the selection pinned to the current
+        // execution row (driven by the SelectedItem binding) and snap back any manual row clicks.
+        private void OnInstructionsSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            object current = _viewModel.CurrentStreamInstruction;
+            if (sender is DataGrid grid && !Equals(grid.SelectedItem, current))
+                grid.SelectedItem = current;
+        }
+
         // Pure view concern: flip the application-wide Light/Dark theme variant.
         private void OnToggleTheme(object sender, RoutedEventArgs e)
         {

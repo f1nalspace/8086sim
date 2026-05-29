@@ -11,7 +11,6 @@
 
     <Window.Resources>
         <conv:HexCellValueConverter x:Key="registerValueConverter" />
-        <conv:PositionMarkerConverter x:Key="asmMarker" InsideBrush="LightBlue" OutsideBrush="Transparent" />
         <conv:PositionMatchConverter x:Key="posMarkerVisible" />
     </Window.Resources>
 
@@ -30,6 +29,21 @@
         <Style Selector="TextBlock.asmline">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <!-- Current execution line highlight: overwrite both background and foreground (App.axaml,
+             theme-variant via DynamicResource) -->
+        <Style Selector="Border.current">
+            <Setter Property="Background" Value="{DynamicResource HighlightBackgroundBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource HighlightForegroundBrush}" />
+        </Style>
+        <!-- Instructions DataGrid: the current execution row is the (programmatic) selection;
+             highlight only it, so every other cell keeps the theme foreground and follows the
+             light/dark toggle. -->
+        <Style Selector="DataGrid.instructions DataGridRow:selected">
+            <Setter Property="Background" Value="{DynamicResource HighlightBackgroundBrush}" />
+        </Style>
+        <Style Selector="DataGrid.instructions DataGridRow:selected DataGridCell">
+            <Setter Property="Foreground" Value="{DynamicResource HighlightForegroundBrush}" />
         </Style>
         <!-- Ribbon command icons -->
         <Style Selector="Image.ribbonicon">
@@ -65,6 +79,14 @@
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+        <!-- Tighten the Semi DataGrid's tall default rows -->
+        <Style Selector="DataGridRow">
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="DataGridCell">
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="8 2" />
         </Style>
     </Window.Styles>
 
@@ -263,13 +285,13 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border>
-                                            <Border.Background>
-                                                <MultiBinding Converter="{StaticResource asmMarker}">
+                                            <Classes.current>
+                                                <MultiBinding Converter="{StaticResource posMarkerVisible}">
                                                     <Binding Path="Position" />
                                                     <Binding
                                                         Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                 </MultiBinding>
-                                            </Border.Background>
+                                            </Classes.current>
                                             <Grid ColumnDefinitions="20,*">
                                                 <Image Grid.Column="0" Classes="marker"
                                                        Source="avares://CPU8086.GUI/Resources/Forward_16x16.png">
@@ -300,7 +322,9 @@
                 <TabControl>
                     <TabItem Header="Instructions">
                         <DataGrid ItemsSource="{Binding Instructions}"
+                                  Classes="instructions"
                                   SelectedItem="{Binding CurrentStreamInstruction, Mode=OneWay}"
+                                  SelectionChanged="OnInstructionsSelectionChanged"
                                   IsReadOnly="True" AutoGenerateColumns="False">
                             <DataGrid.Columns>
                                 <DataGridTemplateColumn>

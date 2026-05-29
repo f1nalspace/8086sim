@@ -14,19 +14,33 @@
         <conv:HexCellValueConverter x:Key="hexCellConverter" />
         <conv:NumericToBoolConverter x:Key="hasStream" />
         <conv:NumericToBoolConverter x:Key="noStream" Inverse="True" />
-        <conv:RangeHighlightConverter x:Key="lineSelectionBg" InsideBrush="LightBlue" OutsideBrush="Transparent" MaxLen="8" />
-        <conv:RangeHighlightConverter x:Key="lineVisualBorder" InsideBrush="LightCoral" OutsideBrush="LightGray" MaxLen="8" />
-        <conv:RangeHighlightConverter x:Key="cellSelectionBg" InsideBrush="LightBlue" OutsideBrush="Transparent" />
-        <conv:RangeHighlightConverter x:Key="cellVisualBorder" InsideBrush="LightCoral" OutsideBrush="LightGray" />
+        <conv:RangeMatchConverter x:Key="selectionMatch" />
+        <conv:RangeHighlightConverter x:Key="lineVisualBorder"
+                                      InsideBrush="{StaticResource CellHighlightBorderBrush}"
+                                      OutsideBrush="{StaticResource CellBorderBrush}" MaxLen="8" />
+        <conv:RangeHighlightConverter x:Key="cellVisualBorder"
+                                      InsideBrush="{StaticResource CellHighlightBorderBrush}"
+                                      OutsideBrush="{StaticResource CellBorderBrush}" />
     </UserControl.Resources>
 
     <UserControl.Styles>
         <Style Selector="Button.pager:disabled Image">
             <Setter Property="Opacity" Value="0.25" />
         </Style>
+        <!-- Line numbers normal colour -->
+        <Style Selector="Border.linecell">
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource SemiColorText2}" />
+        </Style>
+        <!-- Current-position highlight: overwrite both background and foreground (App.axaml,
+             theme-variant via DynamicResource) -->
+        <Style Selector="Border.highlight">
+            <Setter Property="Background" Value="{DynamicResource HighlightBackgroundBrush}" />
+            <Setter Property="TextElement.Foreground" Value="{DynamicResource HighlightForegroundBrush}" />
+        </Style>
     </UserControl.Styles>
 
-    <Grid x:Name="mainGrid" Background="White" TextElement.Foreground="Black" RowDefinitions="Auto,*,Auto">
+    <Grid x:Name="mainGrid" Background="{DynamicResource SemiColorBackground0}"
+          TextElement.Foreground="{DynamicResource SemiColorText0}" RowDefinitions="Auto,*,Auto">
 
         <!-- Jump-to-address -->
         <DockPanel Grid.Row="0" LastChildFill="True">
@@ -54,15 +68,15 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderThickness="1" Margin="2">
-                                    <Border.Background>
-                                        <MultiBinding Converter="{StaticResource lineSelectionBg}">
+                                <Border BorderThickness="1" Margin="2" Classes="linecell">
+                                    <Classes.highlight>
+                                        <MultiBinding Converter="{StaticResource selectionMatch}">
                                             <Binding />
                                             <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
                                             <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
                                             <Binding Path="$parent[ItemsControl].DataContext.Columns" />
                                         </MultiBinding>
-                                    </Border.Background>
+                                    </Classes.highlight>
                                     <Border.BorderBrush>
                                         <MultiBinding Converter="{StaticResource lineVisualBorder}">
                                             <Binding />
@@ -71,7 +85,7 @@
                                             <Binding Path="$parent[ItemsControl].DataContext.Columns" />
                                         </MultiBinding>
                                     </Border.BorderBrush>
-                                    <TextBlock TextAlignment="Right" Foreground="Gray"
+                                    <TextBlock TextAlignment="Right"
                                                Text="{Binding Converter={StaticResource streamPosValueConverter}}" />
                                 </Border>
                             </DataTemplate>
@@ -89,7 +103,14 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderThickness="1" Margin="2" Width="50" Background="Transparent">
+                                <Border BorderThickness="1" Margin="2" Width="50">
+                                    <Classes.highlight>
+                                        <MultiBinding Converter="{StaticResource selectionMatch}">
+                                            <Binding />
+                                            <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
+                                            <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
+                                        </MultiBinding>
+                                    </Classes.highlight>
                                     <Border.BorderBrush>
                                         <MultiBinding Converter="{StaticResource cellVisualBorder}">
                                             <Binding />
@@ -104,13 +125,6 @@
                                         </ia:EventTriggerBehavior>
                                     </i:Interaction.Behaviors>
                                     <TextBlock TextAlignment="Right">
-                                        <TextBlock.Background>
-                                            <MultiBinding Converter="{StaticResource cellSelectionBg}">
-                                                <Binding />
-                                                <Binding Path="$parent[ItemsControl].DataContext.SelectionStart" />
-                                                <Binding Path="$parent[ItemsControl].DataContext.SelectionLength" />
-                                            </MultiBinding>
-                                        </TextBlock.Background>
                                         <TextBlock.Text>
                                             <MultiBinding Converter="{StaticResource hexCellConverter}">
                                                 <Binding />

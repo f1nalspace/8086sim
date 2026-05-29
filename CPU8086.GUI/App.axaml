@@ -11,6 +11,23 @@
                      PathIcon Data="{StaticResource SemiIcon...}" resolves. -->
                 <ResourceInclude Source="avares://Semi.Avalonia/Icons/FillIcons.axaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Single source for the execution-position highlight. Theme-variant so the colours
+                 read well in both modes; reference these with DynamicResource so they switch live. -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="HighlightBackgroundBrush" Color="#D6E4FF" />
+                    <SolidColorBrush x:Key="HighlightForegroundBrush" Color="#1C1F23" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="HighlightBackgroundBrush" Color="#2080F0" />
+                    <SolidColorBrush x:Key="HighlightForegroundBrush" Color="#FFFFFF" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- Memory/stream cell borders (same in both modes) -->
+            <SolidColorBrush x:Key="CellBorderBrush" Color="#D3D3D3" />
+            <SolidColorBrush x:Key="CellHighlightBorderBrush" Color="#F08080" />
         </ResourceDictionary>
     </Application.Resources>
 

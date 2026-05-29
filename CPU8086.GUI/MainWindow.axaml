@@ -16,16 +16,13 @@
     </Window.Resources>
 
     <Window.Styles>
-        <Style Selector="Button.ribbon">
-            <Setter Property="Margin" Value="2" />
-            <Setter Property="Padding" Value="4" />
-        </Style>
+        <!-- All custom margins/spacings/paddings removed to evaluate the Semi.Avalonia theme
+             defaults. Only fonts, icon sizes, splitter direction and the divider remain. -->
         <Style Selector="Button.ribbon:disabled Image">
             <Setter Property="Opacity" Value="0.3" />
         </Style>
         <Style Selector="TextBlock.reg">
             <Setter Property="FontSize" Value="16" />
-            <Setter Property="Margin" Value="0 0 10 0" />
         </Style>
         <Style Selector="TextBlock.regval">
             <Setter Property="FontSize" Value="16" />
@@ -33,20 +30,6 @@
         <Style Selector="TextBlock.asmline">
             <Setter Property="FontSize" Value="16" />
             <Setter Property="VerticalAlignment" Value="Center" />
-        </Style>
-        <Style Selector="Border.registers">
-        </Style>
-        <Style Selector="Border.assembly">
-        </Style>
-        <Style Selector="Border.instructions">
-        </Style>
-        <!-- Tighten the Fluent theme's tall default DataGrid rows in the Instructions grid -->
-        <Style Selector="Border.instructions DataGridRow">
-            <Setter Property="MinHeight" Value="0" />
-        </Style>
-        <Style Selector="Border.instructions DataGridCell">
-            <Setter Property="MinHeight" Value="0" />
-            <Setter Property="Padding" Value="4 1" />
         </Style>
         <!-- Ribbon command icons -->
         <Style Selector="Image.ribbonicon">
@@ -61,136 +44,200 @@
             <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
         <Style Selector="GridSplitter.horizontal_splitter">
-            <Setter Property="Width" Value="4" />
             <Setter Property="ResizeDirection" Value="Columns" />
-            <Setter Property="BorderBrush" Value="CornflowerBlue" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="CadetBlue" />
         </Style>
         <Style Selector="GridSplitter.vertical_splitter">
-            <Setter Property="Height" Value="4" />
             <Setter Property="ResizeDirection" Value="Rows" />
-            <Setter Property="BorderBrush" Value="CornflowerBlue" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Background" Value="CadetBlue" />
-        </Style>
-        <Style Selector="StackPanel.flags CheckBox">
-            <Setter Property="Margin" Value="0 0 5 0" />
-        </Style>
-        <!-- Ribbon layout -->
-        <Style Selector="StackPanel.ribbonpad">
-            <Setter Property="Margin" Value="4" />
-        </Style>
-        <Style Selector="TextBlock.caption">
-            <Setter Property="Foreground" Value="#888" />
         </Style>
         <Style Selector="ComboBox.program">
             <Setter Property="MinWidth" Value="280" />
         </Style>
-        <Style Selector="Border.separator">
-            <Setter Property="Width" Value="1" />
-            <Setter Property="Background" Value="#ddd" />
-            <Setter Property="Margin" Value="6 2" />
-        </Style>
-        <Style Selector="StackPanel.viewbar">
-            <Setter Property="Margin" Value="8" />
-            <Setter Property="Spacing" Value="16" />
-        </Style>
-        <!-- Register column -->
-        <Style Selector="StackPanel.regstack">
-            <Setter Property="Spacing" Value="2" />
-        </Style>
-        <!-- Status bar items -->
-        <Style Selector="TextBlock.statusitem, StackPanel.statusitem">
-            <Setter Property="Margin" Value="0 0 10 0" />
-        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,250,Auto,Auto">
-        
+
         <!-- Ribbon Menu, Row 0 -->
         <TabControl Grid.Row="0">
             <TabItem Header="Home">
-                <StackPanel Orientation="Horizontal" Classes="ribbonpad">
-                    <StackPanel Orientation="Vertical" Classes="ribbonpad">
-                        <TextBlock Text="Program" Classes="caption" />
+                <StackPanel Orientation="Horizontal">
+
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Program" />
                         <ComboBox Classes="program"
                                   ItemsSource="{Binding Programs}"
                                   SelectedItem="{Binding CurrentProgram}"
                                   IsEnabled="{Binding CanChangeStream}" />
                     </StackPanel>
-                    <Border Classes="separator" />
-                    <Button Classes="ribbon" Command="{Binding RunCommand}" ToolTip.Tip="Run">
-                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Run_32x32.png" />
-                    </Button>
-                    <Button Classes="ribbon" Command="{Binding StepCommand}" ToolTip.Tip="Step">
-                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/StepIn_32x32.png" />
-                    </Button>
-                    <Button Classes="ribbon" Command="{Binding StopCommand}" ToolTip.Tip="Stop">
-                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Stop_32x32.png" />
-                    </Button>
-                    <Button Classes="ribbon" Command="{Binding ResetCommand}" ToolTip.Tip="Reset">
-                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Reset_32x32.png" />
-                    </Button>
+                    
+                    <Separator Width="10" />
+
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Execution" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Classes="ribbon" Command="{Binding RunCommand}" ToolTip.Tip="Run">
+                                <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Run_32x32.png" />
+                            </Button>
+                            <Button Classes="ribbon" Command="{Binding StepCommand}" ToolTip.Tip="Step">
+                                <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/StepIn_32x32.png" />
+                            </Button>
+                            <Button Classes="ribbon" Command="{Binding StopCommand}" ToolTip.Tip="Stop">
+                                <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Stop_32x32.png" />
+                            </Button>
+                            <Button Classes="ribbon" Command="{Binding ResetCommand}" ToolTip.Tip="Reset">
+                                <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Reset_32x32.png" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
                 </StackPanel>
             </TabItem>
             <TabItem Header="View">
-                <StackPanel Orientation="Horizontal" Classes="viewbar">
-                    <CheckBox Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
-                    <CheckBox Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
-                    <CheckBox Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
-                    <CheckBox Content="Memory as hex" IsChecked="{Binding ShowMemoryAsHex}" />
+                <StackPanel Orientation="Horizontal">
+                    
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Style" />
+                        <ToggleButton x:Name="darkModeToggle" Content="Dark mode" Click="OnToggleTheme" />
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Values" />
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
+                            <CheckBox Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
+                            <CheckBox Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
+                            <CheckBox Content="Memory as hex" IsChecked="{Binding ShowMemoryAsHex}" />
+                        </StackPanel>
+                    </StackPanel>
+                    
                 </StackPanel>
             </TabItem>
         </TabControl>
 
         <!-- Main, Row 1 -->
         <Grid Grid.Row="1" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,450">
-            
+
             <!-- Registers, Col 0 -->
             <Border Grid.Column="0" Classes="registers">
-                <StackPanel Orientation="Vertical" Classes="regstack">
+                <StackPanel Orientation="Vertical">
                     <TabControl>
                         <TabItem Header="Registers">
-                            <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+                            <Grid ColumnDefinitions="Auto,Auto"
+                                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="reg" Text="AX" />
-                                <TextBlock Grid.Row="0"  Grid.Column="1" Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.AX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="0" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.AX" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="reg" Text="BX" />
-                                <TextBlock Grid.Row="1" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.BX" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="reg" Text="CX" />
-                                <TextBlock Grid.Row="2" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="2" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.CX" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="reg" Text="DX" />
-                                <TextBlock Grid.Row="3" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DX" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="3" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.DX" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <Separator Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" />
                                 <TextBlock Grid.Row="5" Grid.Column="0" Classes="reg" Text="SP" />
-                                <TextBlock Grid.Row="5" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="5" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.SP" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="6" Grid.Column="0" Classes="reg" Text="BP" />
-                                <TextBlock Grid.Row="6" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.BP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="6" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.BP" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="7" Grid.Column="0" Classes="reg" Text="SI" />
-                                <TextBlock Grid.Row="7" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="7" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.SI" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="8" Grid.Column="0" Classes="reg" Text="DI" />
-                                <TextBlock Grid.Row="8" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DI" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="8" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.DI" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <Separator Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" />
                                 <TextBlock Grid.Row="10" Grid.Column="0" Classes="reg" Text="CS" />
-                                <TextBlock Grid.Row="10" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.CS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="10" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.CS" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="11" Grid.Column="0" Classes="reg" Text="DS" />
-                                <TextBlock Grid.Row="11" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.DS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="11" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.DS" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="12" Grid.Column="0" Classes="reg" Text="SS" />
-                                <TextBlock Grid.Row="12" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.SS" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="12" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.SS" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <TextBlock Grid.Row="13" Grid.Column="0" Classes="reg" Text="ES" />
-                                <TextBlock Grid.Row="13" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.ES" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="13" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.ES" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                                 <Separator Grid.Row="14" Grid.Column="0" Grid.ColumnSpan="2" />
                                 <TextBlock Grid.Row="15" Grid.Column="0" Classes="reg" Text="IP" />
-                                <TextBlock Grid.Row="15" Grid.Column="1"  Classes="regval"><TextBlock.Text><MultiBinding Converter="{StaticResource registerValueConverter}"><Binding Path="Register.IP" /><Binding Path="ShowRegisterAsHex" /></MultiBinding></TextBlock.Text></TextBlock>
+                                <TextBlock Grid.Row="15" Grid.Column="1" Classes="regval">
+                                    <TextBlock.Text>
+                                        <MultiBinding Converter="{StaticResource registerValueConverter}">
+                                            <Binding Path="Register.IP" /><Binding Path="ShowRegisterAsHex" />
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </Grid>
                         </TabItem>
                     </TabControl>
                 </StackPanel>
             </Border>
-            
+
             <!-- Splitter, Col 1 -->
             <GridSplitter Grid.Column="1" Classes="horizontal_splitter" />
-            
+
             <!-- Assembly, Col 2 -->
             <Border Grid.Column="2" Classes="assembly">
                 <TabControl>
@@ -203,7 +250,8 @@
                                             <Border.Background>
                                                 <MultiBinding Converter="{StaticResource asmMarker}">
                                                     <Binding Path="Position" />
-                                                    <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                    <Binding
+                                                        Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                 </MultiBinding>
                                             </Border.Background>
                                             <Grid ColumnDefinitions="20,*">
@@ -212,7 +260,8 @@
                                                     <Image.IsVisible>
                                                         <MultiBinding Converter="{StaticResource posMarkerVisible}">
                                                             <Binding Path="Position" />
-                                                            <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                            <Binding
+                                                                Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                         </MultiBinding>
                                                     </Image.IsVisible>
                                                 </Image>
@@ -226,10 +275,10 @@
                     </TabItem>
                 </TabControl>
             </Border>
-            
+
             <!-- Splitter, Col 3 -->
             <GridSplitter Grid.Column="3" Classes="horizontal_splitter" />
-            
+
             <!-- Instructions, Col 4 (Star) -->
             <Border Grid.Column="4" Classes="instructions">
                 <TabControl>
@@ -246,7 +295,8 @@
                                                 <Image.IsVisible>
                                                     <MultiBinding Converter="{StaticResource posMarkerVisible}">
                                                         <Binding Path="Position" />
-                                                        <Binding Path="$parent[DataGrid].DataContext.CurrentStreamPosition" />
+                                                        <Binding
+                                                            Path="$parent[DataGrid].DataContext.CurrentStreamPosition" />
                                                     </MultiBinding>
                                                 </Image.IsVisible>
                                             </Image>
@@ -286,7 +336,7 @@
 
         <!-- Splitter, Row 2 -->
         <GridSplitter Grid.Row="2" Classes="vertical_splitter" />
-        
+
         <!-- Errors, Row 3 -->
         <Border Grid.Row="3">
             <TabControl>
@@ -309,15 +359,18 @@
                 </TabItem>
             </TabControl>
         </Border>
-        
+
         <!-- Flags, Row 4 -->
         <StackPanel Grid.Row="4" Classes="flags">
             <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Register.CarryFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Register.CarryFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="CF" />
-                <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Register.ParityFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Register.ParityFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="PF" />
-                <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding Register.AuxiliaryCarryFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding Register.AuxiliaryCarryFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="AF" />
                 <CheckBox Grid.Row="0" Grid.Column="3" IsChecked="{Binding Register.ZeroFlag}" IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="ZF" />
@@ -325,25 +378,28 @@
                 <TextBlock Grid.Row="1" Grid.Column="4" Text="SF" />
                 <CheckBox Grid.Row="0" Grid.Column="5" IsChecked="{Binding Register.TrapFlag}" IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="5" Text="TF" />
-                <CheckBox Grid.Row="0" Grid.Column="6" IsChecked="{Binding Register.InterruptFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="6" IsChecked="{Binding Register.InterruptFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="6" Text="IF" />
-                <CheckBox Grid.Row="0" Grid.Column="7" IsChecked="{Binding Register.DirectionalFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="7" IsChecked="{Binding Register.DirectionalFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="7" Text="DF" />
-                <CheckBox Grid.Row="0" Grid.Column="8" IsChecked="{Binding Register.OverflowFlag}" IsHitTestVisible="False" />
+                <CheckBox Grid.Row="0" Grid.Column="8" IsChecked="{Binding Register.OverflowFlag}"
+                          IsHitTestVisible="False" />
                 <TextBlock Grid.Row="1" Grid.Column="8" Text="OF" />
             </Grid>
         </StackPanel>
 
         <!-- Statusbar, Row 5 -->
         <StackPanel Grid.Row="5" Orientation="Horizontal">
-            <TextBlock Text="State" Classes="statusitem" />
-            <StackPanel Orientation="Horizontal" Classes="statusitem">
+            <TextBlock Text="State" />
+            <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Decode: " /><TextBlock Text="{Binding DecodeState}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Classes="statusitem">
+            <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Exec: " /><TextBlock Text="{Binding ExecutionState}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Classes="statusitem">
+            <StackPanel Orientation="Horizontal">
                 <TextBlock Text="Pos: " /><TextBlock Text="{Binding CurrentStreamPosition}" />
             </StackPanel>
         </StackPanel>

@@ -19,6 +19,8 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <!-- nur im Debug aktiv (DevTools via F12) -->
     <PackageReference Include="Avalonia.Diagnostics" Version="11.3.17" Condition="'$(Configuration)' == 'Debug'" />
+    <PackageReference Include="Semi.Avalonia" Version="11.3.14" />
+    <PackageReference Include="Semi.Avalonia.DataGrid" Version="11.3.7.3" />
   </ItemGroup>
 
   <ItemGroup>

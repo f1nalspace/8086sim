@@ -1,5 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Styling;
 using DevExpress.Mvvm;
 using Final.CPU8086.Controls;
 using Final.CPU8086.Services;
@@ -35,6 +38,14 @@ namespace Final.CPU8086
             }
 
             _viewModel.OnLoadedCommand.Execute(null);
+        }
+
+        // Pure view concern: flip the application-wide Light/Dark theme variant.
+        private void OnToggleTheme(object sender, RoutedEventArgs e)
+        {
+            bool dark = (sender as ToggleButton)?.IsChecked == true;
+            if (Application.Current is { } app)
+                app.RequestedThemeVariant = dark ? ThemeVariant.Dark : ThemeVariant.Light;
         }
     }
 }

@@ -12,6 +12,7 @@
     <Window.Resources>
         <conv:HexCellValueConverter x:Key="registerValueConverter" />
         <conv:PositionMarkerConverter x:Key="asmMarker" InsideBrush="LightBlue" OutsideBrush="Transparent" />
+        <conv:PositionMatchConverter x:Key="posMarkerVisible" />
     </Window.Resources>
 
     <Window.Styles>
@@ -31,12 +32,33 @@
         </Style>
         <Style Selector="TextBlock.asmline">
             <Setter Property="FontSize" Value="16" />
+            <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
         <Style Selector="Border.registers">
         </Style>
         <Style Selector="Border.assembly">
         </Style>
         <Style Selector="Border.instructions">
+        </Style>
+        <!-- Tighten the Fluent theme's tall default DataGrid rows in the Instructions grid -->
+        <Style Selector="Border.instructions DataGridRow">
+            <Setter Property="MinHeight" Value="0" />
+        </Style>
+        <Style Selector="Border.instructions DataGridCell">
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="Padding" Value="4 1" />
+        </Style>
+        <!-- Ribbon command icons -->
+        <Style Selector="Image.ribbonicon">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+        </Style>
+        <!-- Forward execution-position marker (assembly + instructions views) -->
+        <Style Selector="Image.marker">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
         </Style>
         <Style Selector="GridSplitter.horizontal_splitter">
             <Setter Property="Width" Value="4" />
@@ -55,38 +77,69 @@
         <Style Selector="StackPanel.flags CheckBox">
             <Setter Property="Margin" Value="0 0 5 0" />
         </Style>
+        <!-- Ribbon layout -->
+        <Style Selector="StackPanel.ribbonpad">
+            <Setter Property="Margin" Value="4" />
+        </Style>
+        <Style Selector="TextBlock.caption">
+            <Setter Property="Foreground" Value="#888" />
+        </Style>
+        <Style Selector="ComboBox.program">
+            <Setter Property="MinWidth" Value="280" />
+        </Style>
+        <Style Selector="Border.separator">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Background" Value="#ddd" />
+            <Setter Property="Margin" Value="6 2" />
+        </Style>
+        <Style Selector="StackPanel.viewbar">
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Spacing" Value="16" />
+        </Style>
+        <!-- Register column -->
+        <Style Selector="StackPanel.regstack">
+            <Setter Property="Spacing" Value="2" />
+        </Style>
+        <!-- Stream / Memory side panel -->
+        <Style Selector="TabControl.streampanel">
+            <Setter Property="Width" Value="450" />
+        </Style>
+        <!-- Status bar items -->
+        <Style Selector="TextBlock.statusitem, StackPanel.statusitem">
+            <Setter Property="Margin" Value="0 0 10 0" />
+        </Style>
     </Window.Styles>
 
-    <Grid RowDefinitions="Auto,*,Auto,*,Auto,Auto">
+    <Grid RowDefinitions="Auto,*,Auto,250,Auto,Auto">
         
         <!-- Ribbon Menu, Row 0 -->
         <TabControl Grid.Row="0">
             <TabItem Header="Home">
-                <StackPanel Orientation="Horizontal" Margin="4">
-                    <StackPanel Orientation="Vertical" Margin="4">
-                        <TextBlock Text="Program" Foreground="#888" />
-                        <ComboBox MinWidth="280"
+                <StackPanel Orientation="Horizontal" Classes="ribbonpad">
+                    <StackPanel Orientation="Vertical" Classes="ribbonpad">
+                        <TextBlock Text="Program" Classes="caption" />
+                        <ComboBox Classes="program"
                                   ItemsSource="{Binding Programs}"
                                   SelectedItem="{Binding CurrentProgram}"
                                   IsEnabled="{Binding CanChangeStream}" />
                     </StackPanel>
-                    <Border Width="1" Background="#ddd" Margin="6 2" />
+                    <Border Classes="separator" />
                     <Button Classes="ribbon" Command="{Binding RunCommand}" ToolTip.Tip="Run">
-                        <Image Source="avares://CPU8086.GUI/Resources/Run_32x32.png" Width="28" Height="28" />
+                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Run_32x32.png" />
                     </Button>
                     <Button Classes="ribbon" Command="{Binding StepCommand}" ToolTip.Tip="Step">
-                        <Image Source="avares://CPU8086.GUI/Resources/StepIn_32x32.png" Width="28" Height="28" />
+                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/StepIn_32x32.png" />
                     </Button>
                     <Button Classes="ribbon" Command="{Binding StopCommand}" ToolTip.Tip="Stop">
-                        <Image Source="avares://CPU8086.GUI/Resources/Stop_32x32.png" Width="28" Height="28" />
+                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Stop_32x32.png" />
                     </Button>
                     <Button Classes="ribbon" Command="{Binding ResetCommand}" ToolTip.Tip="Reset">
-                        <Image Source="avares://CPU8086.GUI/Resources/Reset_32x32.png" Width="28" Height="28" />
+                        <Image Classes="ribbonicon" Source="avares://CPU8086.GUI/Resources/Reset_32x32.png" />
                     </Button>
                 </StackPanel>
             </TabItem>
             <TabItem Header="View">
-                <StackPanel Orientation="Horizontal" Margin="8" Spacing="16">
+                <StackPanel Orientation="Horizontal" Classes="viewbar">
                     <CheckBox Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
                     <CheckBox Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
                     <CheckBox Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
@@ -100,7 +153,7 @@
             
             <!-- Registers, Col 0 -->
             <Border Grid.Column="0" Classes="registers">
-                <StackPanel Spacing="2" Orientation="Vertical">
+                <StackPanel Orientation="Vertical" Classes="regstack">
                     <TabControl>
                         <TabItem Header="Registers">
                             <Grid ColumnDefinitions="Auto,Auto" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
@@ -157,7 +210,18 @@
                                                     <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                 </MultiBinding>
                                             </Border.Background>
-                                            <TextBlock Text="{Binding Assembly}" Classes="asmline"  />
+                                            <Grid ColumnDefinitions="20,*">
+                                                <Image Grid.Column="0" Classes="marker"
+                                                       Source="avares://CPU8086.GUI/Resources/Forward_16x16.png">
+                                                    <Image.IsVisible>
+                                                        <MultiBinding Converter="{StaticResource posMarkerVisible}">
+                                                            <Binding Path="Position" />
+                                                            <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                        </MultiBinding>
+                                                    </Image.IsVisible>
+                                                </Image>
+                                                <TextBlock Grid.Column="1" Text="{Binding Assembly}" Classes="asmline" />
+                                            </Grid>
                                         </Border>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
@@ -178,6 +242,21 @@
                                   SelectedItem="{Binding CurrentStreamInstruction, Mode=OneWay}"
                                   IsReadOnly="True" AutoGenerateColumns="False">
                             <DataGrid.Columns>
+                                <DataGridTemplateColumn>
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Image Classes="marker"
+                                                   Source="avares://CPU8086.GUI/Resources/Forward_16x16.png">
+                                                <Image.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource posMarkerVisible}">
+                                                        <Binding Path="Position" />
+                                                        <Binding Path="$parent[DataGrid].DataContext.CurrentStreamPosition" />
+                                                    </MultiBinding>
+                                                </Image.IsVisible>
+                                            </Image>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Pos" Binding="{Binding Position}" />
                                 <DataGridTextColumn Header="Op" Binding="{Binding OpCode}" />
                                 <DataGridTextColumn Header="Mnemonic" Binding="{Binding Mnemonic}" />
@@ -193,7 +272,7 @@
             <GridSplitter Grid.Column="5" Classes="horizontal_splitter" />
 
             <!-- Stream / Memory, Col 6 -->
-            <TabControl Grid.Column="6" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
+            <TabControl Grid.Column="6" Classes="streampanel" SelectedIndex="{Binding SelectedStreamOrMemoryTabIndex}">
                 <TabItem Header="Stream">
                     <ctrls:BinaryGridView StreamSource="{Binding CurrentStream}"
                                           ShowAsHex="{Binding ShowStreamAsHex}"
@@ -261,14 +340,14 @@
 
         <!-- Statusbar, Row 5 -->
         <StackPanel Grid.Row="5" Orientation="Horizontal">
-            <TextBlock Text="State" Margin="0 0 10 0" />
-            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+            <TextBlock Text="State" Classes="statusitem" />
+            <StackPanel Orientation="Horizontal" Classes="statusitem">
                 <TextBlock Text="Decode: " /><TextBlock Text="{Binding DecodeState}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+            <StackPanel Orientation="Horizontal" Classes="statusitem">
                 <TextBlock Text="Exec: " /><TextBlock Text="{Binding ExecutionState}" />
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="0 0 10 0">
+            <StackPanel Orientation="Horizontal" Classes="statusitem">
                 <TextBlock Text="Pos: " /><TextBlock Text="{Binding CurrentStreamPosition}" />
             </StackPanel>
         </StackPanel>

@@ -23,4 +23,13 @@ namespace DevExpress.Mvvm
                 Dispatcher.UIThread.Invoke(action);
         }
     }
+
+    // Stub-Dispatcher: fuehrt die Action direkt aus. Dient als Fallback, wenn (noch)
+    // kein UI-Dispatcher registriert ist, damit Aufrufer keine null-Pruefung brauchen.
+    public sealed class DirectDispatcherService : IDispatcherService
+    {
+        public static readonly DirectDispatcherService Instance = new DirectDispatcherService();
+
+        public void Invoke(Action action) => action?.Invoke();
+    }
 }

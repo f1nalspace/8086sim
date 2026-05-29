@@ -16,7 +16,7 @@
 | 2 | Avalonia-Projektgerüst | ✅ erledigt |
 | 3 | MVVM-Kompatibilitäts-Shim | ✅ erledigt |
 | 4 | Converters, BinaryGridView & Behaviors | ✅ erledigt |
-| 5 | MainWindow-Nachbau (inkl. Ribbon) | ⬜ |
+| 5 | MainWindow-Nachbau (inkl. Ribbon) | 🟡 funktional (UI-Feinschliff offen) |
 | 6 | Plattform-/IDE-Verifikation | ⬜ |
 
 ---
@@ -69,16 +69,20 @@
 - [x] Behaviors portiert: `Behavior<T>`-Shim (Namespace `DevExpress.Mvvm.UI.Interactivity`, basiert auf `Avalonia.Xaml.Interactivity.Behavior<T>`); `AutoServiceBehavior<T>` (FrameworkElement→Control) und `BinaryGridServiceBehavior` (`DependencyProperty`→`StyledProperty` + static Changed-Handler). Pakete `Avalonia.Xaml.Interactivity`/`Avalonia.Xaml.Interactions` 11.3.0.
 - [x] Validierung: GUI baut (0/0); `BinaryGridView` isoliert im MainWindow mit 200 Beispiel-Bytes gerendert → **vom Nutzer bestätigt** (Hex-Zellen `00`–`3F` sichtbar). Bug gefunden+gefixt: Zell-Text ohne explizite Farbe = FluentTheme-hell auf hartem weißem Grid → unsichtbar; `TextElement.Foreground="Black"` auf `mainGrid` gesetzt. Temp-Verdrahtung danach entfernt; Tests unverändert 5/14.
 
-### Phase 5 — MainWindow-Nachbau
-- [ ] Register-Panel (AX–DI, Segmente, IP)
-- [ ] Flags-Panel
-- [ ] Stream-/Memory-Tabs mit `BinaryGridView`
-- [ ] Assembly-Output (`ItemsControl`)
-- [ ] Instructions-`DataGrid`
-- [ ] Errors-/Log-Ansicht (read-only DataGrid)
-- [ ] **Ribbon nachgebaut** (Home/View, Gruppen, Icon-Buttons, Programm-ComboBox, Hex-Checkboxen)
-- [ ] `Loaded`-Command verdrahtet
-- [ ] Validierung: Listing laden, Disassembly/Instructions/Memory sichtbar; Run/Step/Stop/Reset funktionieren
+### Phase 5 — MainWindow-Nachbau  (🟡 funktional, UI-Feinschliff offen)
+- [x] Register-Panel (AX–DI, CS–ES, IP) — Werte via MultiBinding auf `registerValueConverter` + `ShowRegisterAsHex`
+- [x] Flags-Panel (CF/PF/AF/ZF/SF/TF/IF/DF/OF als read-only CheckBoxen) + State (Decode/Exec/Pos)
+- [x] Stream-/Memory-Tabs mit `BinaryGridView` (Stream gebunden an `CurrentStream`; Memory als `MemoryGridService`)
+- [x] Assembly-Output (`ItemsControl` über `AssemblyLines`)
+- [x] Instructions-`DataGrid` (Pos/Op/Mnemonic/Len/Cycles)
+- [x] Errors-/Log-Ansicht (read-only `DataGrid`) — Paket `Avalonia.Controls.DataGrid` 11.3.13 + Fluent-Theme-Include
+- [x] Ribbon als **Tab-Nachbau** (Home: Programm-ComboBox + Run/Step/Stop/Reset-Icon-Buttons; View: Hex-Checkboxen)
+- [x] `Loaded`-Command + Service-Wiring im Code-behind (DispatcherService registriert; Memory-Grid-VM als `"MemoryGridService"`, `MainViewModel` als `IMemoryAddressResolverService` ins Grid-VM)
+- [x] **Cross-Thread-Fix:** `OnCPUPropertyChanged`/`OnCPUMemoryChanged` marshallen über `_dispatcherService` auf den UI-Thread (Avalonia thread-strikt; Run/Step liefen im Hintergrundthread → Crash). `ReadOnlySpan` vorher in `byte[]` kopiert.
+- [x] **Dispatcher-Stub:** `DirectDispatcherService` (führt Action direkt aus); `_dispatcherService` fällt darauf zurück → alle `null`-Prüfungen in `AddLog`/`Reset` entfernt.
+- [x] **Light-Mode** gesetzt (`RequestedThemeVariant="Light"`), vom Nutzer bestätigt.
+- [x] Validierung: Solution baut 0/0; App startet, Programm-Auswahl lädt Disassembly; **Run/Step ohne Cross-Thread-Crash** (Nutzer bestätigt Farben/Funktion).
+- [ ] **OFFEN (nächste Session):** UI-Layout/Abstände, pixelnahe Ribbon-Optik, DataGrid-Row-Highlighting der aktuellen Instruktion, **umschaltbares Theme (Light/Dark zur Laufzeit)**.
 
 ### Phase 6 — Plattform-/IDE-Verifikation
 - [ ] Smoke-Test Linux
@@ -157,6 +161,9 @@
   `Avalonia.Xaml.Interactivity`/`Interactions` 11.3.0. F-008 final erledigt.
 - Validierung Phase 4: GUI baut 0/0; Control isoliert gerendert, **Bytes vom Nutzer bestätigt sichtbar**.
   Gefundener+gefixter Render-Bug: weiße Default-Schrift auf weißem Grid → `TextElement.Foreground="Black"`.
-- **Nächster Schritt:** Phase 5 — MainWindow nachbauen (Register-/Flags-Panel, Stream/Memory-Tabs mit `BinaryGridView`,
-  Assembly-Output, Instructions-DataGrid, Errors/Log, **Ribbon-Nachbau**, `Loaded`-Command, Service-Wiring via Behaviors).
-  Paket `Avalonia.Controls.DataGrid` + Theme-Include in Phase 5 ergänzen.
+- **Phase 5 umgesetzt (funktional):** MainWindow mit Tab-Ribbon, Register-/Flags-Panel, Stream/Memory-Tabs,
+  Assembly-Output, Instructions-/Errors-/Log-DataGrids; DataContext/Services/Commands im Code-behind verdrahtet.
+  Cross-Thread-Crash bei Run/Step gefixt (Dispatcher-Marshalling) + Dispatcher-Stub statt null-Prüfungen. Light-Mode.
+  Paket `Avalonia.Controls.DataGrid` 11.3.13. **Vom Nutzer:** UI-Layout/Abstände/Ribbon-Optik werden separat überarbeitet.
+- **Nächster Schritt:** UI-Feinschliff (Layout/Abstände/Ribbon, DataGrid-Row-Highlight, umschaltbares Theme) durch Nutzer;
+  danach Phase 6 — Plattform-/IDE-Verifikation (Linux/Windows-Smoke, Rider/VS laden+bauen, Definition of Done).

@@ -21,7 +21,7 @@ namespace Final.CPU8086
     {
         private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
 
-        private IDispatcherService _dispatcherService => GetService<IDispatcherService>();
+        private IDispatcherService _dispatcherService => GetService<IDispatcherService>() ?? DirectDispatcherService.Instance;
 
         private readonly CPU _cpu;
 
@@ -129,10 +129,13 @@ namespace Final.CPU8086
             return result;
         }
 
+        // Avalonia ist Thread-strikt: CPU-Events kommen aus den Run/Step-Hintergrundthreads,
+        // jede UI-Aktualisierung muss auf den UI-Thread marshallen (Dispatcher-Stub bei Bedarf).
         private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
         {
-            ReadOnlySpan<byte> stream = Memory.Get(args.Offset, args.Length);
-            MemoryGridService.ReloadStream(stream, args.Offset);
+            byte[] data = Memory.Get(args.Offset, args.Length).ToArray();
+            uint offset = args.Offset;
+            _dispatcherService.Invoke(() => MemoryGridService.ReloadStream(data, offset));
         }
 
         private void OnLoaded()
@@ -151,27 +154,27 @@ namespace Final.CPU8086
 
         private void AddLog(uint position, string message)
         {
-            if (_dispatcherService != null)
-                _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
-            else
-                Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now));
+            _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (nameof(CPU.Register).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(Register));
-            else if (nameof(CPU.Memory).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(Memory));
-            else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(CurrentStreamPosition));
-            else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(CurrentInstruction));
-            else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+            _dispatcherService.Invoke(() =>
             {
-                RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
-                RefreshCommands();
-            }
+                if (nameof(CPU.Register).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(Register));
+                else if (nameof(CPU.Memory).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(Memory));
+                else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(CurrentStreamPosition));
+                else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(CurrentInstruction));
+                else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+                {
+                    RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
+                    RefreshCommands();
+                }
+            });
         }
 
         private void InstructionsChanged(IEnumerable<Instruction> instructions)
@@ -187,10 +190,7 @@ namespace Final.CPU8086
         private bool CanReset() => DecodeState == DecodeState.Failed || ExecutionState == ExecutionState.Failed;
         private void Reset()
         {
-            if (_dispatcherService is not null)
-                _dispatcherService.Invoke(() => Errors.Clear());
-            else
-                Errors.Clear();
+            _dispatcherService.Invoke(() => Errors.Clear());
 
             _cpu.Reset();
         }

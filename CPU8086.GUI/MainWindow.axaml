@@ -52,6 +52,20 @@
         <Style Selector="ComboBox.program">
             <Setter Property="MinWidth" Value="280" />
         </Style>
+        <!-- Flag bulbs: red when off, green when on. Semi palette brushes follow light/dark. -->
+        <Style Selector="PathIcon.flag">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Foreground" Value="{DynamicResource SemiRed5}" />
+        </Style>
+        <Style Selector="PathIcon.flag.on">
+            <Setter Property="Foreground" Value="{DynamicResource SemiGreen5}" />
+        </Style>
+        <Style Selector="TextBlock.flagname">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,250,Auto,Auto">
@@ -365,30 +379,33 @@
         <!-- Flags, Row 4 -->
         <StackPanel Grid.Row="4" Classes="flags">
             <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                <CheckBox Grid.Row="0" Grid.Column="0" IsChecked="{Binding Register.CarryFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Text="CF" />
-                <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Register.ParityFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="PF" />
-                <CheckBox Grid.Row="0" Grid.Column="2" IsChecked="{Binding Register.AuxiliaryCarryFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="AF" />
-                <CheckBox Grid.Row="0" Grid.Column="3" IsChecked="{Binding Register.ZeroFlag}" IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="3" Text="ZF" />
-                <CheckBox Grid.Row="0" Grid.Column="4" IsChecked="{Binding Register.SignFlag}" IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="4" Text="SF" />
-                <CheckBox Grid.Row="0" Grid.Column="5" IsChecked="{Binding Register.TrapFlag}" IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="5" Text="TF" />
-                <CheckBox Grid.Row="0" Grid.Column="6" IsChecked="{Binding Register.InterruptFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="6" Text="IF" />
-                <CheckBox Grid.Row="0" Grid.Column="7" IsChecked="{Binding Register.DirectionalFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="7" Text="DF" />
-                <CheckBox Grid.Row="0" Grid.Column="8" IsChecked="{Binding Register.OverflowFlag}"
-                          IsHitTestVisible="False" />
-                <TextBlock Grid.Row="1" Grid.Column="8" Text="OF" />
+                <PathIcon Grid.Row="0" Grid.Column="0" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.CarryFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="flagname" Text="CF" />
+                <PathIcon Grid.Row="0" Grid.Column="1" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.ParityFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Classes="flagname" Text="PF" />
+                <PathIcon Grid.Row="0" Grid.Column="2" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.AuxiliaryCarryFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="flagname" Text="AF" />
+                <PathIcon Grid.Row="0" Grid.Column="3" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.ZeroFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="3" Classes="flagname" Text="ZF" />
+                <PathIcon Grid.Row="0" Grid.Column="4" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.SignFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="4" Classes="flagname" Text="SF" />
+                <PathIcon Grid.Row="0" Grid.Column="5" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.TrapFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="5" Classes="flagname" Text="TF" />
+                <PathIcon Grid.Row="0" Grid.Column="6" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.InterruptFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="6" Classes="flagname" Text="IF" />
+                <PathIcon Grid.Row="0" Grid.Column="7" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.DirectionalFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="7" Classes="flagname" Text="DF" />
+                <PathIcon Grid.Row="0" Grid.Column="8" Classes="flag" Data="{StaticResource SemiIconBulb}"
+                          Classes.on="{Binding Register.OverflowFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="8" Classes="flagname" Text="OF" />
             </Grid>
         </StackPanel>
 

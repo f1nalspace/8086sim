@@ -13,13 +13,13 @@ namespace Final.CPU8086
         [Fact]
         public void IsParity()
         {
-            Assert.Equal(false, InstructionExecuter.IsParity8(0b00011010));
-            Assert.Equal(false, InstructionExecuter.IsParity8((byte)26));
-            Assert.Equal(false, InstructionExecuter.IsParity16((ushort)26));
+            Assert.False(InstructionExecuter.IsParity8(0b00011010));
+            Assert.False(InstructionExecuter.IsParity8((byte)26));
+            Assert.False(InstructionExecuter.IsParity16((ushort)26));
 
-            Assert.Equal(true, InstructionExecuter.IsParity8(0b00001010));
-            Assert.Equal(true, InstructionExecuter.IsParity8((byte)10));
-            Assert.Equal(true, InstructionExecuter.IsParity16((ushort)10));
+            Assert.True(InstructionExecuter.IsParity8(0b00001010));
+            Assert.True(InstructionExecuter.IsParity8((byte)10));
+            Assert.True(InstructionExecuter.IsParity16((ushort)10));
         }
     }
 }

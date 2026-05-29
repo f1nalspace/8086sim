@@ -13,7 +13,7 @@
 |---|---|---|
 | 0 | Vorbereitung & Baseline | ✅ erledigt |
 | 1 | Non-UI-Projekte → .NET 10 (+ xUnit) | ✅ erledigt |
-| 2 | Avalonia-Projektgerüst | ⬜ |
+| 2 | Avalonia-Projektgerüst | ✅ erledigt |
 | 3 | MVVM-Infrastruktur | ⬜ |
 | 4 | Converters & BinaryGridView | ⬜ |
 | 5 | MainWindow-Nachbau (inkl. Ribbon) | ⬜ |
@@ -41,10 +41,12 @@
 - [x] Validierung: 5 Non-UI-Projekte bauen (0 Fehler/Warnungen); Console disassembliert (`MOV CX, BX`); Tests **5 grün / 14 rot** = identisch zur Baseline, **keine neuen** roten Tests.
 
 ### Phase 2 — Avalonia-Projektgerüst
-- [ ] `CPU8086.GUI.csproj` umgestellt (WPF/DevExpress/WPFHexaEditor raus, Avalonia+CT.Mvvm rein, `net10.0`)
-- [ ] `Program.cs` (Avalonia-Entry) + `App.axaml(.cs)` mit FluentTheme + DataGrid-Styles
-- [ ] Platzhalter-`MainWindow.axaml`, App startet unter Linux
-- [ ] Validierung: GUI baut, leeres Fenster startet
+- [x] `CPU8086.GUI.csproj` umgestellt: `net10.0`, `WinExe`, RootNamespace `Final.CPU8086`. **Raus:** `UseWPF`, `DevExpressMvvm`, `WPFHexaEditor` (F-004 erledigt), WPF-`Resource`-PNGs. **Rein:** `Avalonia` 11.3.17, `Avalonia.Desktop`, `Avalonia.Themes.Fluent`, `Avalonia.Diagnostics` (Debug). `AvaloniaResource Include="Resources\**\*.png"`. CT.Mvvm folgt in Phase 3.
+- [x] `Program.cs` (Avalonia-Entry, `BuildAvaloniaApp().StartWithClassicDesktopLifetime`) + `App.axaml(.cs)` mit `FluentTheme`. (DataGrid-Styles erst in Phase 4/5, wenn DataGrid eingeführt wird.)
+- [x] Platzhalter-`MainWindow.axaml(.cs)`; App startet unter Linux.
+- [x] **Alte WPF-Bootstrap-Dateien gelöscht** (`git rm`): `App.xaml(.cs)`, `MainWindow.xaml(.cs)`, `AssemblyInfo.cs` (WPF-`ThemeInfo`), `Controls/BinaryGridView.xaml`. Alle aus git-Historie wiederherstellbar (Referenz für Phase 4/5).
+- [x] **Temporär aus dem Build genommen** (via `<Compile Remove>`, sichtbar als `<None>`): `MainViewModel.cs`, `LogItemViewModel.cs`, `AutoServiceBehavior.cs`, `DecodeState.cs`, `StreamByte.cs`, `IAutoService.cs`, `Behaviors/**`, `Controls/**`, `Converters/**`, `Services/**`. **→ Phase 3/4 müssen diese Removes wieder entfernen, sobald portiert.**
+- [x] Validierung: `dotnet build CPU8086.sln` grün (0 Fehler); GUI-Fenster lief im Smoke-Test 8 s stabil unter X11 (`:0`), keine Exception; Tests unverändert 5/14; xUnit2004-Warnungen in `FlagsTests` bereinigt (`Assert.False/True`).
 
 ### Phase 3 — MVVM-Kompatibilitäts-Shim (DevExpress.Mvvm-API auf CT.Mvvm)
 - [ ] Shim `ViewModelBase` (GetValue/SetValue-Overloads, Raise*, ISupportServices) — intern `ObservableObject`
@@ -91,7 +93,7 @@
 | F-001 | hoch | `CPU8086.Resources/InstructionStreamResources.cs` `Get()` | Prependet nur `Final.CPU8086.Resources.`, ignoriert die Untergruppe `performance_aware.`. Aufruf mit bloßem `listing_xxxx` liefert `null`. Bricht 14 Decode-Tests (Stream null → `ArgumentNullException`) und den Console-Default-Launcharg. | tracken, nicht fixen |
 | F-002 | mittel | `CPU8086.Console/Program.cs` | `--exec`-Flag (`ExecuteArgConstant`) deklariert, aber im `Main` nie ausgewertet. Console disassembliert nur (`GetAssembly`), führt keine Programme aus. | tracken, nicht fixen |
 | F-003 | niedrig | `CPU8086.Console/Program.cs:201` | `Console.ReadKey()` wirft `InvalidOperationException` bei umgeleiteter/fehlender Konsoleneingabe (Pipe, CI, headless). | tracken, nicht fixen |
-| F-004 | niedrig | `CPU8086.GUI.csproj` | `WPFHexaEditor` referenziert, aber nirgends verwendet. Bei Migration ersatzlos entfernbar. | im Zuge der Portierung entfernen |
+| F-004 | niedrig | `CPU8086.GUI.csproj` | `WPFHexaEditor` referenziert, aber nirgends verwendet. Bei Migration ersatzlos entfernbar. | ✅ **erledigt (Phase 2)** — ersatzlos entfernt |
 | F-005 | info | `CPU8086.Tests` | Mehrere Tests rot, weil Instructions nicht implementiert sind bzw. Cycle-Zählung abweicht. | **ignorieren** (per Nutzer) |
 | F-006 | niedrig | `CPU8086.GUI/Behaviors/AttachServiceBehavior.cs` | Leere abstrakte Behavior-Basis ohne ersichtliche Verwendung — möglicher toter Code. | in Phase 3 prüfen |
 | F-007 | info | `CPU8086.Console/Properties/launchSettings.json` | Default-Arg `--res listing_0050_challenge_jumps` greift wegen F-001 nicht (Resource nicht gefunden). | tracken |
@@ -133,5 +135,10 @@
   Details in Phase-1-Checkliste). Ergebnis: **5 grün / 14 rot** — bitidentisch zur Baseline, keine neuen roten Tests.
 - Console-Disassembly auf net10 verifiziert (`MOV CX, BX`); F-003 (ReadKey bei Pipe) tritt erwartungsgemäß
   weiter auf, kein Regress.
-- **Nächster Schritt:** Phase 2 — Avalonia-Projektgerüst (`CPU8086.GUI.csproj` umstellen, `Program.cs`/`App.axaml`,
-  leeres `MainWindow` unter Linux starten).
+- **Phase 2 umgesetzt:** GUI-Projekt auf Avalonia 11.3.17 / `net10.0` umgestellt; WPF/DevExpress/WPFHexaEditor
+  entfernt (F-004 ✅); alte WPF-Bootstrap-Dateien gelöscht; Avalonia-`Program.cs`/`App.axaml`/Platzhalter-`MainWindow`
+  angelegt. Noch nicht portierte WPF-Quellen temporär via `<Compile Remove>` ausgeschlossen (Phase 3/4 reaktivieren).
+  Validierung: Solution baut grün; Avalonia-Fenster startet stabil unter X11.
+- **Avalonia-Version fixiert:** 11.3.17 (aktuelle Stable-Linie, .NET-10-kompatibel).
+- **Nächster Schritt:** Phase 3 — MVVM-Kompatibilitäts-Shim (`DevExpress.Mvvm`-API auf CommunityToolkit.Mvvm),
+  dann ViewModels/Behaviors/Services schrittweise wieder einkompilieren (die `<Compile Remove>`-Einträge entfernen).

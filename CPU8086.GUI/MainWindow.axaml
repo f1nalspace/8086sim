@@ -380,32 +380,32 @@
         <StackPanel Grid.Row="4" Classes="flags">
             <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                 <PathIcon Grid.Row="0" Grid.Column="0" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.CarryFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="0" Classes="flagname" Text="CF" />
+                          ToolTip.Tip="CF = Carry Flag" Classes.on="{Binding Register.CarryFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="flagname" Text="CF" ToolTip.Tip="CF = Carry Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="1" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.ParityFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="1" Classes="flagname" Text="PF" />
+                          ToolTip.Tip="PF = Parity Flag" Classes.on="{Binding Register.ParityFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Classes="flagname" Text="PF" ToolTip.Tip="PF = Parity Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="2" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.AuxiliaryCarryFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="2" Classes="flagname" Text="AF" />
+                          ToolTip.Tip="AF = Auxiliary Carry Flag" Classes.on="{Binding Register.AuxiliaryCarryFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="flagname" Text="AF" ToolTip.Tip="AF = Auxiliary Carry Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="3" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.ZeroFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="3" Classes="flagname" Text="ZF" />
+                          ToolTip.Tip="ZF = Zero Flag" Classes.on="{Binding Register.ZeroFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="3" Classes="flagname" Text="ZF" ToolTip.Tip="ZF = Zero Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="4" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.SignFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="4" Classes="flagname" Text="SF" />
+                          ToolTip.Tip="SF = Sign Flag" Classes.on="{Binding Register.SignFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="4" Classes="flagname" Text="SF" ToolTip.Tip="SF = Sign Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="5" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.TrapFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="5" Classes="flagname" Text="TF" />
+                          ToolTip.Tip="TF = Trap Flag" Classes.on="{Binding Register.TrapFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="5" Classes="flagname" Text="TF" ToolTip.Tip="TF = Trap Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="6" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.InterruptFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="6" Classes="flagname" Text="IF" />
+                          ToolTip.Tip="IF = Interrupt Flag" Classes.on="{Binding Register.InterruptFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="6" Classes="flagname" Text="IF" ToolTip.Tip="IF = Interrupt Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="7" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.DirectionalFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="7" Classes="flagname" Text="DF" />
+                          ToolTip.Tip="DF = Direction Flag" Classes.on="{Binding Register.DirectionalFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="7" Classes="flagname" Text="DF" ToolTip.Tip="DF = Direction Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="8" Classes="flag" Data="{StaticResource SemiIconBulb}"
-                          Classes.on="{Binding Register.OverflowFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="8" Classes="flagname" Text="OF" />
+                          ToolTip.Tip="OF = Overflow Flag" Classes.on="{Binding Register.OverflowFlag}" />
+                <TextBlock Grid.Row="1" Grid.Column="8" Classes="flagname" Text="OF" ToolTip.Tip="OF = Overflow Flag" />
             </Grid>
         </StackPanel>
 

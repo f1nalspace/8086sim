@@ -560,12 +560,13 @@ namespace Final.CPU8086.Execution
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
 
-            int value = previosDest.Value;
-            int addend = source.Value;
-            int sum = value + addend;
+            // Operands may arrive sign-extended (registers) or zero-extended (memory), so mask
+            // to the operand width and compute carry/overflow on the masked values.
+            int rawValue = previosDest.Value;
+            int rawAddend = source.Value;
 
-            bool isAuxiliary = IsAuxiliaryOverflow(value, addend);
-            bool isZero = IsZero(sum);
+            bool isAuxiliary;
+            bool isZero;
             bool isCarry;
             bool isParity;
             bool isSign;
@@ -575,20 +576,34 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
+                {
+                    int a = rawValue & 0xFF;
+                    int b = rawAddend & 0xFF;
+                    int sum = a + b;
                     finalDest = new Immediate((byte)sum);
-                    isCarry = IsCarry8(sum);
+                    isCarry = sum > 0xFF;
+                    isAuxiliary = ((a & 0xF) + (b & 0xF)) > 0xF;
+                    isZero = (sum & 0xFF) == 0;
                     isParity = IsParity8((byte)sum);
-                    isSign = IsSign8(sum);
-                    isOverflow = IsOverflow8(sum);
-                    break;
+                    isSign = (sum & 0x80) != 0;
+                    isOverflow = (~(a ^ b) & (a ^ sum) & 0x80) != 0;
+                }
+                break;
 
                 case DataWidthType.Word:
+                {
+                    int a = rawValue & 0xFFFF;
+                    int b = rawAddend & 0xFFFF;
+                    int sum = a + b;
                     finalDest = new Immediate((ushort)sum);
-                    isCarry = IsCarry16(sum);
+                    isCarry = sum > 0xFFFF;
+                    isAuxiliary = ((a & 0xF) + (b & 0xF)) > 0xF;
+                    isZero = (sum & 0xFFFF) == 0;
                     isParity = IsParity16((ushort)sum);
-                    isSign = IsSign16(sum);
-                    isOverflow = IsOverflow16(sum);
-                    break;
+                    isSign = (sum & 0x8000) != 0;
+                    isOverflow = (~(a ^ b) & (a ^ sum) & 0x8000) != 0;
+                }
+                break;
 
                 default:
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
@@ -637,13 +652,14 @@ namespace Final.CPU8086.Execution
                 return previosDestRes.AsT1;
             Immediate previosDest = previosDestRes.AsT0;
 
-            int value = previosDest.Value;
-            int subtrahend = source.Value;
-            int difference = value - subtrahend;
+            // Mask to the operand width so carry (unsigned borrow) and overflow are correct
+            // regardless of whether the operands arrived sign- or zero-extended.
+            int rawValue = previosDest.Value;
+            int rawSubtrahend = source.Value;
 
-            bool isCarry = IsBorrow(value, subtrahend);
-            bool isAuxiliary = IsAuxiliaryUnderflow(value, subtrahend);
-            bool isZero = IsZero(difference);
+            bool isCarry;
+            bool isAuxiliary;
+            bool isZero;
             bool isParity;
             bool isSign;
             bool isOverflow;
@@ -652,18 +668,34 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    finalDest = new Immediate((byte)difference);
-                    isParity = IsParity8((byte)difference);
-                    isSign = IsSign8(difference);
-                    isOverflow = IsOverflow8(difference);
-                    break;
+                {
+                    int a = rawValue & 0xFF;
+                    int b = rawSubtrahend & 0xFF;
+                    int diff = a - b;
+                    finalDest = new Immediate((byte)diff);
+                    isCarry = a < b;
+                    isAuxiliary = (a & 0xF) < (b & 0xF);
+                    isZero = (diff & 0xFF) == 0;
+                    isParity = IsParity8((byte)diff);
+                    isSign = (diff & 0x80) != 0;
+                    isOverflow = ((a ^ b) & (a ^ diff) & 0x80) != 0;
+                }
+                break;
 
                 case DataWidthType.Word:
-                    finalDest = new Immediate((ushort)difference);
-                    isParity = IsParity16((ushort)difference);
-                    isSign = IsSign16(difference);
-                    isOverflow = IsOverflow16(difference);
-                    break;
+                {
+                    int a = rawValue & 0xFFFF;
+                    int b = rawSubtrahend & 0xFFFF;
+                    int diff = a - b;
+                    finalDest = new Immediate((ushort)diff);
+                    isCarry = a < b;
+                    isAuxiliary = (a & 0xF) < (b & 0xF);
+                    isZero = (diff & 0xFFFF) == 0;
+                    isParity = IsParity16((ushort)diff);
+                    isSign = (diff & 0x8000) != 0;
+                    isOverflow = ((a ^ b) & (a ^ diff) & 0x8000) != 0;
+                }
+                break;
 
                 default:
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);
@@ -711,13 +743,14 @@ namespace Final.CPU8086.Execution
                 return destRes.AsT1;
             Immediate previosDest = destRes.AsT0;
 
-            int value = previosDest.Value;
-            int subtrahend = source.Value;
-            int difference = value - subtrahend;
+            // Same arithmetic as SUB but the result is discarded; only flags are updated.
+            // Mask to width so carry/overflow are computed on the unsigned/masked values.
+            int rawValue = previosDest.Value;
+            int rawSubtrahend = source.Value;
 
-            bool isCarry = IsBorrow(value, subtrahend);
-            bool isAuxiliary = IsAuxiliaryUnderflow(value, subtrahend);
-            bool isZero = IsZero(difference);
+            bool isCarry;
+            bool isAuxiliary;
+            bool isZero;
             bool isParity;
             bool isSign;
             bool isOverflow;
@@ -725,16 +758,32 @@ namespace Final.CPU8086.Execution
             switch (instruction.Width.Type)
             {
                 case DataWidthType.Byte:
-                    isParity = IsParity8((byte)difference);
-                    isSign = IsSign8(difference);
-                    isOverflow = IsOverflow8(difference);
-                    break;
+                {
+                    int a = rawValue & 0xFF;
+                    int b = rawSubtrahend & 0xFF;
+                    int diff = a - b;
+                    isCarry = a < b;
+                    isAuxiliary = (a & 0xF) < (b & 0xF);
+                    isZero = (diff & 0xFF) == 0;
+                    isParity = IsParity8((byte)diff);
+                    isSign = (diff & 0x80) != 0;
+                    isOverflow = ((a ^ b) & (a ^ diff) & 0x80) != 0;
+                }
+                break;
 
                 case DataWidthType.Word:
-                    isParity = IsParity16((ushort)difference);
-                    isSign = IsSign16(difference);
-                    isOverflow = IsOverflow16(difference);
-                    break;
+                {
+                    int a = rawValue & 0xFFFF;
+                    int b = rawSubtrahend & 0xFFFF;
+                    int diff = a - b;
+                    isCarry = a < b;
+                    isAuxiliary = (a & 0xF) < (b & 0xF);
+                    isZero = (diff & 0xFFFF) == 0;
+                    isParity = IsParity16((ushort)diff);
+                    isSign = (diff & 0x8000) != 0;
+                    isOverflow = ((a ^ b) & (a ^ diff) & 0x8000) != 0;
+                }
+                break;
 
                 default:
                     return new Error(ErrorCode.MismatchInstructionOperands, $"Unsupported data width type '{instruction.Width.Type}' for {instruction.Mnemonic} instruction", instruction.Position);

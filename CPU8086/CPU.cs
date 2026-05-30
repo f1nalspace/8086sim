@@ -283,7 +283,7 @@ namespace Final.CPU8086
             if (type == DataType.Pointer)
                 type = PointerDataType;
             else if (type.HasFlag(DataType.Pointer))
-                type ^= ~DataType.Pointer;
+                type &= ~DataType.Pointer;
             return type switch
             {
                 DataType.Byte => 1,
@@ -533,7 +533,7 @@ namespace Final.CPU8086
                 return DataType.None;
             if (type == DataType.Pointer)
                 return PointerDataType;
-            return type ^ ~DataType.Pointer;
+            return type & ~DataType.Pointer;
         }
 
         private OneOf<Immediate, Error> LoadMemory(uint absoluteAddress, DataType type)

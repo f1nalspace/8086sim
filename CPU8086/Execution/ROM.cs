@@ -4,14 +4,14 @@ using System.IO;
 
 namespace Final.CPU8086.Execution
 {
-    public class Program : IProgram
+    public class ROM : IProgram
     {
         public string Name { get; }
         public ImmutableArray<byte> Stream { get; }
         public RegisterState Register { get; }
         public int Length => Stream.Length;
 
-        public Program(string name, ReadOnlySpan<byte> stream, RegisterState register = default)
+        public ROM(string name, ReadOnlySpan<byte> stream, RegisterState register = default)
         {
             Name = name;
 
@@ -25,7 +25,7 @@ namespace Final.CPU8086.Execution
             Register = register;
         }
 
-        public Program(string name, Stream stream, RegisterState register = default)
+        public ROM(string name, Stream stream, RegisterState register = default)
         {
             Name = name;
 

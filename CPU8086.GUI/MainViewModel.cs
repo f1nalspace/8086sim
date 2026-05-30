@@ -1,7 +1,7 @@
-﻿using DevExpress.Mvvm;
-using Final.CPU8086.Controls;
+﻿using Final.CPU8086.Controls;
 using Final.CPU8086.Execution;
 using Final.CPU8086.Instructions;
+using Final.CPU8086.Mvvm;
 using Final.CPU8086.Services;
 using Final.CPU8086.Types;
 using OneOf;
@@ -10,486 +10,484 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics.Contracts;
-using System.IO;
 using System.Linq;  
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Final.CPU8086
+namespace Final.CPU8086;
+
+public class MainViewModel : ViewModelBase, IMemoryAddressResolverService
 {
-    public class MainViewModel : ViewModelBase, IMemoryAddressResolverService
+    private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
+
+    private IDispatcherService _dispatcherService => GetService<IDispatcherService>() ?? DirectDispatcherService.Instance;
+
+    private readonly CPU _cpu;
+
+    private IBinaryGridService MemoryGridService => GetService<IBinaryGridService>("MemoryGridService");
+    public IProgram[] Programs { get; }
+
+    public IProgram CurrentProgram { get => GetValue<IProgram>(); set => SetValue(value, () => LoadProgram(value)); }
+
+    public ImmutableArray<byte> CurrentStream { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
+
+    public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value, () => InstructionsChanged(value)); }
+    private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
+
+    public ImmutableArray<AssemblyLine> AssemblyLines { get => _assemblyLines; private set => SetValue(ref _assemblyLines, value); }
+    private ImmutableArray<AssemblyLine> _assemblyLines = ImmutableArray<AssemblyLine>.Empty;
+
+    public ObservableCollection<Error> Errors { get; }
+
+    public ObservableCollection<LogItemViewModel> Logs { get; }
+
+    public bool ShowStreamAsHex { get => _showStreamAsHex; set => SetValue(ref _showStreamAsHex, value); }
+    private bool _showStreamAsHex = true;
+
+    public bool ShowRegisterAsHex { get => _showRegisterAsHex; set => SetValue(ref _showRegisterAsHex, value); }
+    private bool _showRegisterAsHex = true;
+
+    public bool ShowAssemblyAsHex { get => _showAssemblyAsHex; set => SetValue(ref _showAssemblyAsHex, value, () => ShowAssemblyAsHexChanged(value)); }
+    private bool _showAssemblyAsHex = true;
+
+    public bool ShowMemoryAsHex { get => _showMemoryAsHex; set => SetValue(ref _showMemoryAsHex, value); }
+    private bool _showMemoryAsHex = true;
+
+    public uint CurrentStreamPosition => _cpu.PreviousIP; // Previous IP is the current stream position
+
+    // The decoded instruction sitting at the current stream position (the one about to be
+    // executed). CPU.CurrentInstruction is the *previously executed* one after a step, so the
+    // Instructions grid and the stream highlight must resolve by position instead, otherwise
+    // both lag one step behind the actual execution position.
+    public Instruction CurrentStreamInstruction
     {
-        private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
-
-        private IDispatcherService _dispatcherService => GetService<IDispatcherService>() ?? DirectDispatcherService.Instance;
-
-        private readonly CPU _cpu;
-
-        private IBinaryGridService MemoryGridService => GetService<IBinaryGridService>("MemoryGridService");
-        public IProgram[] Programs { get; }
-
-        public IProgram CurrentProgram { get => GetValue<IProgram>(); set => SetValue(value, () => LoadProgram(value)); }
-
-        public ImmutableArray<byte> CurrentStream { get => GetValue<ImmutableArray<byte>>(); private set => SetValue(value); }
-
-        public ImmutableArray<Instruction> Instructions { get => _instructions; private set => SetValue(ref _instructions, value, () => InstructionsChanged(value)); }
-        private ImmutableArray<Instruction> _instructions = ImmutableArray<Instruction>.Empty;
-
-        public ImmutableArray<AssemblyLine> AssemblyLines { get => _assemblyLines; private set => SetValue(ref _assemblyLines, value); }
-        private ImmutableArray<AssemblyLine> _assemblyLines = ImmutableArray<AssemblyLine>.Empty;
-
-        public ObservableCollection<Error> Errors { get; }
-
-        public ObservableCollection<LogItemViewModel> Logs { get; }
-
-        public bool ShowStreamAsHex { get => _showStreamAsHex; set => SetValue(ref _showStreamAsHex, value); }
-        private bool _showStreamAsHex = true;
-
-        public bool ShowRegisterAsHex { get => _showRegisterAsHex; set => SetValue(ref _showRegisterAsHex, value); }
-        private bool _showRegisterAsHex = true;
-
-        public bool ShowAssemblyAsHex { get => _showAssemblyAsHex; set => SetValue(ref _showAssemblyAsHex, value, () => ShowAssemblyAsHexChanged(value)); }
-        private bool _showAssemblyAsHex = true;
-
-        public bool ShowMemoryAsHex { get => _showMemoryAsHex; set => SetValue(ref _showMemoryAsHex, value); }
-        private bool _showMemoryAsHex = true;
-
-        public uint CurrentStreamPosition => _cpu.PreviousIP; // Previous IP is the current stream position
-
-        // The decoded instruction sitting at the current stream position (the one about to be
-        // executed). CPU.CurrentInstruction is the *previously executed* one after a step, so the
-        // Instructions grid and the stream highlight must resolve by position instead, otherwise
-        // both lag one step behind the actual execution position.
-        public Instruction CurrentStreamInstruction
+        get
         {
-            get
-            {
-                uint pos = CurrentStreamPosition;
-                if (pos == uint.MaxValue)
-                    return null;
-                foreach (Instruction instruction in _instructions)
-                {
-                    if (instruction.Position == pos)
-                        return instruction;
-                }
+            uint pos = CurrentStreamPosition;
+            if (pos == uint.MaxValue)
                 return null;
-            }
-        }
-
-        // Byte length of the instruction at the current stream position, so the binary grid
-        // highlights exactly the bytes of the instruction about to be executed (not just one box).
-        public uint CurrentStreamLength
-            => CurrentStreamInstruction?.Length ?? (CurrentStreamPosition == uint.MaxValue ? 0u : 1u);
-
-        public ExecutionState ExecutionState => _cpu.ExecutionState;
-
-        public DecodeState DecodeState
-        {
-            get => _decodeState;
-            private set
+            foreach (Instruction instruction in _instructions)
             {
-                _decodeState = value;
-                RaisePropertyChanged(nameof(DecodeState));
+                if (instruction.Position == pos)
+                    return instruction;
+            }
+            return null;
+        }
+    }
+
+    // Byte length of the instruction at the current stream position, so the binary grid
+    // highlights exactly the bytes of the instruction about to be executed (not just one box).
+    public uint CurrentStreamLength
+        => CurrentStreamInstruction?.Length ?? (CurrentStreamPosition == uint.MaxValue ? 0u : 1u);
+
+    public ExecutionState ExecutionState => _cpu.ExecutionState;
+
+    public DecodeState DecodeState
+    {
+        get => _decodeState;
+        private set
+        {
+            _decodeState = value;
+            RaisePropertyChanged(nameof(DecodeState));
+            RefreshCommands();
+        }
+    }
+    private volatile DecodeState _decodeState = DecodeState.None;
+
+    public Instruction CurrentInstruction => _cpu.CurrentInstruction;
+
+    public RegisterState Register => _cpu.Register;
+
+    public MemoryState Memory => _cpu.Memory;
+
+    public int SelectedStreamOrMemoryTabIndex { get => GetValue<int>(); set => SetValue(value); }
+
+    public bool CanChangeStream => ExecutionState != ExecutionState.Running;
+
+    public DelegateCommand OnLoadedCommand { get; }
+    public DelegateCommand RunCommand { get; }
+    public DelegateCommand StopCommand { get; }
+    public DelegateCommand StepCommand { get; }
+    public DelegateCommand ResetCommand { get; }
+
+    private volatile Task _executionTask = null;
+    private volatile int _isStopping = 0;
+
+    public MainViewModel()
+    {
+        _cpu = new CPU();
+        _cpu.PropertyChanged += OnCPUPropertyChanged;
+        _cpu.MemoryChanged += OnCPUMemoryChanged;
+
+        OnLoadedCommand = new DelegateCommand(OnLoaded);
+        RunCommand = new DelegateCommand(Run, CanRun);
+        StopCommand = new DelegateCommand(Stop, CanStop);
+        StepCommand = new DelegateCommand(Step, CanStep);
+        ResetCommand = new DelegateCommand(Reset, CanReset);
+
+        Errors = new ObservableCollection<Error>();
+        Logs = new ObservableCollection<LogItemViewModel>();
+
+        _executionTask = null;
+
+        CurrentProgram = null;
+        CurrentStream = ImmutableArray<byte>.Empty;
+        DecodeState = DecodeState.None;
+        SelectedStreamOrMemoryTabIndex = 0;
+
+        IEnumerable<InstructionStreamResourceName> resourceNames = _resources.GetNames();
+
+        IEnumerable<InstructionStreamResourceName> binaryOnly = resourceNames.Where(r => r.IsBinary);
+
+        Programs = binaryOnly
+            .Select(n => new ROM($"{n.Group}/{n.Name}", _resources.Get(n.ResourceName, false)))
+            .ToArray();
+
+        CurrentProgram = Programs[0];
+    }
+
+    public uint ResolveMemoryAddress(SegmentType segment, (uint start, uint len) range)
+    {
+        MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate((int)range.start), segment, 0);
+        uint result = _cpu.GetAbsoluteMemoryAddress(address);
+        return result;
+    }
+
+    // Avalonia ist Thread-strikt: CPU-Events kommen aus den Run/Step-Hintergrundthreads,
+    // jede UI-Aktualisierung muss auf den UI-Thread marshallen (Dispatcher-Stub bei Bedarf).
+    private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
+    {
+        byte[] data = Memory.Get(args.Offset, args.Length).ToArray();
+        uint offset = args.Offset;
+        _dispatcherService.Invoke(() => MemoryGridService.ReloadStream(data, offset));
+    }
+
+    private void OnLoaded()
+    {
+        MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
+
+        // The first program is already loaded in the constructor (before the memory grid
+        // service exists), so push the current memory now that the grid is wired up.
+        RefreshMemoryGrid();
+    }
+
+    // Feed the full 1 MB address space into the memory grid so it always shows memory (paged
+    // via BytesPerPage) while a program is loaded. Subsequent in-place ReloadStream calls from
+    // OnCPUMemoryChanged / OnMemoryGridServicePageChanged keep the visible page fresh.
+    private void RefreshMemoryGrid()
+    {
+        IBinaryGridService grid = MemoryGridService;
+        if (grid == null)
+            return;
+        byte[] data = Memory.Get(0, (uint)Memory.Length).ToArray();
+        _dispatcherService.Invoke(() => grid.ReloadStream(data, 0));
+    }
+
+    private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
+    {
+        (uint Offset, uint Length) range = MemoryGridService.ComputePageRange(args.PageOffset, args.PageCount, args.BytesPerPage);
+
+        ReadOnlySpan<byte> stream = Memory.Get(range.Offset, range.Length);
+
+        MemoryGridService.ReloadStream(stream, range.Offset);
+    }
+
+    private void AddLog(uint position, string message)
+    {
+        _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
+    }
+
+    private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _dispatcherService.Invoke(() =>
+        {
+            if (nameof(CPU.Register).Equals(e.PropertyName))
+                RaisePropertyChanged(nameof(Register));
+            else if (nameof(CPU.Memory).Equals(e.PropertyName))
+                RaisePropertyChanged(nameof(Memory));
+            else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
+                RaisePropertiesChanged(nameof(CurrentStreamPosition), nameof(CurrentStreamLength), nameof(CurrentStreamInstruction));
+            else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
+                RaisePropertyChanged(nameof(CurrentInstruction));
+            else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+            {
+                RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
                 RefreshCommands();
             }
-        }
-        private volatile DecodeState _decodeState = DecodeState.None;
+        });
+    }
 
-        public Instruction CurrentInstruction => _cpu.CurrentInstruction;
+    private void InstructionsChanged(IEnumerable<Instruction> instructions)
+    {
+        RefreshAssemblyLines(instructions, ShowAssemblyAsHex);
+    }
 
-        public RegisterState Register => _cpu.Register;
+    private void ShowAssemblyAsHexChanged(bool asHex)
+    {
+        RefreshAssemblyLines(Instructions, asHex);
+    }
 
-        public MemoryState Memory => _cpu.Memory;
+    private bool CanReset() => DecodeState == DecodeState.Failed || ExecutionState == ExecutionState.Failed;
+    private void Reset()
+    {
+        _dispatcherService.Invoke(() => Errors.Clear());
 
-        public int SelectedStreamOrMemoryTabIndex { get => GetValue<int>(); set => SetValue(value); }
+        _cpu.Reset();
+    }
 
-        public bool CanChangeStream => ExecutionState != ExecutionState.Running;
+    public void LoadProgram(IProgram program)
+    {
+        AddLog(0, $"Loading program '{program}'");
 
-        public DelegateCommand OnLoadedCommand { get; }
-        public DelegateCommand RunCommand { get; }
-        public DelegateCommand StopCommand { get; }
-        public DelegateCommand StepCommand { get; }
-        public DelegateCommand ResetCommand { get; }
+        if (CanStop())
+            Stop();
 
-        private volatile Task _executionTask = null;
-        private volatile int _isStopping = 0;
+        Reset();
 
-        public MainViewModel()
+        if (program != null)
         {
-            _cpu = new CPU();
-            _cpu.PropertyChanged += OnCPUPropertyChanged;
-            _cpu.MemoryChanged += OnCPUMemoryChanged;
+            CurrentStream = program.Stream;
+            DecodeInstructions(program);
 
-            OnLoadedCommand = new DelegateCommand(OnLoaded);
-            RunCommand = new DelegateCommand(Run, CanRun);
-            StopCommand = new DelegateCommand(Stop, CanStop);
-            StepCommand = new DelegateCommand(Step, CanStep);
-            ResetCommand = new DelegateCommand(Reset, CanReset);
+            OneOf<int, Error> loadRes = _cpu.LoadProgram(program);
+            if (loadRes.IsT1)
+                _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
 
-            Errors = new ObservableCollection<Error>();
-            Logs = new ObservableCollection<LogItemViewModel>();
-
-            _executionTask = null;
-
-            CurrentProgram = null;
-            CurrentStream = ImmutableArray<byte>.Empty;
-            DecodeState = DecodeState.None;
-            SelectedStreamOrMemoryTabIndex = 0;
-
-            IEnumerable<InstructionStreamResourceName> resourceNames = _resources.GetNames();
-
-            IEnumerable<InstructionStreamResourceName> binaryOnly = resourceNames.Where(r => r.IsBinary);
-
-            Programs = binaryOnly
-                .Select(n => new Program($"{n.Group}/{n.Name}", _resources.Get(n.ResourceName, false)))
-                .ToArray();
-
-            CurrentProgram = Programs[0];
-        }
-
-        public uint ResolveMemoryAddress(SegmentType segment, (uint start, uint len) range)
-        {
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate((int)range.start), segment, 0);
-            uint result = _cpu.GetAbsoluteMemoryAddress(address);
-            return result;
-        }
-
-        // Avalonia ist Thread-strikt: CPU-Events kommen aus den Run/Step-Hintergrundthreads,
-        // jede UI-Aktualisierung muss auf den UI-Thread marshallen (Dispatcher-Stub bei Bedarf).
-        private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
-        {
-            byte[] data = Memory.Get(args.Offset, args.Length).ToArray();
-            uint offset = args.Offset;
-            _dispatcherService.Invoke(() => MemoryGridService.ReloadStream(data, offset));
-        }
-
-        private void OnLoaded()
-        {
-            MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
-
-            // The first program is already loaded in the constructor (before the memory grid
-            // service exists), so push the current memory now that the grid is wired up.
+            // Refresh the memory grid with the program just written into memory.
             RefreshMemoryGrid();
         }
+        else
+            CurrentStream = ImmutableArray<byte>.Empty;
+    }
 
-        // Feed the full 1 MB address space into the memory grid so it always shows memory (paged
-        // via BytesPerPage) while a program is loaded. Subsequent in-place ReloadStream calls from
-        // OnCPUMemoryChanged / OnMemoryGridServicePageChanged keep the visible page fresh.
-        private void RefreshMemoryGrid()
+    private void RefreshCommands()
+    {
+        RunCommand.RaiseCanExecuteChanged();
+        StopCommand.RaiseCanExecuteChanged();
+        StepCommand.RaiseCanExecuteChanged();
+        ResetCommand.RaiseCanExecuteChanged();
+        RaisePropertyChanged(nameof(CanChangeStream));
+    }
+
+    private bool CanRun() =>
+        DecodeState == DecodeState.Success &&
+        (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed) &&
+        (_executionTask == null || _executionTask.IsCompleted);
+    private async void Run()
+    {
+        Contract.Assert(CanRun());
+
+        _isStopping = 0;
+
+        AddLog(CurrentStreamPosition, $"Running program '{CurrentProgram}'");
+
+        _dispatcherService.Invoke(() => Errors.Clear());
+
+        OneOf<int, Error> loadRes = _cpu.LoadProgram(CurrentProgram);
+        if (loadRes.IsT1)
         {
-            IBinaryGridService grid = MemoryGridService;
-            if (grid == null)
-                return;
-            byte[] data = Memory.Get(0, (uint)Memory.Length).ToArray();
-            _dispatcherService.Invoke(() => grid.ReloadStream(data, 0));
+            _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
+            return;
         }
 
-        private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
+        _executionTask = Task.Run(() => ExecuteAsync());
+        await _executionTask;
+
+        RefreshCommands();
+    }
+
+    private Task ExecuteAsync() => Task.Run(() =>
+    {
+        _dispatcherService.Invoke(() => Errors.Clear());
+
+        RunState state = new RunState();
+
+        _cpu.Reset();
+
+        try
         {
-            (uint Offset, uint Length) range = MemoryGridService.ComputePageRange(args.PageOffset, args.PageCount, args.BytesPerPage);
-
-            ReadOnlySpan<byte> stream = Memory.Get(range.Offset, range.Length);
-
-            MemoryGridService.ReloadStream(stream, range.Offset);
-        }
-
-        private void AddLog(uint position, string message)
-        {
-            _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
-        }
-
-        private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            _dispatcherService.Invoke(() =>
+            Task stoppingCheckTask = Task.Run(() =>
             {
-                if (nameof(CPU.Register).Equals(e.PropertyName))
-                    RaisePropertyChanged(nameof(Register));
-                else if (nameof(CPU.Memory).Equals(e.PropertyName))
-                    RaisePropertyChanged(nameof(Memory));
-                else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
-                    RaisePropertiesChanged(nameof(CurrentStreamPosition), nameof(CurrentStreamLength), nameof(CurrentStreamInstruction));
-                else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
-                    RaisePropertyChanged(nameof(CurrentInstruction));
-                else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+                while (!state.IsStopped)
                 {
-                    RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
-                    RefreshCommands();
+                    if (_isStopping == 1)
+                        state.IsStopped = true;
+                    else
+                        Thread.Sleep(10);
                 }
             });
+
+            OneOf<uint, Error> runRes = new Error();
+
+            Task<bool> runTask = Task.Run(() => runRes = _cpu.Run(state)).ContinueWith((t) => state.IsStopped = true);
+
+            Task.WaitAll(runTask, stoppingCheckTask);
+
+            if (runRes.IsT1)
+                _dispatcherService.Invoke(() => Errors.Add(runRes.AsT1));
         }
-
-        private void InstructionsChanged(IEnumerable<Instruction> instructions)
+        catch (Exception e)
         {
-            RefreshAssemblyLines(instructions, ShowAssemblyAsHex);
+            _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
         }
-
-        private void ShowAssemblyAsHexChanged(bool asHex)
+        finally
         {
-            RefreshAssemblyLines(Instructions, asHex);
+            Interlocked.Exchange(ref _isStopping, 0);
         }
+    });
 
-        private bool CanReset() => DecodeState == DecodeState.Failed || ExecutionState == ExecutionState.Failed;
-        private void Reset()
+    private bool CanStop() =>
+        DecodeState == DecodeState.Success &&
+        (ExecutionState == ExecutionState.Running || ExecutionState == ExecutionState.Halted);
+    private async void Stop()
+    {
+        Contract.Assert(CanStop());
+        AddLog(CurrentStreamPosition, $"Stopping program '{CurrentProgram}'");
+        await StopAsync();
+        RefreshCommands();
+    }
+
+    private async Task StopAsync()
+    {
+        Interlocked.Exchange(ref _isStopping, 1);
+        try
         {
-            _dispatcherService.Invoke(() => Errors.Clear());
-
-            _cpu.Reset();
-        }
-
-        public void LoadProgram(IProgram program)
-        {
-            AddLog(0, $"Loading program '{program}'");
-
-            if (CanStop())
-                Stop();
-
-            Reset();
-
-            if (program != null)
-            {
-                CurrentStream = program.Stream;
-                DecodeInstructions(program);
-
-                OneOf<int, Error> loadRes = _cpu.LoadProgram(program);
-                if (loadRes.IsT1)
-                    _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
-
-                // Refresh the memory grid with the program just written into memory.
-                RefreshMemoryGrid();
-            }
+            if (ExecutionState == ExecutionState.Halted)
+                _cpu.StopStepping();
             else
-                CurrentStream = ImmutableArray<byte>.Empty;
+            {
+                while (ExecutionState == ExecutionState.Running || ExecutionState == ExecutionState.Halted)
+                {
+                    await Task.Delay(50);
+                }
+            }
         }
-
-        private void RefreshCommands()
+        finally
         {
-            RunCommand.RaiseCanExecuteChanged();
-            StopCommand.RaiseCanExecuteChanged();
-            StepCommand.RaiseCanExecuteChanged();
-            ResetCommand.RaiseCanExecuteChanged();
-            RaisePropertyChanged(nameof(CanChangeStream));
+            Interlocked.Exchange(ref _isStopping, 0);
         }
+    }
 
-        private bool CanRun() =>
-            DecodeState == DecodeState.Success &&
-            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished || ExecutionState == ExecutionState.Failed) &&
-            (_executionTask == null || _executionTask.IsCompleted);
-        private async void Run()
+    private bool CanStep() =>
+        Instructions.Length > 0 &&
+        CurrentStream.Length > 0 &&
+        (CurrentStreamPosition == uint.MaxValue || CurrentStreamPosition < CurrentStream.Length) &&
+        DecodeState == DecodeState.Success &&
+        (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted || ExecutionState == ExecutionState.Finished) &&
+        (_executionTask == null || _executionTask.IsCompleted);
+    private async void Step()
+    {
+        Contract.Assert(CanStep());
+        if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished)
         {
-            Contract.Assert(CanRun());
-
-            _isStopping = 0;
-
-            AddLog(CurrentStreamPosition, $"Running program '{CurrentProgram}'");
-
             _dispatcherService.Invoke(() => Errors.Clear());
 
-            OneOf<int, Error> loadRes = _cpu.LoadProgram(CurrentProgram);
-            if (loadRes.IsT1)
+            OneOf<int, Error> progRes = _cpu.LoadProgram(CurrentProgram);
+            if (progRes.IsT1)
             {
-                _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
+                _dispatcherService.Invoke(() => Errors.Add(progRes.AsT1));
                 return;
             }
 
-            _executionTask = Task.Run(() => ExecuteAsync());
+            AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}'");
+            Interlocked.Exchange(ref _isStopping, 0);
+
+            _cpu.BeginStepping();
+        }
+        else if (ExecutionState == ExecutionState.Halted)
+        {
+            AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}'");
+            Interlocked.Exchange(ref _isStopping, 0);
+            _executionTask = Task.Run(() => StepAsync());
             await _executionTask;
-
-            RefreshCommands();
         }
 
-        private Task ExecuteAsync() => Task.Run(() =>
+        RefreshCommands();
+    }
+
+    private Task StepAsync() => Task.Run(() =>
+    {
+        RunState state = new RunState();
+        if (_isStopping == 1)
+            state.IsStopped = true;
+        try
         {
-            _dispatcherService.Invoke(() => Errors.Clear());
-
-            RunState state = new RunState();
-
-            _cpu.Reset();
-
-            try
+            OneOf<Instruction, Error> stepRes = _cpu.Step(state);
+            if (stepRes.IsT1)
             {
-                Task stoppingCheckTask = Task.Run(() =>
-                {
-                    while (!state.IsStopped)
-                    {
-                        if (_isStopping == 1)
-                            state.IsStopped = true;
-                        else
-                            Thread.Sleep(10);
-                    }
-                });
-
-                OneOf<uint, Error> runRes = new Error();
-
-                Task<bool> runTask = Task.Run(() => runRes = _cpu.Run(state)).ContinueWith((t) => state.IsStopped = true);
-
-                Task.WaitAll(runTask, stoppingCheckTask);
-
-                if (runRes.IsT1)
-                    _dispatcherService.Invoke(() => Errors.Add(runRes.AsT1));
-            }
-            catch (Exception e)
-            {
-                _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _isStopping, 0);
-            }
-        });
-
-        private bool CanStop() =>
-            DecodeState == DecodeState.Success &&
-            (ExecutionState == ExecutionState.Running || ExecutionState == ExecutionState.Halted);
-        private async void Stop()
-        {
-            Contract.Assert(CanStop());
-            AddLog(CurrentStreamPosition, $"Stopping program '{CurrentProgram}'");
-            await StopAsync();
-            RefreshCommands();
-        }
-
-        private async Task StopAsync()
-        {
-            Interlocked.Exchange(ref _isStopping, 1);
-            try
-            {
-                if (ExecutionState == ExecutionState.Halted)
-                    _cpu.StopStepping();
-                else
-                {
-                    while (ExecutionState == ExecutionState.Running || ExecutionState == ExecutionState.Halted)
-                    {
-                        await Task.Delay(50);
-                    }
-                }
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _isStopping, 0);
+                Error err = stepRes.AsT1;
+                if (err.Code != ErrorCode.ExecutionStopped)
+                    _dispatcherService.Invoke(() => Errors.Add(err));
             }
         }
-
-        private bool CanStep() =>
-            Instructions.Length > 0 &&
-            CurrentStream.Length > 0 &&
-            (CurrentStreamPosition == uint.MaxValue || CurrentStreamPosition < CurrentStream.Length) &&
-            DecodeState == DecodeState.Success &&
-            (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Halted || ExecutionState == ExecutionState.Finished) &&
-            (_executionTask == null || _executionTask.IsCompleted);
-        private async void Step()
+        catch (Exception e)
         {
-            Contract.Assert(CanStep());
-            if (ExecutionState == ExecutionState.Stopped || ExecutionState == ExecutionState.Finished)
-            {
-                _dispatcherService.Invoke(() => Errors.Clear());
-
-                OneOf<int, Error> progRes = _cpu.LoadProgram(CurrentProgram);
-                if (progRes.IsT1)
-                {
-                    _dispatcherService.Invoke(() => Errors.Add(progRes.AsT1));
-                    return;
-                }
-
-                AddLog(CurrentStreamPosition, $"Start stepping into program '{CurrentProgram}'");
-                Interlocked.Exchange(ref _isStopping, 0);
-
-                _cpu.BeginStepping();
-            }
-            else if (ExecutionState == ExecutionState.Halted)
-            {
-                AddLog(CurrentStreamPosition, $"Continue stepping into program '{CurrentProgram}'");
-                Interlocked.Exchange(ref _isStopping, 0);
-                _executionTask = Task.Run(() => StepAsync());
-                await _executionTask;
-            }
-
-            RefreshCommands();
+            _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
         }
-
-        private Task StepAsync() => Task.Run(() =>
+        finally
         {
-            RunState state = new RunState();
-            if (_isStopping == 1)
-                state.IsStopped = true;
-            try
-            {
-                OneOf<Instruction, Error> stepRes = _cpu.Step(state);
-                if (stepRes.IsT1)
-                {
-                    Error err = stepRes.AsT1;
-                    if (err.Code != ErrorCode.ExecutionStopped)
-                        _dispatcherService.Invoke(() => Errors.Add(err));
-                }
-            }
-            catch (Exception e)
-            {
-                _dispatcherService.Invoke(() => Errors.Add(new Error(ErrorCode.ExecutionFailed, $"Failed to execute instruction '{CurrentInstruction}' in position '{CurrentStreamPosition}': {e}", CurrentStreamPosition)));
-            }
-            finally
-            {
-                Interlocked.Exchange(ref _isStopping, 0);
-            }
-        });
-
-        private void RefreshAssemblyLines(IEnumerable<Instruction> instructions, bool asHex)
-        {
-            OneOf<AssemblyLine[], Error> res = CPU.GetAssemblyLines(instructions, asHex ? OutputValueMode.AsHex : OutputValueMode.AsInteger);
-            if (res.IsT0)
-                AssemblyLines = res.AsT0.ToImmutableArray();
-            else
-            {
-                AssemblyLines = ImmutableArray<AssemblyLine>.Empty;
-                Errors.Add(res.AsT1);
-            }
+            Interlocked.Exchange(ref _isStopping, 0);
         }
+    });
 
-        private void DecodeInstructions(IProgram program)
+    private void RefreshAssemblyLines(IEnumerable<Instruction> instructions, bool asHex)
+    {
+        OneOf<AssemblyLine[], Error> res = CPU.GetAssemblyLines(instructions, asHex ? OutputValueMode.AsHex : OutputValueMode.AsInteger);
+        if (res.IsT0)
+            AssemblyLines = res.AsT0.ToImmutableArray();
+        else
         {
-            if (program == null)
-                throw new ArgumentNullException(nameof(program));
+            AssemblyLines = ImmutableArray<AssemblyLine>.Empty;
+            Errors.Add(res.AsT1);
+        }
+    }
 
-            DecodeState = DecodeState.Decoding;
+    private void DecodeInstructions(IProgram program)
+    {
+        if (program == null)
+            throw new ArgumentNullException(nameof(program));
 
-            AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
+        DecodeState = DecodeState.Decoding;
 
-            List<Instruction> list = new List<Instruction>();
+        AddLog(CurrentStreamPosition, $"Decoding instructions for program '{program}'");
 
-            ImmutableArray<byte> stream = program.Stream;
+        List<Instruction> list = new List<Instruction>();
 
-            Errors.Clear();
-            try
+        ImmutableArray<byte> stream = program.Stream;
+
+        Errors.Clear();
+        try
+        {
+            ReadOnlySpan<byte> cur = stream.AsSpan();
+            uint position = 0;
+            while (cur.Length > 0)
             {
-                ReadOnlySpan<byte> cur = stream.AsSpan();
-                uint position = 0;
-                while (cur.Length > 0)
+                OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, program.Name, position);
+                if (r.IsT1)
                 {
-                    OneOf<Instruction, Error> r = _cpu.TryDecodeNext(cur, program.Name, position);
-                    if (r.IsT1)
-                    {
-                        if (r.AsT1.Code == ErrorCode.EndOfStream)
-                            break;
-                        var err = new Error(r.AsT1, $"Failed to decode instruction stream '{program}'", position);
-                        Errors.Add(err);
+                    if (r.AsT1.Code == ErrorCode.EndOfStream)
                         break;
-                    }
-                    Instruction instruction = r.AsT0;
-                    list.Add(instruction);
-                    cur = cur.Slice(instruction.Length);
-                    position += instruction.Length;
+                    var err = new Error(r.AsT1, $"Failed to decode instruction stream '{program}'", position);
+                    Errors.Add(err);
+                    break;
                 }
+                Instruction instruction = r.AsT0;
+                list.Add(instruction);
+                cur = cur.Slice(instruction.Length);
+                position += instruction.Length;
+            }
 
-                Instructions = list.ToImmutableArray();
-            }
-            finally
-            {
-                DecodeState = (Errors.Any() || stream.Length == 0) ? DecodeState.Failed : DecodeState.Success;
-            }
+            Instructions = list.ToImmutableArray();
         }
-
-        uint IMemoryAddressResolverService.Resolve(SegmentType segment, int displacement)
+        finally
         {
-            MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate(displacement), segment, 0);
-            return _cpu.GetAbsoluteMemoryAddress(address);
+            DecodeState = (Errors.Any() || stream.Length == 0) ? DecodeState.Failed : DecodeState.Success;
         }
+    }
+
+    uint IMemoryAddressResolverService.Resolve(SegmentType segment, int displacement)
+    {
+        MemoryAddress address = new MemoryAddress(EffectiveAddressCalculation.DirectAddress, new Immediate(displacement), segment, 0);
+        return _cpu.GetAbsoluteMemoryAddress(address);
     }
 }

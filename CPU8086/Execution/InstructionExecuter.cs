@@ -349,8 +349,10 @@ namespace Final.CPU8086.Execution
 
                 case InstructionType.CALL:
                     {
-                        Immediate sp = new Immediate(cpu.Register.SP);
-                        OneOf<int, Error> pushRes = PushToStack(cpu, instruction, state, DataWidth.Word, sp);
+                        // Push the return address (the IP of the next instruction). At execution
+                        // time Register.IP has already been advanced past this CALL by Step()/Run().
+                        Immediate returnAddress = new Immediate(cpu.Register.IP);
+                        OneOf<int, Error> pushRes = PushToStack(cpu, instruction, state, DataWidth.Word, returnAddress);
                         if (pushRes.IsT1)
                             return pushRes.AsT1;
                         // NOTE(final): Jump is done below
@@ -363,12 +365,16 @@ namespace Final.CPU8086.Execution
                         if (popRes.IsT1)
                             return popRes.AsT1;
 
-                        // TODO(final): Not sure if this is correct
-                        return popRes.AsT0.Value;
+                        // The popped value is the absolute return IP. Step()/Run() adds our return
+                        // value to the already-advanced IP, so hand back the delta that lands
+                        // exactly on the popped target.
+                        ushort targetIP = popRes.AsT0.U16;
+                        int relative = targetIP - cpu.Register.IP;
+                        return relative;
                     }
 
                 case InstructionType.RETF:
-                    throw new NotImplementedException();
+                    return new Error(ErrorCode.UnsupportedInstruction, $"The instruction '{instruction.Mnemonic}' (far return) is not implemented yet", instruction.Position);
 
                 default:
                     return new Error(ErrorCode.UnsupportedInstruction, $"Unsupported type '{type}' for direct jump instruction '{instruction.Mnemonic}'", instruction.Position);

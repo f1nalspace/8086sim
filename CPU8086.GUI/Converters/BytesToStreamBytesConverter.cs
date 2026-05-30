@@ -6,22 +6,21 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 
-namespace Final.CPU8086.Converters
-{
-    public class BytesToStreamBytesConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is IEnumerable<byte> bytes)
-            {
-                uint index = 0;
-                ImmutableArray<StreamByte> result = bytes.Select(b => new StreamByte(Interlocked.Increment(ref index) - 1, b)).ToImmutableArray();
-                return result;
-            }
-            return ImmutableArray<StreamByte>.Empty;
-        }
+namespace Final.CPU8086.Converters;
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-             => throw new NotSupportedException();
+public class BytesToStreamBytesConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        if (value is IEnumerable<byte> bytes)
+        {
+            uint index = 0;
+            ImmutableArray<StreamByte> result = bytes.Select(b => new StreamByte(Interlocked.Increment(ref index) - 1, b)).ToImmutableArray();
+            return result;
+        }
+        return ImmutableArray<StreamByte>.Empty;
     }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        => throw new NotSupportedException();
 }

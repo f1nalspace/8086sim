@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Reactive;
+using Final.CPU8086.Mvvm;
 using System;
 using System.ComponentModel;
 

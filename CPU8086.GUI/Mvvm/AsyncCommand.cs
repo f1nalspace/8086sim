@@ -1,5 +1,4 @@
 using Avalonia.Threading;
-using DevExpress.Mvvm;
 using System;
 using System.ComponentModel;
 using System.Runtime.ExceptionServices;

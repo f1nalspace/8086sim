@@ -1,13 +1,5 @@
-﻿//#define EXPORT_TO_CSV
-#define GENERATE_CS
-
-//#define GENERATE_INSTRUCTION_CLASSES
-
-#if EXPORT_TO_CSV
 using CsvHelper;
 using CsvHelper.Configuration;
-#endif
-
 using Final.CPU8086;
 using Final.CPU8086.Instructions;
 using Final.CPU8086.Types;
@@ -35,14 +27,11 @@ namespace Final.ITP
 
     static class AdditionalInstructions
     {
-        // See: https://wiki.osdev.org/X86-64_Instruction_Encoding#Legacy_Prefixes
         public static readonly InstructionDefinition[] PrefixInstructions = new InstructionDefinition[] {
-            // Lock/Repeat
             new InstructionDefinition(0xF0, new Mnemonic("LOCK"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "--------", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Lock Prefix" },
             new InstructionDefinition(0xF2, new Mnemonic("REPNE"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Not Equal Prefix" },
             new InstructionDefinition(0xF3, new Mnemonic("REP"), DataWidthType.None, InstructionFlags.Prefix, DataType.None, "-----z--", new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Repeat Prefix" },
 
-            // Segment override
             new InstructionDefinition(0x2E, new Mnemonic("CS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.CS, DataType.None)}) { Description = "CS Segment Override Prefix" },
             new InstructionDefinition(0x36, new Mnemonic("SS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.SS, DataType.None)}) { Description = "SS Segment Override Prefix" },
             new InstructionDefinition(0x3E, new Mnemonic("DS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.DS, DataType.None)}) { Description = "DS Segment Override Prefix" },
@@ -50,17 +39,9 @@ namespace Final.ITP
             new InstructionDefinition(0x64, new Mnemonic("FS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.FS, DataType.None)}) { Description = "FS Segment Override Prefix" },
             new InstructionDefinition(0x65, new Mnemonic("GS"), DataWidthType.None, InstructionFlags.Prefix | InstructionFlags.Segment, DataType.None, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), new[]{new OperandDefinition(OperandDefinitionKind.GS, DataType.None)}) { Description = "GS Segment Override Prefix" },
 
-#if false
-            // Branch not taken/taken
-            new InstructionEntry(0x2E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
-            new InstructionEntry(0x3E, new Mnemonic(), DataWidthType.None, InstructionFlags.Prefix, DataType.None, States.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<Field>(), new[]{new Operand(OperandKind.GS, DataType.None)}),
-#endif
-
-            // Operand size override (Changes size of operand size expected by default mode of the instruction e.g. 8-bit to 16-bit and vice versa.)
             new InstructionDefinition(0x66, new Mnemonic("DATA8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 8-bit Override Prefix" },
             new InstructionDefinition(0x66, new Mnemonic("DATA16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Data to 16-bit Override Prefix" },
 
-            // Address size override (Changes size of address expected by the instruction. 16-bit address could switch to 8-bit and vice versa.)
             new InstructionDefinition(0x67, new Mnemonic("ADDR8"), DataWidthType.Byte, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Byte, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 8-bit Override Prefix" },
             new InstructionDefinition(0x67, new Mnemonic("ADDR16"), DataWidthType.Word, InstructionFlags.Prefix | InstructionFlags.Override, DataType.Word, FlagsDefinition.Empty, new Platform(PlatformType._8086), 1, 1, Array.Empty<FieldDefinition>(), Array.Empty<OperandDefinition>()) { Description = "Address to 16-bit Override Prefix" },
         };
@@ -102,19 +83,447 @@ namespace Final.ITP
         }
     }
 
+    sealed class ParsedInstructionRow
+    {
+        public InstructionDefinition Definition { get; }
+        public InstructionFamily Family { get; }
+        public string CleanedMnemonics { get; }
+        public byte Op { get; }
+        public string FieldsText { get; }
+        public string NormalizedSignWidthText { get; }
+        public int MinLength { get; }
+        public int MaxLength { get; }
+        public string NormalizedFlagsText { get; }
+        public string Title { get; }
+        public Platform Platform { get; }
+        public string LengthText { get; }
+        public string OpAndFieldsText { get; }
+
+        public ParsedInstructionRow(InstructionDefinition definition, InstructionFamily family, string cleanedMnemonics, byte op, string fieldsText, string normalizedSignWidthText, int minLength, int maxLength, string normalizedFlagsText, string title, Platform platform, string lengthText, string opAndFieldsText)
+        {
+            Definition = definition;
+            Family = family;
+            CleanedMnemonics = cleanedMnemonics;
+            Op = op;
+            FieldsText = fieldsText;
+            NormalizedSignWidthText = normalizedSignWidthText;
+            MinLength = minLength;
+            MaxLength = maxLength;
+            NormalizedFlagsText = normalizedFlagsText;
+            Title = title;
+            Platform = platform;
+            LengthText = lengthText;
+            OpAndFieldsText = opAndFieldsText;
+        }
+    }
+
+    sealed class ParsedInstructionReference
+    {
+        public List<ParsedInstructionRow> Rows { get; } = new List<ParsedInstructionRow>();
+        public List<InstructionDefinition> Instructions { get; } = new List<InstructionDefinition>();
+        public List<InstructionFamily> OrderedFamilies { get; } = new List<InstructionFamily>();
+    }
+
+    record InstructionTableCell(InstructionDefinition Instruction, (Color background, Color foreground) colors);
+
     public class Program
     {
-        private static readonly Regex _rexTitle = new Regex("\\(([0-9]+[+]?.*)\\).*$", RegexOptions.Compiled);
         private static readonly Regex _rexLength = new Regex("(?<min>[0-6])(([~+])(?<max>[0-6]))?", RegexOptions.Compiled);
         private static readonly Regex _rexPlatform = new Regex("\\s+\\[(?<platform>(?:[0-9]|[bit]|[P5]){2,5})\\]\\s*$", RegexOptions.Compiled);
 
-        public static void Main(string[] args)
+        private const string GenTypesSwitchName= "--types";
+        private const string GenTableSwitchName = "--table";
+        private const string GenCSVSwitchName= "--csv";
+        private const string SaveReferenceSwitchName= "--ref";
+        
+        private static void PrintUsage()
         {
-#if EXPORT_TO_CSV
-            string outFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "8086-instruction-table.csv");
+            string assemblyFilename = Path.GetFileName(Environment.ProcessPath);
+            Console.Error.WriteLine($"Usage: {assemblyFilename} {{target-path}} [arguments]");
+            Console.Error.WriteLine($"Arguments:");
+            Console.Error.WriteLine($"{GenTypesSwitchName} -> Generate types and enums");
+            Console.Error.WriteLine($"{GenTableSwitchName} -> Generate instruction table");
+            Console.Error.WriteLine($"{GenCSVSwitchName} -> Write instruction table CSV");
+            Console.Error.WriteLine($"{SaveReferenceSwitchName} -> Save original reference documents");
+        }
+        
+        public static int Main(string[] args)
+        {
+            if (args.Length < 2)
+            {
+                Console.Error.WriteLine("Missing arguments!");
+                PrintUsage();
+                return 1;
+            }
 
-            using FileStream csvStream = File.Create(outFilePath);
+            string targetPath = args[0];
+            if (string.IsNullOrWhiteSpace(targetPath))
+            {
+                Console.Error.WriteLine("Target path is empty!");
+                PrintUsage();
+                return 1;
+            }
+            
+            bool genTypes = false;
+            bool genTable = false;
+            bool genCSV = false;
+            bool saveReference = false;
+            for (int i = 1; i < args.Length; ++i)
+            {
+                string arg = args[i];
+                if (string.Equals(GenTypesSwitchName, arg))
+                    genTypes = true;
+                else if (string.Equals(GenTableSwitchName, arg))
+                    genTable = true;
+                else if (string.Equals(GenCSVSwitchName, arg))
+                    genCSV = true;
+                else if (string.Equals(SaveReferenceSwitchName, arg))
+                    saveReference = true;
+                else
+                {
+                    Console.Error.WriteLine($"Unsupported argument: {arg}");
+                    PrintUsage();
+                    return 1;
+                }
+            }
 
+            Directory.CreateDirectory(targetPath);
+            
+            HtmlDocument referenceDocument = LoadInstructionReferenceHtmlDocument();
+
+            ParsedInstructionReference reference = ParseInstructionReferenceDocument(referenceDocument);
+
+            if (genCSV)
+            {
+                string csvFilePath = Path.Combine(targetPath, "8086-instruction-table.csv");
+                WriteParsedInstructionsToCsvFile(reference, csvFilePath);
+            }
+
+            if (genTypes)
+            {
+                string instructionTypeSource = GenerateInstructionTypeEnumAndNameConversionSource(reference);
+
+                string generatedTypesFilePath = Path.Combine(targetPath, "8086-types.cs");
+                
+                Debug.WriteLine(instructionTypeSource);
+            }
+
+            if (genTable)
+            {
+                string instructionTableSource = GenerateInstructionTableConstructorSource(reference);
+                
+                string generatedTableFilePath = Path.Combine(targetPath, "8086-table.cs");
+                
+                Debug.WriteLine(instructionTableSource);
+            }
+
+            if (saveReference)
+            {
+                string referenceFilePath = Path.Combine(targetPath, "8086-instruction-table.html");
+                WriteParsedInstructionsToHtmlFile(reference, referenceFilePath);
+            }
+
+            Console.WriteLine();
+            Console.WriteLine("Done, press any key to exit");
+            Console.ReadKey();
+
+            return 0;
+        }
+
+        private static HtmlDocument LoadInstructionReferenceHtmlDocument()
+        {
+            Assembly assembly = typeof(Program).Assembly;
+            Stream stream = assembly.GetManifestResourceStream("Final.ITP.x86asmref.htm");
+            HtmlDocument document = new HtmlDocument();
+            document.Load(stream);
+            return document;
+        }
+
+        private static ParsedInstructionReference ParseInstructionReferenceDocument(HtmlDocument document)
+        {
+            ParsedInstructionReference reference = new ParsedInstructionReference();
+            HashSet<InstructionFamily> seenFamilies = new HashSet<InstructionFamily>();
+
+            HtmlNode body = document.DocumentNode.SelectSingleNode("//body");
+            HtmlNode hr = body.SelectSingleNode("hr");
+            HtmlNode cur = hr.SelectSingleNode("following-sibling::h4");
+
+            while (cur != null)
+            {
+                if (!"h4".Equals(cur.Name, StringComparison.InvariantCultureIgnoreCase))
+                    throw new FormatException("Missing h4 node!");
+
+                string fullTitle = cur.InnerText;
+
+                SplitInstructionTitleIntoGroupAndDescription(fullTitle, out string group, out string title);
+
+                Platform globalPlatform = DetermineGlobalPlatformFromTitle(title);
+
+                HtmlNode table = cur.SelectSingleNode("following-sibling::table");
+                if (table == null)
+                    throw new FormatException($"Missing table node for '{fullTitle}'!");
+
+                HtmlNode tbody = table.SelectSingleNode("tbody");
+                if (tbody == null)
+                    throw new FormatException($"Missing tbody node for '{fullTitle}'!!");
+
+                HtmlNodeCollection rows = tbody.SelectNodes("tr");
+                if (rows.Count < 2)
+                    throw new FormatException($"Empty table for '{fullTitle}'!");
+
+                HtmlNode firstRow = rows[0];
+                HtmlNodeCollection firstColumns = firstRow.SelectNodes("th");
+                if (firstColumns.Count != 5)
+                    throw new FormatException($"Expect header row to have '{5}' columns, but got '{firstColumns.Count}' for '{fullTitle}'!");
+
+                HtmlNode div = table.SelectSingleNode("following-sibling::div");
+                if (div == null)
+                    throw new FormatException($"Missing div node for '{fullTitle}'!!");
+
+                for (int rowIndex = 1; rowIndex < rows.Count; ++rowIndex)
+                {
+                    ParsedInstructionRow row = ParseSingleInstructionRow(rows[rowIndex], rowIndex, fullTitle, group, title, globalPlatform);
+
+                    reference.Rows.Add(row);
+
+                    if (row.Definition != null)
+                        reference.Instructions.Add(row.Definition);
+
+                    if (seenFamilies.Add(row.Family))
+                        reference.OrderedFamilies.Add(row.Family);
+                }
+
+                cur = div.SelectSingleNode("following-sibling::h4");
+            }
+
+            return reference;
+        }
+
+        private static ParsedInstructionRow ParseSingleInstructionRow(HtmlNode row, int rowIndex, string fullTitle, string group, string title, Platform globalPlatform)
+        {
+            HtmlNodeCollection cols = row.SelectNodes("td");
+            if (cols.Count != 5)
+                throw new FormatException($"Expect content row '{rowIndex}' to have '{5}' columns, but got '{cols.Count}' for '{fullTitle}'!");
+
+            string mnemonics = HttpUtility.HtmlDecode(cols[0].InnerText);
+            string opAndFields = HttpUtility.HtmlDecode(cols[1].InnerText);
+            string swText = HttpUtility.HtmlDecode(cols[2].InnerText);
+            string lenText = HttpUtility.HtmlDecode(cols[3].InnerText);
+            string flagsText = HttpUtility.HtmlDecode(cols[4].InnerText);
+
+            Platform platform = ParsePlatformFromMnemonicsLine(mnemonics, globalPlatform, out string platformText);
+
+            ParseOpcodeByteAndFieldTokens(opAndFields, out byte op, out string[] fieldTokens, out string[] allTokens);
+
+            ParseMinimumAndMaximumInstructionLength(lenText, fullTitle, rowIndex, out int minLen, out int maxLen);
+            ValidateInstructionLengthAgainstFieldTokens(allTokens, minLen, maxLen, mnemonics);
+
+            ParseSignBitAndDataWidthType(swText, out SignBit signBit, out DataWidthType dataWidthType, out string normalizedSwText);
+
+            FlagsDefinition usedFlags = ParseAffectedFlagsDefinition(flagsText, out string normalizedFlagsText);
+
+            string cleanedMnemonics = RemovePlatformSuffixFromMnemonicsLine(mnemonics, platformText);
+            string[] mnemonicTokens = SplitMnemonicLineIntoTokens(cleanedMnemonics);
+            string opName = mnemonicTokens[0];
+
+            FieldDefinition[] fields = ParseFieldDefinitions(fieldTokens);
+            OperandDefinition[] operands = ParseOperandDefinitions(mnemonicTokens);
+
+            InstructionFamily family = new InstructionFamily(opName, title, platform);
+
+            InstructionDefinition definition = TryBuildInstructionDefinitionForFamily(op, family, signBit, dataWidthType, usedFlags, platform, minLen, maxLen, fields, operands);
+
+            return new ParsedInstructionRow(definition, family, cleanedMnemonics, op, string.Join(' ', fieldTokens), normalizedSwText, minLen, maxLen, normalizedFlagsText, title, platform, lenText, opAndFields);
+        }
+
+        private static void SplitInstructionTitleIntoGroupAndDescription(string fullTitle, out string group, out string title)
+        {
+            int dashIndex = fullTitle.IndexOf("-");
+            if (dashIndex > -1)
+            {
+                group = fullTitle.Substring(0, dashIndex).Trim();
+                title = fullTitle.Substring(dashIndex + 1).Trim();
+            }
+            else
+            {
+                group = string.Empty;
+                title = fullTitle;
+            }
+        }
+
+        private static Platform DetermineGlobalPlatformFromTitle(string title)
+        {
+            if ("A description of the floating point instructions is not available at yet.".Equals(title, StringComparison.InvariantCultureIgnoreCase))
+                return new Platform(PlatformType._8087);
+            return new Platform();
+        }
+
+        private static Platform ParsePlatformFromMnemonicsLine(string mnemonics, Platform globalPlatform, out string platformText)
+        {
+            platformText = string.Empty;
+            Match platformMatch = _rexPlatform.Match(mnemonics);
+            if (platformMatch.Success)
+                platformText = platformMatch.Groups["platform"].Value;
+
+            Platform platform = Platform.Parse(platformText);
+            if (platform < globalPlatform)
+                platform = globalPlatform;
+            return platform;
+        }
+
+        private static void ParseOpcodeByteAndFieldTokens(string opAndFields, out byte op, out string[] fieldTokens, out string[] allTokens)
+        {
+            allTokens = opAndFields
+                .Replace("|", "")
+                .Split(new[] { ' ' });
+
+            op = 0;
+            fieldTokens = Array.Empty<string>();
+            if (allTokens.Length > 0)
+            {
+                op = byte.Parse(allTokens[0], NumberStyles.HexNumber);
+                fieldTokens = allTokens.AsSpan(1).ToArray();
+            }
+        }
+
+        private static void ParseMinimumAndMaximumInstructionLength(string lenText, string fullTitle, int rowIndex, out int minLen, out int maxLen)
+        {
+            Match lenMatch = _rexLength.Match(lenText);
+            if (!lenMatch.Success)
+                throw new FormatException($"Unsupported length string '{lenText}' in row '{rowIndex}' for '{fullTitle}'!");
+            int.TryParse(lenMatch.Groups["min"].Value ?? string.Empty, out minLen);
+            int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out maxLen);
+            if (maxLen == 0)
+                maxLen = minLen;
+        }
+
+        private static void ValidateInstructionLengthAgainstFieldTokens(string[] allTokens, int minLen, int maxLen, string mnemonics)
+        {
+            int fieldsLen = 0;
+            foreach (string single in allTokens)
+            {
+                if ("i0~i3".Equals(single))
+                    fieldsLen += 4;
+                else
+                    ++fieldsLen;
+            }
+            if (minLen == maxLen && minLen > fieldsLen)
+                throw new InvalidDataException($"The min/max length of '{minLen}' for op '{mnemonics}' does not match fields length of '{fieldsLen}'");
+        }
+
+        private static void ParseSignBitAndDataWidthType(string swText, out SignBit signBit, out DataWidthType dataWidthType, out string normalizedSwText)
+        {
+            normalizedSwText = swText.PadRight(2, '*');
+            normalizedSwText = Regex.Replace(normalizedSwText, "\\s", "*");
+            Debug.Assert(normalizedSwText.Length == 2);
+
+            dataWidthType = DataWidthType.None;
+            char widthChar = normalizedSwText[1];
+            if (widthChar == 'B')
+                dataWidthType |= DataWidthType.Byte;
+            else if (widthChar == 'W')
+                dataWidthType |= DataWidthType.Word;
+            else if (widthChar == 'D')
+                dataWidthType |= DataWidthType.DoubleWord;
+            else if (widthChar == 'Q')
+                dataWidthType |= DataWidthType.QuadWord;
+            else if (widthChar == 'T')
+                dataWidthType |= DataWidthType.TenBytes;
+            else if (widthChar != '*')
+                throw new NotImplementedException($"The w flag '{widthChar}' is not implemented");
+
+            signBit = SignBit.None;
+            char signChar = normalizedSwText[0];
+            if (signChar == 'E')
+                signBit = SignBit.SignExtendedImm8;
+            else if (signChar == 'N')
+                signBit = SignBit.Non;
+            else if (signChar != '*')
+                throw new NotImplementedException($"The s flag '{signChar}' is not implemented");
+        }
+
+        private static FlagsDefinition ParseAffectedFlagsDefinition(string flagsText, out string normalizedFlagsText)
+        {
+            normalizedFlagsText = Regex.Replace(flagsText, "-", "*");
+            Debug.Assert(normalizedFlagsText.Length == 8);
+            return new FlagsDefinition(normalizedFlagsText.AsSpan());
+        }
+
+        private static string RemovePlatformSuffixFromMnemonicsLine(string mnemonics, string platformText)
+        {
+            if (!string.IsNullOrEmpty(platformText))
+                return mnemonics.Substring(0, mnemonics.Length - (platformText.Length + 2));
+            return mnemonics;
+        }
+
+        private static string[] SplitMnemonicLineIntoTokens(string mnemonics)
+        {
+            string tabbedReplaced = Regex.Replace(mnemonics, @"[\s,\[\]]", "\t");
+            string[] tokens = tabbedReplaced.Split('\t', StringSplitOptions.RemoveEmptyEntries);
+            if (tokens.Length == 0)
+                throw new NotSupportedException($"Mnemonic '{mnemonics}' is invalid!");
+            return tokens;
+        }
+
+        private static FieldDefinition[] ParseFieldDefinitions(string[] fieldTokens)
+        {
+            FieldDefinition[] fields = new FieldDefinition[fieldTokens.Length];
+            for (int i = 0; i < fieldTokens.Length; i++)
+                fields[i] = FieldDefinition.Parse(fieldTokens[i]);
+            return fields;
+        }
+
+        private static OperandDefinition[] ParseOperandDefinitions(string[] mnemonicTokens)
+        {
+            List<OperandDefinition> operands = new List<OperandDefinition>(8);
+            for (int i = 1; i < mnemonicTokens.Length; i++)
+                operands.Add(OperandDefinition.Parse(mnemonicTokens[i]));
+            return operands.ToArray();
+        }
+
+        private static InstructionDefinition TryBuildInstructionDefinitionForFamily(byte op, InstructionFamily family, SignBit signBit, DataWidthType dataWidthType, FlagsDefinition usedFlags, Platform platform, int minLen, int maxLen, FieldDefinition[] fields, OperandDefinition[] operands)
+        {
+            if (!Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
+                return null;
+
+            InstructionFlags flags = InstructionFlags.None;
+            if (signBit == SignBit.SignExtendedImm8)
+                flags |= InstructionFlags.SignExtendedImm8;
+
+            DataType dataType = DataType.None;
+            foreach (OperandDefinition operand in operands)
+            {
+                if (operand.DataType > dataType)
+                    dataType = operand.DataType;
+                switch (operand.Kind)
+                {
+                    case OperandDefinitionKind.FarPointer:
+                        flags |= InstructionFlags.Far;
+                        break;
+
+                    case OperandDefinitionKind.NearPointer:
+                        flags |= InstructionFlags.Near;
+                        break;
+
+                    case OperandDefinitionKind.KeywordFar:
+                        flags |= InstructionFlags.Far;
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            DataWidth dataWidth = new DataWidth(dataWidthType);
+            if (dataWidth == DataWidth.None)
+                dataWidth = DataWidth.DataTypeToWidth(dataType);
+
+            return new InstructionDefinition(op, type, dataWidth, flags, dataType, usedFlags, platform, minLen, maxLen, fields, operands);
+        }
+
+        private static void WriteParsedInstructionsToCsvFile(ParsedInstructionReference reference, string csvFilePath)
+        {
+            using FileStream csvStream = File.Create(csvFilePath);
             using StreamWriter writer = new StreamWriter(csvStream, encoding: Encoding.UTF8, leaveOpen: true);
 
             CsvConfiguration config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -125,6 +534,18 @@ namespace Final.ITP
             };
 
             using CsvWriter csv = new CsvWriter(writer, config, leaveOpen: true);
+
+            WriteCsvHeaderRow(csv);
+
+            foreach (ParsedInstructionRow row in reference.Rows)
+                WriteCsvInstructionRow(csv, row);
+
+            writer.Flush();
+            csvStream.Flush();
+        }
+
+        private static void WriteCsvHeaderRow(CsvWriter csv)
+        {
             csv.WriteConvertedField("mnemonics", typeof(string));
             csv.WriteConvertedField("op byte", typeof(byte));
             csv.WriteConvertedField("op hex", typeof(string));
@@ -143,346 +564,72 @@ namespace Final.ITP
             csv.WriteConvertedField("len", typeof(string));
             csv.WriteConvertedField("op", typeof(string));
             csv.NextRecord();
-#endif
+        }
 
-#if GENERATE_CS
+        private static void WriteCsvInstructionRow(CsvWriter csv, ParsedInstructionRow row)
+        {
+            csv.WriteField(row.CleanedMnemonics, true);
+            csv.WriteField(row.Op);
+            csv.WriteField(row.Op.ToString("X2"));
+            csv.WriteField(row.Op.ToBinary());
+            csv.WriteField(row.FieldsText, true);
+            csv.WriteField(row.NormalizedSignWidthText, true);
+            csv.WriteField(row.MinLength);
+            csv.WriteField(row.MaxLength);
+            csv.WriteField(row.NormalizedFlagsText, true);
+            csv.WriteField(row.Family.Name, true);
+            csv.WriteField(row.Title, true);
+            csv.WriteField(row.Platform.Type);
+            csv.WriteField(string.Empty);
+            csv.WriteField(string.Empty);
+            csv.WriteField(string.Empty);
+            csv.WriteField(row.LengthText);
+            csv.WriteField(row.OpAndFieldsText);
+            csv.NextRecord();
+        }
 
-#if !GENERATE_INSTRUCTION_CLASSES
-            List<InstructionDefinition> allInstructions = new List<InstructionDefinition>();
-#endif
-            Dictionary<InstructionFamily, List<string>> familyOpTypeListMap = new Dictionary<InstructionFamily, List<string>>();
-            List<InstructionFamily> orderedFamilies = new List<InstructionFamily>();
-#endif
+        private static List<InstructionFamily> BuildFamilyListWithPrefixInstructions(List<InstructionFamily> orderedFamilies)
+        {
+            List<InstructionFamily> families = new List<InstructionFamily>(orderedFamilies);
 
-            Assembly asm = typeof(Program).Assembly;
-            Stream stream = asm.GetManifestResourceStream("Final.ITP.x86asmref.htm");
-
-            HtmlDocument doc = new HtmlDocument();
-            doc.Load(stream);
-
-            HtmlNode body = doc.DocumentNode.SelectSingleNode("//body");
-
-            HtmlNode hr = body.SelectSingleNode("hr");
-
-            HtmlNode cur = hr.SelectSingleNode("following-sibling::h4");
-
-            while (cur != null)
-            {
-                if (!"h4".Equals(cur.Name, System.StringComparison.InvariantCultureIgnoreCase))
-                    throw new FormatException("Missing h4 node!");
-
-                HtmlNode header = cur;
-
-                // Contains the group/family name with an additional description or just the description
-                // E.g.
-                // AAA - Ascii Adjust for Addition
-                // ARPL - Adjusted Requested Privilege Level of Selector (286+ protected mode)
-                // A description of the floating point instructions is not available at yet.
-                string fullTitle = header.InnerText;
-
-                string title;
-                string group;
-                if (fullTitle.IndexOf("-") > -1)
-                {
-                    group = fullTitle.Substring(0, fullTitle.IndexOf("-")).Trim();
-                    title = fullTitle.Substring(fullTitle.IndexOf("-") + 1).Trim();
-                }
-                else
-                {
-                    group = string.Empty;
-                    title = fullTitle;
-                }
-
-                // Table additions
-                Platform globalPlatform = new Platform();
-                if ("A description of the floating point instructions is not available at yet.".Equals(title, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    globalPlatform = new Platform(PlatformType._8087);
-                }
-
-                HtmlNode table = cur.SelectSingleNode("following-sibling::table");
-                if (table == null)
-                    throw new FormatException($"Missing table node for '{fullTitle}'!");
-
-                HtmlNode tbody = table.SelectSingleNode("tbody");
-                if (tbody == null)
-                    throw new FormatException($"Missing tbody node for '{fullTitle}'!!");
-
-                HtmlNodeCollection rows = tbody.SelectNodes("tr");
-                if (rows.Count < 2)
-                    throw new FormatException($"Empty table for '{fullTitle}'!");
-
-                HtmlNode firstRow = rows[0];
-                var firstColumns = firstRow.SelectNodes("th");
-                if (firstColumns.Count != 5)
-                    throw new FormatException($"Expect header row to have '{5}' columns, but got '{firstColumns.Count}' for '{fullTitle}'!");
-
-                HtmlNode div = table.SelectSingleNode("following-sibling::div");
-                if (div == null)
-                    throw new FormatException($"Missing div node for '{fullTitle}'!!");
-
-                for (int rowIndex = 1; rowIndex < rows.Count; ++rowIndex)
-                {
-                    HtmlNode row = rows[rowIndex];
-                    HtmlNodeCollection cols = row.SelectNodes("td");
-                    if (cols.Count != 5)
-                        throw new FormatException($"Expect content row '{rowIndex}' to have '{5}' columns, but got '{cols.Count}' for '{fullTitle}'!");
-
-                    string mnemonics = HttpUtility.HtmlDecode(cols[0].InnerText);
-                    string opAndFields = HttpUtility.HtmlDecode(cols[1].InnerText);
-                    string swText = HttpUtility.HtmlDecode(cols[2].InnerText);
-                    string lenText = HttpUtility.HtmlDecode(cols[3].InnerText);
-                    string flagsText = HttpUtility.HtmlDecode(cols[4].InnerText);
-
-                    // Parse platform from the mnemonic line using a captured regex
-                    // There are not that much platforms to cover, so we could simple check for:
-                    // [186] or [286] or [386] or [486] or [P5] or [32bit]
-                    string platformText = string.Empty;
-                    Match platformMatch = _rexPlatform.Match(mnemonics);
-                    if (platformMatch.Success)
-                        platformText = platformMatch.Groups["platform"].Value;
-
-                    Platform platform = Platform.Parse(platformText);
-                    if (platform < globalPlatform)
-                        platform = globalPlatform;
-
-                    // Split fields that defines each byte in the instruction stream
-                    // 
-                    // Each field is separated by a space, so if we split by space, we get all the fields.
-                    // The very first field contains the full op-code byte always, so we parse that right away
-                    //
-                    // Issues:
-                    // Sometimes there is a | character, so we need to remove that
-                    string[] opSplit = opAndFields
-                        .Replace("|", "")
-                        .Split(new[] { ' ' });
-
-                    // Parse op and get a span for the fields separately
-                    byte op = 0;
-                    Span<string> fieldsSplitted = Span<string>.Empty;
-                    if (opSplit.Length > 0)
-                    {
-                        op = byte.Parse(opSplit[0], NumberStyles.HexNumber);
-                        fieldsSplitted = opSplit.AsSpan(1);
-                    }
-
-                    // Parse min/max instruction length
-                    // We either have a fixed length or minimum and maximum length
-                    // 2
-                    // 3~4
-                    // 1+1
-                    Match lenMatch = _rexLength.Match(lenText);
-                    if (!lenMatch.Success)
-                        throw new FormatException($"Unsupported length string '{lenText}' in row '{rowIndex}' for '{fullTitle}'!");
-                    int.TryParse(lenMatch.Groups["min"].Value ?? string.Empty, out int minLen);
-                    int.TryParse(lenMatch.Groups["max"].Value ?? string.Empty, out int maxLen);
-                    if (maxLen == 0)
-                        maxLen = minLen;
-
-                    // Check for entries with an incorrect length
-                    int fieldsLen = 0;
-                    foreach (string single in opSplit)
-                    {
-                        if ("i0~i3".Equals(single))
-                            fieldsLen += 4;
-                        else
-                            ++fieldsLen;
-                    }
-                    if (minLen == maxLen)
-                    {
-                        if (minLen > fieldsLen)
-                            throw new InvalidDataException($"The min/max length of '{minLen}' for op '{mnemonics}' does not match fields length of '{fieldsLen}'");
-                        //minLen = maxLen = fieldsLen;
-                    }
-
-                    // Parse Signed or Word flag (SW)
-                    swText = swText.PadRight(2, '*');
-                    swText = Regex.Replace(swText, "\\s", "*");
-                    Debug.Assert(swText.Length == 2);
-
-                    DataWidthType dataWidthType = DataWidthType.None;
-                    if (swText[1] == 'B')
-                        dataWidthType |= DataWidthType.Byte;
-                    else if (swText[1] == 'W')
-                        dataWidthType |= DataWidthType.Word;
-                    else if (swText[1] == 'D')
-                        dataWidthType |= DataWidthType.DoubleWord;
-                    else if (swText[1] == 'Q')
-                        dataWidthType |= DataWidthType.QuadWord;
-                    else if (swText[1] == 'T')
-                        dataWidthType |= DataWidthType.TenBytes; // @TODO(final): Is TenBytes correct?
-                    else if (swText[1] != '*')
-                        throw new NotImplementedException($"The w flag '{swText[1]}' is not implemented");
-
-                    SignBit signBit = SignBit.None;
-                    if (swText[0] == 'E')
-                        signBit = SignBit.SignExtendedImm8;
-                    else if (swText[0] == 'N')
-                        signBit = SignBit.Non;
-                    else if (swText[0] != '*')
-                        throw new NotImplementedException($"The s flag '{swText[0]}' is not implemented");
-
-                    // Parse flags
-                    flagsText = Regex.Replace(flagsText, "-", "*");
-                    Debug.Assert(flagsText.Length == 8);
-                    FlagsDefinition states = new FlagsDefinition(flagsText.AsSpan());
-
-
-
-#if GENERATE_CS
-                    string originalMemonics = mnemonics;
-
-                    // If we have parsed a platform string, we remove it from the mnemonic line because it ends with that
-                    if (!string.IsNullOrEmpty(platformText))
-                        mnemonics = originalMemonics.Substring(0, originalMemonics.Length - (platformText.Length + 2));
-
-                    // Now we split the full mnemonic line by spaces, but fist we replace all whitespaces and [ ] characters with tab charcters, to make our life more easy
-                    // Also we ensure that empty entries removed, are fully removed so we end up with the just the mnemonic and the operands of it
-                    string tabbedReplaced = Regex.Replace(mnemonics, @"[\s,\[\]]", "\t");
-                    string[] splittedMnemonics = tabbedReplaced.Split('\t', StringSplitOptions.RemoveEmptyEntries);
-                    if (splittedMnemonics.Length == 0)
-                        throw new NotSupportedException($"Mnemonic '{mnemonics}' is invalid!");
-
-                    string opName = splittedMnemonics[0];
-
-                    // Parse fields without "Op"
-                    FieldDefinition[] fields = new FieldDefinition[fieldsSplitted.Length];
-                    for (int i = 0; i < fieldsSplitted.Length; i++)
-                        fields[i] = FieldDefinition.Parse(fieldsSplitted[i]);
-
-                    // Get family, so we can group the instructions into a family of instructions
-                    // For example: MOV is a family, but contains dozens of instructions with varieties
-                    string familyText;
-                    if (!string.IsNullOrWhiteSpace(group))
-                        familyText = group;
-                    else
-                        familyText = opName; // @NOTE(final): The family string could be just the description, so we assume the operand is the family itself
-                    if (string.IsNullOrWhiteSpace(familyText))
-                        throw new NotSupportedException($"Empty family for name '{opName}'");
-
-                    // The family can contain multiple names, but we are only interested in the very first one
-                    string[] splittedFamily = familyText.Split('/', StringSplitOptions.RemoveEmptyEntries);
-
-                    InstructionFamily family = new InstructionFamily(opName, title, platform);
-
-                    if (!familyOpTypeListMap.TryGetValue(family, out List<string> opNames))
-                    {
-                        opNames = new List<string>();
-                        familyOpTypeListMap.Add(family, opNames);
-                        orderedFamilies.Add(family);
-                    }
-
-                    opNames.Add(opName);
-
-#if !GENERATE_INSTRUCTION_CLASSES
-                    // Parse mnemonic operands
-                    List<OperandDefinition> operands = new List<OperandDefinition>(8);
-                    for (int i = 1; i < splittedMnemonics.Length; i++)
-                        operands.Add(OperandDefinition.Parse(splittedMnemonics[i]));
-
-                    // Convert family into instruction type and create the instruction entry to the table
-                    if (Enum.TryParse<InstructionType>(family.Name, out InstructionType type))
-                    {
-                        InstructionFlags flags = InstructionFlags.None;
-                        if (signBit == SignBit.SignExtendedImm8)
-                            flags |= InstructionFlags.SignExtendedImm8;
-
-                        // We dont want to create any Operand´s for Keywords or Type-Casts, so we convert them into data-types
-                        DataType dataType = DataType.None;
-                        foreach (OperandDefinition operand in operands)
-                        {
-                            DataType thisDataType = operand.DataType;
-                            if (thisDataType > dataType)
-                                dataType = thisDataType;
-                            switch (operand.Kind)
-                            {
-                                case OperandDefinitionKind.FarPointer:
-                                    flags |= InstructionFlags.Far;
-                                    break;
-
-                                case OperandDefinitionKind.NearPointer:
-                                    flags |= InstructionFlags.Near;
-                                    break;
-
-                                case OperandDefinitionKind.KeywordFar:
-                                    flags |= InstructionFlags.Far;
-                                    break;
-
-                                default:
-                                    break;
-                            }
-                        }
-
-                        DataWidth dataWidth = new DataWidth(dataWidthType);
-                        if (dataWidth == DataWidth.None)
-                            dataWidth = DataWidth.DataTypeToWidth(dataType);
-
-                        InstructionDefinition instruction = new InstructionDefinition(op, type, dataWidth, flags, dataType, states, platform, minLen, maxLen, fields, operands.ToArray());
-                        allInstructions.Add(instruction);
-                    }
-
-
-#endif // !GENERATE_INSTRUCTION_CLASSES
-
-#endif // GENERATE_CS
-
-#if EXPORT_TO_CSV
-                    csv.WriteField(mnemonics, true);
-                    csv.WriteField(op);
-                    csv.WriteField(op.ToString("X2"));
-                    csv.WriteField(op.ToBinary());
-                    csv.WriteField(string.Join(' ', fieldsSplitted.ToArray()), true);
-                    csv.WriteField(swText, true);
-                    csv.WriteField(minLen);
-                    csv.WriteField(maxLen);
-                    csv.WriteField(flagsText, true);
-                    csv.WriteField(family.Name, true);
-                    csv.WriteField(title, true);
-                    csv.WriteField(platform.Type);
-                    csv.WriteField(string.Empty);
-                    csv.WriteField(string.Empty);
-                    csv.WriteField(string.Empty);
-                    csv.WriteField(lenText);
-                    csv.WriteField(opAndFields);
-                    csv.NextRecord();
-#endif // EXPORT_TO_CSV
-                }
-
-                HtmlNode next = div.SelectSingleNode("following-sibling::h4");
-
-                cur = next;
-            }
-
-#if EXPORT_TO_CSV
-            writer.Flush();
-            csvStream.Flush();
-#endif // EXPORT_TO_CSV
-
-#if GENERATE_CS
-
-#if GENERATE_INSTRUCTION_CLASSES
-            // Replace/Add prefix instructions
-            InstructionEntry[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
-            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+            foreach (InstructionDefinition prefixInstruction in AdditionalInstructions.PrefixInstructions)
             {
                 string name = prefixInstruction.Mnemonic.Name;
                 if (string.IsNullOrWhiteSpace(name))
                     continue;
-                InstructionFamily family = orderedFamilies.FirstOrDefault(i => string.Equals(i.Name, name, StringComparison.InvariantCultureIgnoreCase));
+                InstructionFamily family = families.FirstOrDefault(i => string.Equals(i.Name, name, StringComparison.InvariantCultureIgnoreCase));
                 if (family != null)
-                    orderedFamilies.Remove(family);
+                    families.Remove(family);
             }
-            foreach (InstructionEntry prefixInstruction in prefixInstructions)
+
+            foreach (InstructionDefinition prefixInstruction in AdditionalInstructions.PrefixInstructions)
             {
                 string name = prefixInstruction.Mnemonic.Name;
                 if (string.IsNullOrWhiteSpace(name))
                     continue;
-                InstructionFamily family = new InstructionFamily(name, prefixInstruction.Description, prefixInstruction.Platform);
-                orderedFamilies.Add(family);
+                families.Add(new InstructionFamily(name, prefixInstruction.Description, prefixInstruction.Platform));
             }
 
-            // Generate instruction types enum
-            // Generate instruction names ToString() and TryParse() method
+            return families;
+        }
+
+        private static List<InstructionDefinition> BuildInstructionListWithPrefixInstructions(List<InstructionDefinition> instructions)
+        {
+            List<InstructionDefinition> result = new List<InstructionDefinition>(instructions);
+
+            foreach (InstructionDefinition prefixInstruction in AdditionalInstructions.PrefixInstructions)
+                result.RemoveAll(i => i.Op == prefixInstruction.Op);
+
+            foreach (InstructionDefinition prefixInstruction in AdditionalInstructions.PrefixInstructions)
+                result.Add(prefixInstruction);
+
+            return result;
+        }
+
+        private static string GenerateInstructionTypeEnumAndNameConversionSource(ParsedInstructionReference reference)
+        {
+            List<InstructionFamily> families = BuildFamilyListWithPrefixInstructions(reference.OrderedFamilies);
+
             StringBuilder instructionTypesText = new StringBuilder();
             instructionTypesText.AppendLine("enum InstructionType {");
             instructionTypesText.AppendLine("\t/// <summary>");
@@ -491,17 +638,14 @@ namespace Final.ITP
             instructionTypesText.AppendLine("\tNone = 0,");
 
             StringBuilder stringToTypeMethodText = new StringBuilder();
-
             stringToTypeMethodText.AppendLine($"public static {nameof(InstructionType)} NameToType(string name) {{");
             stringToTypeMethodText.AppendLine($"\treturn (name ?? string.Empty) switch {{");
 
             StringBuilder typeToNameMethodText = new StringBuilder();
-
-            // private static string TypeToName(InstructionType type)
             typeToNameMethodText.AppendLine($"public static string TypeToName({nameof(InstructionType)} type) {{");
             typeToNameMethodText.AppendLine($"\treturn type switch {{");
 
-            foreach (InstructionFamily family in orderedFamilies)
+            foreach (InstructionFamily family in families)
             {
                 if (family.Platform.Type != PlatformType._8086)
                     continue;
@@ -526,39 +670,33 @@ namespace Final.ITP
             typeToNameMethodText.AppendLine("\t};");
             typeToNameMethodText.AppendLine("}");
 
-            Debug.WriteLine(instructionTypesText.ToString());
-            Debug.WriteLine(string.Empty);
-            Debug.WriteLine(stringToTypeMethodText.ToString());
-            Debug.WriteLine(string.Empty);
-            Debug.WriteLine(typeToNameMethodText.ToString());
-            Debug.WriteLine(string.Empty);
-#else
-            // Replace/Add prefix instructions
-            InstructionDefinition[] prefixInstructions = AdditionalInstructions.PrefixInstructions;
-            foreach (InstructionDefinition prefixInstruction in prefixInstructions)
-                allInstructions.RemoveAll(i => i.Op == prefixInstruction.Op);
+            StringBuilder result = new StringBuilder();
+            result.AppendLine(instructionTypesText.ToString());
+            result.AppendLine();
+            result.AppendLine(stringToTypeMethodText.ToString());
+            result.AppendLine();
+            result.AppendLine(typeToNameMethodText.ToString());
+            return result.ToString();
+        }
 
-            foreach (InstructionDefinition prefixInstruction in prefixInstructions)
-                allInstructions.Add(prefixInstruction);
+        private static string GenerateInstructionTableConstructorSource(ParsedInstructionReference reference)
+        {
+            List<InstructionDefinition> instructions = BuildInstructionListWithPrefixInstructions(reference.Instructions);
 
-            // Fill instruction table, but skip all non 8086 platforms
             InstructionTable newTable = new InstructionTable();
-            InstructionDefinition[] sortedInstructions = allInstructions.OrderBy(i => i.Op).ToArray();
+            InstructionDefinition[] sortedInstructions = instructions.OrderBy(i => i.Op).ToArray();
             foreach (InstructionDefinition instruction in sortedInstructions)
             {
                 if (instruction.Platform.Type != PlatformType._8086)
                     continue;
-                byte op = instruction.Op;
-                InstructionDefinitionList list = newTable.GetOrCreate(op);
+                InstructionDefinitionList list = newTable.GetOrCreate(instruction.Op);
                 list.Add(instruction);
             }
 
-            // Generate instructions table class
             string entryName = "IE";
             string mnemonicName = "MNE";
             string instructionTypeName = "IT";
             string listName = "IL";
-            string dataWidthName = "DW";
             string dataTypeName = "DT";
             string flagsName = "IF";
             string tableName = nameof(InstructionTable);
@@ -568,7 +706,6 @@ namespace Final.ITP
             instructionsTableText.AppendLine($"using {listName} = {typeof(InstructionDefinitionList).FullName};");
             instructionsTableText.AppendLine($"using {entryName} = {typeof(InstructionDefinition).FullName};");
             instructionsTableText.AppendLine($"using {instructionTypeName} = {typeof(InstructionType).FullName};");
-            instructionsTableText.AppendLine($"using {dataWidthName} = {typeof(DataWidth).FullName};");
             instructionsTableText.AppendLine($"using {dataTypeName} = {typeof(DataType).FullName};");
             instructionsTableText.AppendLine($"using {flagsName} = {typeof(InstructionFlags).FullName};");
             instructionsTableText.AppendLine($"using {mnemonicName} = {typeof(Mnemonic).FullName};");
@@ -580,203 +717,193 @@ namespace Final.ITP
             instructionsTableText.AppendLine($"\tpublic {tableName}()");
             instructionsTableText.AppendLine("\t{");
 
-            InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>().Where(d => d != InstructionFlags.None).ToArray();
-            DataType[] allDataTypes = Enum.GetValues<DataType>().Where(d => d != DataType.None).ToArray();
-
             foreach (InstructionDefinitionList list in newTable)
             {
-                if (list != null)
+                if (list == null)
+                    continue;
+
+                string opBinary = list.Op.ToBinary();
+
+                StringBuilder entriesText = new StringBuilder();
+                foreach (InstructionDefinition entry in list)
                 {
-                    string opBinary = list.Op.ToBinary();
-
-                    string listOpHex = list.Op.ToString("X2");
-
-                    StringBuilder entriesText = new StringBuilder();
-                    foreach (InstructionDefinition entry in list)
-                    {
-                        string entryOpHex = entry.Op.ToString("X2");
-
-                        if (entriesText.Length > 0)
-                            entriesText.AppendLine(",");
-
-                        StringBuilder entryText = new StringBuilder();
-                        entryText.Append("\t\t\t");
-
-                        entryText.Append("new ");
-                        entryText.Append(entryName);
-                        entryText.Append('(');
-
-                        // Op-Code
-                        entryText.Append("0x");
-                        entryText.Append(entryOpHex);
-
-                        // Mnemonic
-                        entryText.Append(", ");
-                        entryText.Append("new ");
-                        entryText.Append(mnemonicName);
-                        entryText.Append('(');
-                        entryText.Append(instructionTypeName);
-                        entryText.Append('.');
-                        entryText.Append(entry.Mnemonic.Type.ToString());
-                        entryText.Append(',');
-                        entryText.Append('"');
-                        entryText.Append(entry.Mnemonic.Name);
-                        entryText.Append('"');
-                        entryText.Append(')');
-
-                        // DataWidth
-                        entryText.Append(", ");
-                        entryText.Append('"');
-                        entryText.Append(entry.DataWidth.ToString());
-                        entryText.Append('"');
-
-                        // Flags
-                        entryText.Append(", ");
-                        if (entry.Flags != InstructionFlags.None)
-                        {
-                            int flagCount = 0;
-                            foreach (InstructionFlags flag in allFlags)
-                            {
-                                if (entry.Flags.HasFlag(flag))
-                                {
-                                    if (flagCount > 0)
-                                        entryText.Append(" | ");
-                                    entryText.Append(flagsName);
-                                    entryText.Append('.');
-                                    entryText.Append(flag);
-                                    ++flagCount;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            entryText.Append(flagsName);
-                            entryText.Append('.');
-                            entryText.Append(nameof(InstructionFlags.None));
-                        }
-
-                        // DataType
-                        entryText.Append(", ");
-                        if (entry.DataType != DataType.None)
-                        {
-                            int dataTypeCount = 0;
-                            foreach (DataType dataType in allDataTypes)
-                            {
-                                if (entry.DataType.HasFlag(dataType))
-                                {
-                                    if (dataTypeCount > 0)
-                                        entryText.Append(" | ");
-                                    entryText.Append(dataTypeName);
-                                    entryText.Append('.');
-                                    entryText.Append(dataType.ToString());
-                                    ++dataTypeCount;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            entryText.Append(dataTypeName);
-                            entryText.Append('.');
-                            entryText.Append(nameof(DataType.None));
-                        }
-
-                        // States
-                        entryText.Append(", ");
-                        entryText.Append('"');
-                        entryText.Append(entry.UsedFlags.ToString());
-                        entryText.Append('"');
-
-                        // Platform
-                        entryText.Append(", ");
-                        entryText.Append('"');
-                        entryText.Append(entry.Platform.ToString());
-                        entryText.Append('"');
-
-                        // Min/Max Length
-                        entryText.Append(", ");
-                        entryText.Append(entry.MinLength.ToString());
-                        entryText.Append(", ");
-                        entryText.Append(entry.MaxLength.ToString());
-
-                        // Fields
-                        entryText.Append(", ");
-                        if (entry.Fields.Length > 0)
-                        {
-                            entryText.Append($"new {nameof(FieldDefinition)}[] {{");
-                            int fieldIndex = 0;
-                            foreach (FieldDefinition field in entry.Fields)
-                            {
-                                if (fieldIndex > 0)
-                                    entryText.Append(", ");
-                                entryText.Append('"');
-                                entryText.Append(field.ToString());
-                                entryText.Append('"');
-                                ++fieldIndex;
-                            }
-                            entryText.Append("}");
-                        }
-                        else
-                        {
-                            entryText.Append(nameof(Array));
-                            entryText.Append('.');
-                            entryText.Append(nameof(Array.Empty));
-                            entryText.Append('<');
-                            entryText.Append($"{nameof(FieldDefinition)}");
-                            entryText.Append(">()");
-                        }
-
-                        // Operands
-                        entryText.Append(", ");
-                        if (entry.Operands.Length > 0)
-                        {
-                            entryText.Append($"new {nameof(OperandDefinition)}[] {{");
-                            int operandIndex = 0;
-                            foreach (OperandDefinition operand in entry.Operands)
-                            {
-                                if (operandIndex > 0)
-                                    entryText.Append(", ");
-                                entryText.Append('"');
-                                entryText.Append(operand.ToString());
-                                entryText.Append('"');
-                                ++operandIndex;
-                            }
-                            entryText.Append("}");
-                        }
-                        else
-                        {
-                            entryText.Append(nameof(Array));
-                            entryText.Append('.');
-                            entryText.Append(nameof(Array.Empty));
-                            entryText.Append('<');
-                            entryText.Append($"{nameof(OperandDefinition)}");
-                            entryText.Append(">()");
-                        }
-
-                        entryText.Append(')');
-
-                        entriesText.Append(entryText);
-                    }
-
-                    instructionsTableText.AppendLine($"\t\t{varName}[{list.Op:D}] = new {listName}(0b{opBinary},");
-                    instructionsTableText.AppendLine(entriesText.ToString());
-                    instructionsTableText.AppendLine($"\t\t);");
+                    if (entriesText.Length > 0)
+                        entriesText.AppendLine(",");
+                    entriesText.Append(BuildInstructionDefinitionConstructorSource(entry, entryName, mnemonicName, instructionTypeName, dataTypeName, flagsName));
                 }
+
+                instructionsTableText.AppendLine($"\t\t{varName}[{list.Op:D}] = new {listName}(0b{opBinary},");
+                instructionsTableText.AppendLine(entriesText.ToString());
+                instructionsTableText.AppendLine($"\t\t);");
             }
 
             instructionsTableText.AppendLine("\t}");
             instructionsTableText.AppendLine("}");
 
-            Debug.WriteLine(instructionsTableText.ToString());
-#endif
+            return instructionsTableText.ToString();
+        }
 
-#endif // GENERATE_CS
+        private static string BuildInstructionDefinitionConstructorSource(InstructionDefinition entry, string entryName, string mnemonicName, string instructionTypeName, string dataTypeName, string flagsName)
+        {
+            InstructionFlags[] allFlags = Enum.GetValues<InstructionFlags>().Where(d => d != InstructionFlags.None).ToArray();
+            DataType[] allDataTypes = Enum.GetValues<DataType>().Where(d => d != DataType.None).ToArray();
 
+            string entryOpHex = entry.Op.ToString("X2");
+
+            StringBuilder entryText = new StringBuilder();
+            entryText.Append("\t\t\t");
+
+            entryText.Append("new ");
+            entryText.Append(entryName);
+            entryText.Append('(');
+
+            entryText.Append("0x");
+            entryText.Append(entryOpHex);
+
+            entryText.Append(", ");
+            entryText.Append("new ");
+            entryText.Append(mnemonicName);
+            entryText.Append('(');
+            entryText.Append(instructionTypeName);
+            entryText.Append('.');
+            entryText.Append(entry.Mnemonic.Type.ToString());
+            entryText.Append(',');
+            entryText.Append('"');
+            entryText.Append(entry.Mnemonic.Name);
+            entryText.Append('"');
+            entryText.Append(')');
+
+            entryText.Append(", ");
+            entryText.Append('"');
+            entryText.Append(entry.DataWidth.ToString());
+            entryText.Append('"');
+
+            entryText.Append(", ");
+            if (entry.Flags != InstructionFlags.None)
+            {
+                int flagCount = 0;
+                foreach (InstructionFlags flag in allFlags)
+                {
+                    if (entry.Flags.HasFlag(flag))
+                    {
+                        if (flagCount > 0)
+                            entryText.Append(" | ");
+                        entryText.Append(flagsName);
+                        entryText.Append('.');
+                        entryText.Append(flag);
+                        ++flagCount;
+                    }
+                }
+            }
+            else
+            {
+                entryText.Append(flagsName);
+                entryText.Append('.');
+                entryText.Append(nameof(InstructionFlags.None));
+            }
+
+            entryText.Append(", ");
+            if (entry.DataType != DataType.None)
+            {
+                int dataTypeCount = 0;
+                foreach (DataType dataType in allDataTypes)
+                {
+                    if (entry.DataType.HasFlag(dataType))
+                    {
+                        if (dataTypeCount > 0)
+                            entryText.Append(" | ");
+                        entryText.Append(dataTypeName);
+                        entryText.Append('.');
+                        entryText.Append(dataType.ToString());
+                        ++dataTypeCount;
+                    }
+                }
+            }
+            else
+            {
+                entryText.Append(dataTypeName);
+                entryText.Append('.');
+                entryText.Append(nameof(DataType.None));
+            }
+
+            entryText.Append(", ");
+            entryText.Append('"');
+            entryText.Append(entry.UsedFlags.ToString());
+            entryText.Append('"');
+
+            entryText.Append(", ");
+            entryText.Append('"');
+            entryText.Append(entry.Platform.ToString());
+            entryText.Append('"');
+
+            entryText.Append(", ");
+            entryText.Append(entry.MinLength.ToString());
+            entryText.Append(", ");
+            entryText.Append(entry.MaxLength.ToString());
+
+            entryText.Append(", ");
+            if (entry.Fields.Length > 0)
+            {
+                entryText.Append($"new {nameof(FieldDefinition)}[] {{");
+                int fieldIndex = 0;
+                foreach (FieldDefinition field in entry.Fields)
+                {
+                    if (fieldIndex > 0)
+                        entryText.Append(", ");
+                    entryText.Append('"');
+                    entryText.Append(field.ToString());
+                    entryText.Append('"');
+                    ++fieldIndex;
+                }
+                entryText.Append("}");
+            }
+            else
+            {
+                entryText.Append(nameof(Array));
+                entryText.Append('.');
+                entryText.Append(nameof(Array.Empty));
+                entryText.Append('<');
+                entryText.Append($"{nameof(FieldDefinition)}");
+                entryText.Append(">()");
+            }
+
+            entryText.Append(", ");
+            if (entry.Operands.Length > 0)
+            {
+                entryText.Append($"new {nameof(OperandDefinition)}[] {{");
+                int operandIndex = 0;
+                foreach (OperandDefinition operand in entry.Operands)
+                {
+                    if (operandIndex > 0)
+                        entryText.Append(", ");
+                    entryText.Append('"');
+                    entryText.Append(operand.ToString());
+                    entryText.Append('"');
+                    ++operandIndex;
+                }
+                entryText.Append("}");
+            }
+            else
+            {
+                entryText.Append(nameof(Array));
+                entryText.Append('.');
+                entryText.Append(nameof(Array.Empty));
+                entryText.Append('<');
+                entryText.Append($"{nameof(OperandDefinition)}");
+                entryText.Append(">()");
+            }
+
+            entryText.Append(')');
+
+            return entryText.ToString();
+        }
+
+        private static void WriteParsedInstructionsToHtmlFile(ParsedInstructionReference reference, string htmlFilePath)
+        {
             StringBuilder htmlString = new StringBuilder();
 
             htmlString.AppendLine("<!DOCTYPE html>");
-
             htmlString.AppendLine("<html>");
-
             htmlString.AppendLine("<head>");
             htmlString.AppendLine("<title>Op code table</title>");
             htmlString.AppendLine("<style>");
@@ -794,48 +921,19 @@ namespace Final.ITP
             htmlString.AppendLine("}");
             htmlString.AppendLine("</style>");
             htmlString.AppendLine("</head>");
-
             htmlString.AppendLine("<body>");
-
             htmlString.AppendLine("<h1>");
             htmlString.AppendLine("Intel 8086 Instruction Table");
             htmlString.AppendLine("</h1>");
-
             htmlString.AppendLine("<table>");
 
-            Random rnd = new Random(42);
-
-            Span<byte> colorBytes = stackalloc byte[3];
-
-            InstructionTableCell[] cells = new InstructionTableCell[256];
-            Dictionary<InstructionType, (Color, Color)> colorsMap = new Dictionary<InstructionType, (Color, Color)>();
-            foreach (InstructionDefinition instruction in allInstructions)
-            {
-                int index = instruction.Op;
-                if (!colorsMap.TryGetValue(instruction.Type, out (Color backColor, Color foregroundColor) colors))
-                {
-                    rnd.NextBytes(colorBytes);
-
-                    Color backColor = Color.FromArgb(colorBytes[0], colorBytes[1], colorBytes[2]);
-
-                    float brightness = backColor.GetBrightness();
-                   
-                    Color foregroundColor = brightness < 0.45f ? Color.White : Color.Black;
-
-                    colors = (backColor, foregroundColor);
-
-                    colorsMap.Add(instruction.Type, colors);
-                }
-                cells[index] = new InstructionTableCell(instruction, colors);
-            }
+            InstructionTableCell[] cells = BuildInstructionTableCells(reference.Instructions);
 
             htmlString.AppendLine("<thead>");
             htmlString.AppendLine("<tr>");
             htmlString.AppendLine("<th></th>");
             for (int colIndex = 0; colIndex < 16; ++colIndex)
-            {
                 htmlString.AppendLine($"<th>{colIndex:X1}</th>");
-            }
             htmlString.AppendLine("</tr>");
             htmlString.AppendLine("</thead>");
 
@@ -844,7 +942,7 @@ namespace Final.ITP
             {
                 htmlString.AppendLine("<tr>");
                 htmlString.AppendLine($"<td>{rowIndex:X1}</td>");
-                for (var colIndex = 0; colIndex < 16; ++colIndex)
+                for (int colIndex = 0; colIndex < 16; ++colIndex)
                 {
                     InstructionTableCell cell = cells[rowIndex * 16 + colIndex];
 
@@ -859,14 +957,12 @@ namespace Final.ITP
                     if (cell is not null)
                     {
                         htmlString.AppendLine("<div>");
-
                         if (cell.Instruction.Operands.Length == 0)
                             htmlString.AppendLine(cell.Instruction.Mnemonic.Name);
                         else if (cell.Instruction.Operands.Length == 1)
                             htmlString.AppendLine($"{cell.Instruction.Mnemonic.Name} {cell.Instruction.Operands[0]}");
                         else if (cell.Instruction.Operands.Length == 2)
                             htmlString.AppendLine($"{cell.Instruction.Mnemonic.Name} {cell.Instruction.Operands[0]}, {cell.Instruction.Operands[1]}");
-
                         htmlString.AppendLine("</div>");
 
                         htmlString.AppendLine("<div>");
@@ -886,27 +982,39 @@ namespace Final.ITP
             htmlString.AppendLine("</tbody>");
 
             htmlString.AppendLine("</table>");
-
             htmlString.AppendLine("</body>");
-
             htmlString.AppendLine("</html>");
 
-            string htmlFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads", "8086-instruction-table.html");
+            using FileStream htmlStream = File.Create(htmlFilePath);
+            using (StreamWriter writer = new StreamWriter(htmlStream, encoding: Encoding.UTF8, leaveOpen: true))
+                writer.Write(htmlString.ToString());
+            htmlStream.Flush();
+        }
 
-            using (FileStream csvStream = File.Create(htmlFilePath))
+        private static InstructionTableCell[] BuildInstructionTableCells(List<InstructionDefinition> instructions)
+        {
+            Random rnd = new Random(42);
+            Span<byte> colorBytes = stackalloc byte[3];
+
+            InstructionTableCell[] cells = new InstructionTableCell[256];
+            Dictionary<InstructionType, (Color, Color)> colorsMap = new Dictionary<InstructionType, (Color, Color)>();
+            foreach (InstructionDefinition instruction in instructions)
             {
-                using (StreamWriter writer = new StreamWriter(csvStream, encoding: Encoding.UTF8, leaveOpen: true))
+                int index = instruction.Op;
+                if (!colorsMap.TryGetValue(instruction.Type, out (Color backColor, Color foregroundColor) colors))
                 {
-                    writer.Write(htmlString.ToString());
-                }
-                csvStream.Flush();
-            }
+                    rnd.NextBytes(colorBytes);
 
-            Console.WriteLine();
-            Console.WriteLine("Done, press any key to exit");
-            Console.ReadKey();
+                    Color backColor = Color.FromArgb(colorBytes[0], colorBytes[1], colorBytes[2]);
+                    float brightness = backColor.GetBrightness();
+                    Color foregroundColor = brightness < 0.45f ? Color.White : Color.Black;
+
+                    colors = (backColor, foregroundColor);
+                    colorsMap.Add(instruction.Type, colors);
+                }
+                cells[index] = new InstructionTableCell(instruction, colors);
+            }
+            return cells;
         }
     }
-
-    record InstructionTableCell(InstructionDefinition Instruction, (Color background, Color foreground) colors);
 }

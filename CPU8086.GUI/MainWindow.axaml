@@ -1,13 +1,20 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Final.CPU8086"
         xmlns:conv="clr-namespace:Final.CPU8086.Converters"
         xmlns:ctrls="clr-namespace:Final.CPU8086.Controls"
         x:Class="Final.CPU8086.MainWindow"
         x:CompileBindings="False"
+        d:DesignHeight="960"
+        d:DesignWidth="1280"
+        d:DataContext="{d:DesignInstance Type=local:MainViewModel, IsDesignTimeCreatable=False}"
         Title="8086 CPU Simulator by Torsten Spaete"
         Width="1280" Height="960"
         FontFamily="Bitstream Vera Sans Mono" FontSize="14"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        mc:Ignorable="d">
 
     <Window.Resources>
         <conv:HexCellValueConverter x:Key="registerValueConverter" />
@@ -174,7 +181,7 @@
 
             <!-- Registers, Col 0 -->
             <Border Grid.Column="0" Classes="registers">
-                <StackPanel Orientation="Vertical">
+                <StackPanel Orientation="Vertical" Background="Beige">
                     <TabControl>
                         <TabItem Header="Registers">
                             <Grid ColumnDefinitions="Auto,*"

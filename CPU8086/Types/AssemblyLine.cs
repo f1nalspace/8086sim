@@ -24,6 +24,15 @@
             Label = label;
         }
 
+        /// <summary>The text to display for this line, resolved from <see cref="Type"/>.</summary>
+        public string Display => ToString();
+
+        /// <summary>True for both source ("label0:") and target ("jne label0") jump lines.</summary>
+        public bool IsLabel => Type == AssemblyLineType.SourceLabel || Type == AssemblyLineType.TargetLabel;
+
+        /// <summary>True for a "label0:" marker line that other instructions jump to.</summary>
+        public bool IsSourceLabel => Type == AssemblyLineType.SourceLabel;
+
         public override string ToString()
         {
             if (Type == AssemblyLineType.SourceLabel)

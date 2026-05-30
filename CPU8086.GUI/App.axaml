@@ -34,6 +34,20 @@
     <Application.Styles>
         <semi:SemiTheme />
         <StyleInclude Source="avares://Semi.Avalonia.DataGrid/Index.axaml" />
+
+        <!-- Jump labels in the Assembly view (e.g. "jne label0") -->
+        <Style Selector="TextBlock.asmline.label">
+        </Style>
+        
+        <!-- Source-label markers (e.g. "label0:") that other instructions jump to.
+             These get their own marker-less DataTemplate, so they already start at the
+             row origin (where the execution-marker image begins) — no negative margin needed. -->
+        <Style Selector="TextBlock.asmline.sourcelabel">
+            <Setter Property="Foreground" Value="{DynamicResource SemiColorText2}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="FontStyle" Value="Italic" />
+        </Style>
     </Application.Styles>
 
 </Application>

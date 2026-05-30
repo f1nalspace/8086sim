@@ -130,7 +130,7 @@
                                   SelectedItem="{Binding CurrentProgram}"
                                   IsEnabled="{Binding CanChangeStream}" />
                     </StackPanel>
-                    
+
                     <Separator />
 
                     <StackPanel Orientation="Vertical">
@@ -154,24 +154,28 @@
             </TabItem>
             <TabItem Header="View">
                 <StackPanel Orientation="Horizontal">
-                    
+
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="Dark-Mode" />
                         <ToggleSwitch x:Name="darkModeToggle" IsCheckedChanged="OnToggleTheme" />
                     </StackPanel>
-                    
+
                     <Separator />
-                    
+
                     <StackPanel Orientation="Vertical">
                         <TextBlock Text="Values" />
                         <StackPanel Orientation="Horizontal">
-                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Stream as hex" IsChecked="{Binding ShowStreamAsHex}" />
-                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Registers as hex" IsChecked="{Binding ShowRegisterAsHex}" />
-                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Assembly as hex" IsChecked="{Binding ShowAssemblyAsHex}" />
-                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Memory as hex" IsChecked="{Binding ShowMemoryAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Stream as hex"
+                                      IsChecked="{Binding ShowStreamAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Registers as hex"
+                                      IsChecked="{Binding ShowRegisterAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Assembly as hex"
+                                      IsChecked="{Binding ShowAssemblyAsHex}" />
+                            <CheckBox Theme="{DynamicResource CardCheckBox}" Content="Memory as hex"
+                                      IsChecked="{Binding ShowMemoryAsHex}" />
                         </StackPanel>
                     </StackPanel>
-                    
+
                 </StackPanel>
             </TabItem>
         </TabControl>
@@ -309,30 +313,42 @@
                         <ScrollViewer>
                             <ItemsControl ItemsSource="{Binding AssemblyLines}">
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border>
-                                            <Classes.current>
-                                                <MultiBinding Converter="{StaticResource posMarkerVisible}">
-                                                    <Binding Path="Position" />
-                                                    <Binding
-                                                        Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
-                                                </MultiBinding>
-                                            </Classes.current>
-                                            <Grid ColumnDefinitions="20,*">
-                                                <Image Grid.Column="0" Classes="marker"
-                                                       Source="avares://CPU8086.GUI/Resources/Forward_16x16.png">
-                                                    <Image.IsVisible>
+                                    <ctrls:AssemblyLineTemplateSelector>
+                                        <!-- Normal lines: execution marker + assembly text -->
+                                        <ctrls:AssemblyLineTemplateSelector.Default>
+                                            <DataTemplate>
+                                                <Border>
+                                                    <Classes.current>
                                                         <MultiBinding Converter="{StaticResource posMarkerVisible}">
                                                             <Binding Path="Position" />
-                                                            <Binding
-                                                                Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                            <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
                                                         </MultiBinding>
-                                                    </Image.IsVisible>
-                                                </Image>
-                                                <TextBlock Grid.Column="1" Text="{Binding Assembly}" Classes="asmline" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
+                                                    </Classes.current>
+                                                    <Grid ColumnDefinitions="20,*">
+                                                        <Image Grid.Column="0" Classes="marker"
+                                                               Source="avares://CPU8086.GUI/Resources/Forward_16x16.png">
+                                                            <Image.IsVisible>
+                                                                <MultiBinding Converter="{StaticResource posMarkerVisible}">
+                                                                    <Binding Path="Position" />
+                                                                    <Binding Path="$parent[ItemsControl].DataContext.CurrentStreamPosition" />
+                                                                </MultiBinding>
+                                                            </Image.IsVisible>
+                                                        </Image>
+                                                        <TextBlock Grid.Column="1"
+                                                                   Text="{Binding Display}"
+                                                                   Classes="asmline"
+                                                                   Classes.label="{Binding IsLabel}" />
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ctrls:AssemblyLineTemplateSelector.Default>
+                                        <!-- Source labels ("label0:"): no marker column, flush-left -->
+                                        <ctrls:AssemblyLineTemplateSelector.SourceLabel>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Display}" Classes="asmline sourcelabel" />
+                                            </DataTemplate>
+                                        </ctrls:AssemblyLineTemplateSelector.SourceLabel>
+                                    </ctrls:AssemblyLineTemplateSelector>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </ScrollViewer>
@@ -361,8 +377,7 @@
                                                 <Image.IsVisible>
                                                     <MultiBinding Converter="{StaticResource posMarkerVisible}">
                                                         <Binding Path="Position" />
-                                                        <Binding
-                                                            Path="$parent[DataGrid].DataContext.CurrentStreamPosition" />
+                                                        <Binding Path="$parent[DataGrid].DataContext.CurrentStreamPosition" />
                                                     </MultiBinding>
                                                 </Image.IsVisible>
                                             </Image>
@@ -437,7 +452,8 @@
                 <TextBlock Grid.Row="1" Grid.Column="1" Classes="flagname" Text="PF" ToolTip.Tip="PF = Parity Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="2" Classes="flag" Data="{StaticResource SemiIconBulb}"
                           ToolTip.Tip="AF = Auxiliary Carry Flag" Classes.on="{Binding Register.AuxiliaryCarryFlag}" />
-                <TextBlock Grid.Row="1" Grid.Column="2" Classes="flagname" Text="AF" ToolTip.Tip="AF = Auxiliary Carry Flag" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Classes="flagname" Text="AF"
+                           ToolTip.Tip="AF = Auxiliary Carry Flag" />
                 <PathIcon Grid.Row="0" Grid.Column="3" Classes="flag" Data="{StaticResource SemiIconBulb}"
                           ToolTip.Tip="ZF = Zero Flag" Classes.on="{Binding Register.ZeroFlag}" />
                 <TextBlock Grid.Row="1" Grid.Column="3" Classes="flagname" Text="ZF" ToolTip.Tip="ZF = Zero Flag" />

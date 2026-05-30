@@ -1,61 +1,60 @@
-﻿namespace Final.CPU8086
+﻿namespace Final.CPU8086;
+
+public enum ErrorCode
 {
-    public enum ErrorCode
-    {
-        Unknown = 0,
+    Unknown = 0,
 
-        // Stream errors
-        NotEnoughBytesInStream,
-        EndOfStream,
-        StreamIndexOutOfRange,
+    // Stream errors
+    NotEnoughBytesInStream,
+    EndOfStream,
+    StreamIndexOutOfRange,
 
-        // Instruction errors
-        InstructionLengthTooSmall,
-        InstructionLengthTooLarge,
-        MissingInstructionParameter,
-        OpCodeNotImplemented,
-        OpCodeMismatch,
-        InstructionNotImplemented,
-        InstructionMissingAdditionalData,
-        ModeNotImplemented,
+    // Instruction errors
+    InstructionLengthTooSmall,
+    InstructionLengthTooLarge,
+    MissingInstructionParameter,
+    OpCodeNotImplemented,
+    OpCodeMismatch,
+    InstructionNotImplemented,
+    InstructionMissingAdditionalData,
+    ModeNotImplemented,
 
-        // Program errors
-        MissingProgramParameter,
-        ProgramTooLarge,
-        ProgramIsEmpty,
-        ProgramNotLoaded,
+    // Program errors
+    MissingProgramParameter,
+    ProgramTooLarge,
+    ProgramIsEmpty,
+    ProgramNotLoaded,
 
-        // Execution errors
-        ExecutionStopped,
-        ExecutionFailed,
-        MissingExecutionFunction,
-        MismatchInstructionOperands,
-        InvalidExecutionState,
-        InvalidSegmentAddress,
-        EndOfProgram,
-        MissingStateParameter,
-        UnsupportedInstruction,
+    // Execution errors
+    ExecutionStopped,
+    ExecutionFailed,
+    MissingExecutionFunction,
+    MismatchInstructionOperands,
+    InvalidExecutionState,
+    InvalidSegmentAddress,
+    EndOfProgram,
+    MissingStateParameter,
+    UnsupportedInstruction,
 
-        // Type errors
-        UnsupportedOperandType,
-        UnsupportedRegisterType,
-        UnsupportedEffectiveAddressCalculation,
-        UnsupportedImmediateFlags,
-        UnsupportedDataWidth,
-        UnsupportedDataType,
+    // Type errors
+    UnsupportedOperandType,
+    UnsupportedRegisterType,
+    UnsupportedEffectiveAddressCalculation,
+    UnsupportedImmediateFlags,
+    UnsupportedDataWidth,
+    UnsupportedDataType,
 
-        // Memory errors
-        InvalidMemoryAddress,
+    // Memory errors
+    InvalidMemoryAddress,
 
-        // Fields errors
-        ConstantFieldMismatch,
-        RegFieldMismatch,
-        JumpInstructionNotFound,
-        InvalidOperandsLength,
-        UnsupportedFieldType,
+    // Fields errors
+    ConstantFieldMismatch,
+    RegFieldMismatch,
+    JumpInstructionNotFound,
+    InvalidOperandsLength,
+    UnsupportedFieldType,
 
-        // Load/Store errors
-        FailedToLoadRegister,
-        FailedToLoadMemory,
-    }
+    // Load/Store errors
+    FailedToLoadRegister,
+    FailedToLoadMemory,
 }

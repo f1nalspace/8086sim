@@ -1,12 +1,11 @@
 ﻿using System.Collections.Immutable;
 
-namespace Final.CPU8086.Execution
+namespace Final.CPU8086.Execution;
+
+public interface IProgram
 {
-    public interface IProgram
-    {
-        string Name { get; }
-        ImmutableArray<byte> Stream { get; }
-        RegisterState Register { get; }
-        int Length { get; }
-    }
+    string Name { get; }
+    ImmutableArray<byte> Stream { get; }
+    RegisterState Register { get; }
+    int Length { get; }
 }

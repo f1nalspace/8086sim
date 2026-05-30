@@ -1,5 +1,4 @@
 ﻿using DevExpress.Mvvm;
-using DevExpress.Mvvm.Native;
 using Final.CPU8086.Controls;
 using Final.CPU8086.Execution;
 using Final.CPU8086.Instructions;
@@ -22,7 +21,7 @@ namespace Final.CPU8086
     {
         private static readonly InstructionStreamResources _resources = new InstructionStreamResources();
 
-        private IDispatcherService _dispatcherService => GetService<IDispatcherService>();
+        private IDispatcherService _dispatcherService => GetService<IDispatcherService>() ?? DirectDispatcherService.Instance;
 
         private readonly CPU _cpu;
 
@@ -56,6 +55,31 @@ namespace Final.CPU8086
         private bool _showMemoryAsHex = true;
 
         public uint CurrentStreamPosition => _cpu.PreviousIP; // Previous IP is the current stream position
+
+        // The decoded instruction sitting at the current stream position (the one about to be
+        // executed). CPU.CurrentInstruction is the *previously executed* one after a step, so the
+        // Instructions grid and the stream highlight must resolve by position instead, otherwise
+        // both lag one step behind the actual execution position.
+        public Instruction CurrentStreamInstruction
+        {
+            get
+            {
+                uint pos = CurrentStreamPosition;
+                if (pos == uint.MaxValue)
+                    return null;
+                foreach (Instruction instruction in _instructions)
+                {
+                    if (instruction.Position == pos)
+                        return instruction;
+                }
+                return null;
+            }
+        }
+
+        // Byte length of the instruction at the current stream position, so the binary grid
+        // highlights exactly the bytes of the instruction about to be executed (not just one box).
+        public uint CurrentStreamLength
+            => CurrentStreamInstruction?.Length ?? (CurrentStreamPosition == uint.MaxValue ? 0u : 1u);
 
         public ExecutionState ExecutionState => _cpu.ExecutionState;
 
@@ -130,15 +154,34 @@ namespace Final.CPU8086
             return result;
         }
 
+        // Avalonia ist Thread-strikt: CPU-Events kommen aus den Run/Step-Hintergrundthreads,
+        // jede UI-Aktualisierung muss auf den UI-Thread marshallen (Dispatcher-Stub bei Bedarf).
         private void OnCPUMemoryChanged(object sender, MemoryChangedEventArgs args)
         {
-            ReadOnlySpan<byte> stream = Memory.Get(args.Offset, args.Length);
-            MemoryGridService.ReloadStream(stream, args.Offset);
+            byte[] data = Memory.Get(args.Offset, args.Length).ToArray();
+            uint offset = args.Offset;
+            _dispatcherService.Invoke(() => MemoryGridService.ReloadStream(data, offset));
         }
 
         private void OnLoaded()
         {
             MemoryGridService.PageChanged += OnMemoryGridServicePageChanged;
+
+            // The first program is already loaded in the constructor (before the memory grid
+            // service exists), so push the current memory now that the grid is wired up.
+            RefreshMemoryGrid();
+        }
+
+        // Feed the full 1 MB address space into the memory grid so it always shows memory (paged
+        // via BytesPerPage) while a program is loaded. Subsequent in-place ReloadStream calls from
+        // OnCPUMemoryChanged / OnMemoryGridServicePageChanged keep the visible page fresh.
+        private void RefreshMemoryGrid()
+        {
+            IBinaryGridService grid = MemoryGridService;
+            if (grid == null)
+                return;
+            byte[] data = Memory.Get(0, (uint)Memory.Length).ToArray();
+            _dispatcherService.Invoke(() => grid.ReloadStream(data, 0));
         }
 
         private void OnMemoryGridServicePageChanged(object sender, BinaryGridPageChangedEventArgs args)
@@ -152,27 +195,27 @@ namespace Final.CPU8086
 
         private void AddLog(uint position, string message)
         {
-            if (_dispatcherService != null)
-                _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
-            else
-                Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now));
+            _dispatcherService.Invoke(() => Logs.Add(new LogItemViewModel(position, message, DateTimeOffset.Now)));
         }
 
         private void OnCPUPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            if (nameof(CPU.Register).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(Register));
-            else if (nameof(CPU.Memory).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(Memory));
-            else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(CurrentStreamPosition));
-            else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
-                RaisePropertyChanged(nameof(CurrentInstruction));
-            else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+            _dispatcherService.Invoke(() =>
             {
-                RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
-                RefreshCommands();
-            }
+                if (nameof(CPU.Register).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(Register));
+                else if (nameof(CPU.Memory).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(Memory));
+                else if (nameof(CPU.PreviousIP).Equals(e.PropertyName))
+                    RaisePropertiesChanged(nameof(CurrentStreamPosition), nameof(CurrentStreamLength), nameof(CurrentStreamInstruction));
+                else if (nameof(CPU.CurrentInstruction).Equals(e.PropertyName))
+                    RaisePropertyChanged(nameof(CurrentInstruction));
+                else if (nameof(CPU.ExecutionState).Equals(e.PropertyName))
+                {
+                    RaisePropertiesChanged(nameof(ExecutionState), nameof(CanChangeStream));
+                    RefreshCommands();
+                }
+            });
         }
 
         private void InstructionsChanged(IEnumerable<Instruction> instructions)
@@ -188,10 +231,7 @@ namespace Final.CPU8086
         private bool CanReset() => DecodeState == DecodeState.Failed || ExecutionState == ExecutionState.Failed;
         private void Reset()
         {
-            if (_dispatcherService is not null)
-                _dispatcherService.Invoke(() => Errors.Clear());
-            else
-                Errors.Clear();
+            _dispatcherService.Invoke(() => Errors.Clear());
 
             _cpu.Reset();
         }
@@ -213,6 +253,9 @@ namespace Final.CPU8086
                 OneOf<int, Error> loadRes = _cpu.LoadProgram(program);
                 if (loadRes.IsT1)
                     _dispatcherService.Invoke(() => Errors.Add(loadRes.AsT1));
+
+                // Refresh the memory grid with the program just written into memory.
+                RefreshMemoryGrid();
             }
             else
                 CurrentStream = ImmutableArray<byte>.Empty;

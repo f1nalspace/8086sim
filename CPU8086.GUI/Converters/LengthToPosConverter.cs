@@ -1,11 +1,10 @@
-﻿using System;
+using Avalonia.Data.Converters;
+using System;
 using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Markup;
 
 namespace Final.CPU8086.Converters
 {
-    public class LengthToPosConverter : MarkupExtension, IValueConverter
+    public class LengthToPosConverter : IValueConverter
     {
         public int Columns { get; set; } = 8;
 
@@ -28,8 +27,5 @@ namespace Final.CPU8086.Converters
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
             => throw new NotSupportedException();
-
-        public override object ProvideValue(IServiceProvider serviceProvider)
-            => this;
     }
 }

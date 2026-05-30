@@ -1,11 +1,10 @@
-﻿using System;
+using Avalonia.Data.Converters;
+using System;
 using System.Globalization;
-using System.Windows.Data;
-using System.Windows.Markup;
 
 namespace Final.CPU8086.Converters
 {
-    public class BytePositionToStringConverter : MarkupExtension, IValueConverter
+    public class BytePositionToStringConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
@@ -21,7 +20,5 @@ namespace Final.CPU8086.Converters
         {
             throw new NotImplementedException();
         }
-
-        public override object ProvideValue(IServiceProvider serviceProvider) => this;
     }
 }

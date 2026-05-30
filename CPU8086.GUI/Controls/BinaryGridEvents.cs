@@ -1,6 +1,6 @@
-﻿using Final.CPU8086.Types;
+﻿using Avalonia.Interactivity;
+using Final.CPU8086.Types;
 using System;
-using System.Windows;
 
 namespace Final.CPU8086.Controls
 {

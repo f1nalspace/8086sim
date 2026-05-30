@@ -187,7 +187,16 @@ namespace Final.ITP
                 }
             }
 
-            Directory.CreateDirectory(targetPath);
+            string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string downloadsPath = Path.Combine(homePath, "Downloads");
+            if (string.Equals(targetPath, homePath) || string.Equals(targetPath, downloadsPath))
+            {
+                Console.Error.WriteLine("Not allowed to write directory to the home or downloads path!");
+                return 2;
+            }
+
+            if (!Directory.Exists(targetPath))
+                Directory.CreateDirectory(targetPath);
             
             HtmlDocument referenceDocument = LoadInstructionReferenceHtmlDocument();
 
@@ -202,19 +211,15 @@ namespace Final.ITP
             if (genTypes)
             {
                 string instructionTypeSource = GenerateInstructionTypeEnumAndNameConversionSource(reference);
-
                 string generatedTypesFilePath = Path.Combine(targetPath, "8086-types.cs");
-                
-                Debug.WriteLine(instructionTypeSource);
+                File.WriteAllText(generatedTypesFilePath, instructionTypeSource);
             }
 
             if (genTable)
             {
                 string instructionTableSource = GenerateInstructionTableConstructorSource(reference);
-                
                 string generatedTableFilePath = Path.Combine(targetPath, "8086-table.cs");
-                
-                Debug.WriteLine(instructionTableSource);
+                File.WriteAllText(generatedTableFilePath, instructionTableSource);
             }
 
             if (saveReference)

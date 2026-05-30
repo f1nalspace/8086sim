@@ -230,10 +230,10 @@ namespace Final.CPU8086
 
                 if (!isEvenAddress)
                 {
+                    // 8086: add 4 clocks for each 16-bit word transfer to/from an odd address.
+                    // (This is an addition per transfer, not a multiplication of the whole cost.)
                     if (cycles.Transfers > 0)
-                        result *= (4U * cycles.Transfers);
-                    else
-                        result += 4;
+                        result += 4U * cycles.Transfers;
                 }
             }
 

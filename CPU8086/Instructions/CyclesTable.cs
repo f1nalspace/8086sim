@@ -18,7 +18,7 @@ namespace Final.CPU8086.Instructions
             }
         }
 
-        public Cycles[,,] _cyclesFromOperand = new Cycles[0xFF, 6, 6];
+        public Cycles[,,] _cyclesFromOperand;
 
         private void Set(InstructionType type, OperandType a, OperandType b, Cycles cycles)
         {
@@ -29,7 +29,16 @@ namespace Final.CPU8086.Instructions
 
         public CyclesTable()
         {
-            Array.Clear(_cyclesFromOperand);
+            // Size the table from the actual enum ranges. OperandType has 7 members
+            // (None..Value), so the previous fixed size of 6 threw IndexOutOfRange for
+            // OperandType.Value operands.
+            int typeCount = 0;
+            foreach (InstructionType t in Enum.GetValues(typeof(InstructionType)))
+                typeCount = Math.Max(typeCount, (int)t + 1);
+            int operandCount = 0;
+            foreach (OperandType o in Enum.GetValues(typeof(OperandType)))
+                operandCount = Math.Max(operandCount, (int)o + 1);
+            _cyclesFromOperand = new Cycles[typeCount, operandCount, operandCount];
 
             Set(InstructionType.AAA, OperandType.None, OperandType.None, new Cycles(4));
             Set(InstructionType.AAD, OperandType.None, OperandType.None, new Cycles(60));

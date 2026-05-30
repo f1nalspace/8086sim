@@ -187,6 +187,15 @@ namespace Final.ITP
                 }
             }
 
+            bool hasAnything = genTypes || genTable || genCSV || saveReference;
+
+            if (!hasAnything)
+            {
+                Console.Error.WriteLine("Missing arguments!");
+                PrintUsage();
+                return 1;
+            }
+            
             string homePath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
             string downloadsPath = Path.Combine(homePath, "Downloads");
             if (string.Equals(targetPath, homePath) || string.Equals(targetPath, downloadsPath))
@@ -206,6 +215,7 @@ namespace Final.ITP
             {
                 string csvFilePath = Path.Combine(targetPath, "8086-instruction-table.csv");
                 WriteParsedInstructionsToCsvFile(reference, csvFilePath);
+                Console.WriteLine($"Written CSV file: {csvFilePath}");
             }
 
             if (genTypes)
@@ -213,6 +223,7 @@ namespace Final.ITP
                 string instructionTypeSource = GenerateInstructionTypeEnumAndNameConversionSource(reference);
                 string generatedTypesFilePath = Path.Combine(targetPath, "8086-types.cs");
                 File.WriteAllText(generatedTypesFilePath, instructionTypeSource);
+                Console.WriteLine($"Written types file: {generatedTypesFilePath}");
             }
 
             if (genTable)
@@ -220,17 +231,18 @@ namespace Final.ITP
                 string instructionTableSource = GenerateInstructionTableConstructorSource(reference);
                 string generatedTableFilePath = Path.Combine(targetPath, "8086-table.cs");
                 File.WriteAllText(generatedTableFilePath, instructionTableSource);
+                Console.WriteLine($"Written table file: {generatedTableFilePath}");
             }
 
             if (saveReference)
             {
                 string referenceFilePath = Path.Combine(targetPath, "8086-instruction-table.html");
                 WriteParsedInstructionsToHtmlFile(reference, referenceFilePath);
+                Console.WriteLine($"Written reference file: {referenceFilePath}");
             }
 
             Console.WriteLine();
-            Console.WriteLine("Done, press any key to exit");
-            Console.ReadKey();
+            Console.WriteLine("Done");
 
             return 0;
         }
